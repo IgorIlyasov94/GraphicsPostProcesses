@@ -1,1 +1,0 @@
-#include "GraphicsRendererDirectX12.h"

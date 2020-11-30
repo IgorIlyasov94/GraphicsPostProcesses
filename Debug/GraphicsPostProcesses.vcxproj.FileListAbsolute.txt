@@ -1,0 +1,2 @@
+C:\Users\IgorIlyasov\source\repos\GraphicsPostProcesses\Debug\GraphicsPostProcesses.exe
+C:\Users\IgorIlyasov\source\repos\GraphicsPostProcesses\Debug\GraphicsPostProcesses.pdb

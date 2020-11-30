@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{32182861-0fdd-4ee2-a91e-f80149b67d80}</ProjectGuid>
+    <ProjectGuid>{ff7dbc2a-6943-4cab-9394-ee056ad89b37}</ProjectGuid>
     <RootNamespace>GraphicsPostProcesses</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
@@ -90,7 +90,7 @@
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
@@ -140,10 +140,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="GraphicsPostProcesses.cpp" />
-    <ClCompile Include="GraphicsRendererDirectX12.cpp" />
+    <ClCompile Include="GraphicsRendererDirecX12.cpp" />
+    <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="GraphicsPostProcesses.h" />
     <ClInclude Include="GraphicsRendererDirectX12.h" />
+    <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
