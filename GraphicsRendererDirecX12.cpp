@@ -14,7 +14,7 @@ GraphicsRendererDirectX12& GraphicsRendererDirectX12::getInstance()
 	return instance;
 }
 
-inline ID3D12Device* const& GraphicsRendererDirectX12::getDevice()
+ID3D12Device* const& GraphicsRendererDirectX12::getDevice()
 {
 	return device.Get();
 }
