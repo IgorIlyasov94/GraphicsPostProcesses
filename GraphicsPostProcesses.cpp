@@ -85,6 +85,8 @@ int GraphicsWinApplication::run(const HINSTANCE& instance, const LPSTR& cmdLine,
 
 		auto message = MSG({});
 
+		renderer.initialize(windowHandler);
+
 		while (PeekMessage(&message, NULL, 0, 0, PM_REMOVE) != WM_QUIT)
 		{
 			TranslateMessage(&message);
