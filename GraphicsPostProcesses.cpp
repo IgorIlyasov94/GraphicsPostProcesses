@@ -25,6 +25,17 @@ LRESULT GraphicsWinApplication::windowProc(HWND windowHandler, UINT message, WPA
 
 		return 0;
 	}
+	case WM_KEYDOWN:
+	{
+		auto keyData = static_cast<uint8_t>(wParam);
+
+		if (keyData == VK_ESCAPE)
+		{
+			ExitProcess(0);
+		}
+
+		return 0;
+	}
 	case WM_PAINT:
 	{
 		transmittedRenderer->frameRender();
