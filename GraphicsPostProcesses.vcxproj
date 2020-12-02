@@ -139,11 +139,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="GraphicsCommonHandler.cpp" />
     <ClCompile Include="GraphicsPostProcesses.cpp" />
     <ClCompile Include="GraphicsRendererDirecX12.cpp" />
     <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="GraphicsCommonHandler.h" />
     <ClInclude Include="GraphicsPostProcesses.h" />
     <ClInclude Include="GraphicsRendererDirectX12.h" />
     <ClInclude Include="stdafx.h" />

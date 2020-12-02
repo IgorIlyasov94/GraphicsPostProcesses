@@ -14,7 +14,7 @@ GraphicsWinApplication::GraphicsWinApplication()
 
 LRESULT GraphicsWinApplication::windowProc(HWND windowHandler, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	GraphicsRendererDirectX12* transmittedRenderer = reinterpret_cast<GraphicsRendererDirectX12*>(GetWindowLongPtr(windowHandler, GWLP_USERDATA));
+	GraphicsCommonHandler* transmittedCommonHandler = reinterpret_cast<GraphicsCommonHandler*>(GetWindowLongPtr(windowHandler, GWLP_USERDATA));
 
 	switch (message)
 	{
@@ -29,16 +29,21 @@ LRESULT GraphicsWinApplication::windowProc(HWND windowHandler, UINT message, WPA
 	{
 		auto keyData = static_cast<uint8_t>(wParam);
 
-		if (keyData == VK_ESCAPE)
-		{
-			ExitProcess(0);
-		}
+		transmittedCommonHandler->onKeyDown(keyData);
+
+		return 0;
+	}
+	case WM_KEYUP:
+	{
+		auto keyData = static_cast<uint8_t>(wParam);
+
+		transmittedCommonHandler->onKeyUp(keyData);
 
 		return 0;
 	}
 	case WM_PAINT:
 	{
-		transmittedRenderer->frameRender();
+		transmittedCommonHandler->update();
 
 		return 0;
 	}
@@ -72,7 +77,7 @@ int GraphicsWinApplication::run(const HINSTANCE& instance, const LPSTR& cmdLine,
 {
 	try
 	{
-		auto windowClass = WNDCLASSEX({});
+		WNDCLASSEX windowClass{};
 
 		auto windowClassName = L"GraphicsPostProcess";
 		auto windowTitleName = L"GraphicsPostProcess";
@@ -90,13 +95,13 @@ int GraphicsWinApplication::run(const HINSTANCE& instance, const LPSTR& cmdLine,
 		RegisterClassExW(&windowClass);
 
 		auto windowHandler = CreateWindowExW(WS_EX_APPWINDOW, windowClassName, windowTitleName, WS_OVERLAPPEDWINDOW,
-			0, 0, renderer.getResolutionX(), renderer.getResolutionY(), nullptr, nullptr, instance, &renderer);
+			0, 0, commonHandler.getRenderer().getResolutionX(), commonHandler.getRenderer().getResolutionY(), nullptr, nullptr, instance, &commonHandler);
 
 		ShowWindow(windowHandler, cmdShow);
 
-		auto message = MSG({});
+		MSG message{};
 
-		renderer.initialize(windowHandler);
+		commonHandler.initialize(windowHandler);
 
 		while (PeekMessage(&message, NULL, 0, 0, PM_REMOVE) != WM_QUIT)
 		{
@@ -104,7 +109,7 @@ int GraphicsWinApplication::run(const HINSTANCE& instance, const LPSTR& cmdLine,
 			DispatchMessage(&message);
 		}
 
-		renderer.gpuRelease();
+		commonHandler.stop();
 
 		return static_cast<int>(message.wParam);
 	}
@@ -113,7 +118,7 @@ int GraphicsWinApplication::run(const HINSTANCE& instance, const LPSTR& cmdLine,
 		OutputDebugStringW(L"Error: ");
 		OutputDebugStringA(e.what());
 
-		renderer.gpuRelease();
+		commonHandler.stop();
 
 		return EXIT_FAILURE;
 	}

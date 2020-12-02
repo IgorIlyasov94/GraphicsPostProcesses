@@ -1,7 +1,7 @@
 #pragma once
 
 #include "stdafx.h"
-#include "GraphicsRendererDirectX12.h"
+#include "GraphicsCommonHandler.h"
 
 class GraphicsWinApplication
 {
@@ -20,5 +20,5 @@ private:
 
 	static LRESULT CALLBACK windowProc(HWND windowHandler, UINT message, WPARAM wParam, LPARAM lParam);
 
-	GraphicsRendererDirectX12& renderer = GraphicsRendererDirectX12::getInstance();
+	GraphicsCommonHandler& commonHandler = GraphicsCommonHandler::getInstance();
 };
