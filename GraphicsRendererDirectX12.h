@@ -9,8 +9,6 @@ class GraphicsRendererDirectX12
 public:
 	static GraphicsRendererDirectX12& getInstance();
 
-	ID3D12Device* const& getDevice();
-
 	int32_t const& getResolutionX() const;
 	int32_t const& getResolutionY() const;
 
@@ -36,13 +34,14 @@ private:
 	ComPtr<ID3D12Device> device;
 	ComPtr<ID3D12CommandQueue> commandQueue;
 	ComPtr<ID3D12DescriptorHeap> swapChainRtvHeap;
-	ComPtr<ID3D12DescriptorHeap> swapChainSrvHeap;
+	//ComPtr<ID3D12DescriptorHeap> swapChainSrvHeap;
 	ComPtr<ID3D12CommandAllocator> commandAllocator[SWAP_CHAIN_BUFFER_COUNT];
-	/*ComPtr<ID3D12GraphicsCommandList> commandList;
-	ComPtr<ID3D12PipelineState> pipelineState;*/
+	ComPtr<ID3D12GraphicsCommandList> commandList;
+	ComPtr<ID3D12PipelineState> pipelineState;
 	ComPtr<ID3D12Fence> fence;
 
-	//ID3D12Resource* backBufferRT[2];
+	ComPtr<ID3D12Resource> swapChainBuffersRtv[SWAP_CHAIN_BUFFER_COUNT];
+	//ComPtr<ID3D12Resource> swapChainBuffersSrv[SWAP_CHAIN_BUFFER_COUNT];
 
 	ComPtr<IDXGIFactory4> factory;
 	ComPtr<IDXGISwapChain4> swapChain;

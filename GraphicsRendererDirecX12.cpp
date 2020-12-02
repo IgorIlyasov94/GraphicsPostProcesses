@@ -15,11 +15,6 @@ GraphicsRendererDirectX12& GraphicsRendererDirectX12::getInstance()
 	return instance;
 }
 
-ID3D12Device* const& GraphicsRendererDirectX12::getDevice()
-{
-	return device.Get();
-}
-
 int32_t const& GraphicsRendererDirectX12::getResolutionX() const
 {
 	return resolutionX;
@@ -41,14 +36,14 @@ void GraphicsRendererDirectX12::initialize(HWND& windowHandler)
 
 	ThrowIfFailed(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&device)));
 
-	auto commandQueueDesc = D3D12_COMMAND_QUEUE_DESC({});
+	D3D12_COMMAND_QUEUE_DESC commandQueueDesc{};
 	commandQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
 	commandQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
 
 	ThrowIfFailed(device->CreateCommandQueue(&commandQueueDesc, IID_PPV_ARGS(&commandQueue)));
 	commandQueue->SetName(L"commandQueue");
 
-	auto swapChainDesc = DXGI_SWAP_CHAIN_DESC1({});
+	DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
 	swapChainDesc.BufferCount = SWAP_CHAIN_BUFFER_COUNT;
 	swapChainDesc.Width = resolutionX;
 	swapChainDesc.Height = resolutionY;
@@ -64,24 +59,33 @@ void GraphicsRendererDirectX12::initialize(HWND& windowHandler)
 
 	bufferIndex = swapChain->GetCurrentBackBufferIndex();
 
-	auto descriptorHeapRtvDesc = D3D12_DESCRIPTOR_HEAP_DESC({});
-	descriptorHeapRtvDesc.NumDescriptors = SWAP_CHAIN_BUFFER_COUNT + 2;
+	D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapRtvDesc{};
+	descriptorHeapRtvDesc.NumDescriptors = SWAP_CHAIN_BUFFER_COUNT;
 	descriptorHeapRtvDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 	descriptorHeapRtvDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 	ThrowIfFailed(device->CreateDescriptorHeap(&descriptorHeapRtvDesc, IID_PPV_ARGS(&swapChainRtvHeap)));
 
-	auto descriptorHeapSrvDesc = D3D12_DESCRIPTOR_HEAP_DESC({});
-	descriptorHeapSrvDesc.NumDescriptors = 2;
+	/*D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapSrvDesc{};
+	descriptorHeapSrvDesc.NumDescriptors = SWAP_CHAIN_BUFFER_COUNT;
 	descriptorHeapSrvDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	descriptorHeapSrvDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	ThrowIfFailed(device->CreateDescriptorHeap(&descriptorHeapSrvDesc, IID_PPV_ARGS(&swapChainSrvHeap)));
+	ThrowIfFailed(device->CreateDescriptorHeap(&descriptorHeapSrvDesc, IID_PPV_ARGS(&swapChainSrvHeap)));*/
 
 	swapChainRtvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	swapChainSrvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
+	auto rtvHeapHandle(swapChainRtvHeap->GetCPUDescriptorHandleForHeapStart());
+
 	for (auto swapChainBufferId = 0; swapChainBufferId < SWAP_CHAIN_BUFFER_COUNT; swapChainBufferId++)
 	{
 		ThrowIfFailed(device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator[swapChainBufferId])));
+
+		ThrowIfFailed(swapChain->GetBuffer(swapChainBufferId, IID_PPV_ARGS(&swapChainBuffersRtv[swapChainBufferId])));
+
+		device->CreateRenderTargetView(swapChainBuffersRtv[swapChainBufferId].Get(), nullptr, rtvHeapHandle);
+		rtvHeapHandle.ptr += swapChainRtvDescriptorSize;
+
+		swapChainBuffersRtv[swapChainBufferId]->SetName(L"swapChainBuffersRtv");
 	}
 
 	ThrowIfFailed(device->CreateFence(fenceValues[bufferIndex], D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)));
@@ -90,6 +94,16 @@ void GraphicsRendererDirectX12::initialize(HWND& windowHandler)
 	fenceEvent = CreateEvent(nullptr, false, false, nullptr);
 	if (fenceEvent == nullptr)
 		ThrowIfFailed(HRESULT_FROM_WIN32(GetLastError()));
+
+	ThrowIfFailed(device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator[bufferIndex].Get(), nullptr, IID_PPV_ARGS(&commandList)));
+
+	//D3D12_GRAPHICS_PIPELINE_STATE_DESC graphicsPipelineStateDesc{};
+	
+	//ThrowIfFailed(device->CreateGraphicsPipelineState(&graphicsPipelineStateDesc, IID_PPV_ARGS(&pipelineState)));
+
+	pipelineState = nullptr;
+
+	ThrowIfFailed(commandList->Close());
 }
 
 void GraphicsRendererDirectX12::gpuRelease()
@@ -101,6 +115,35 @@ void GraphicsRendererDirectX12::gpuRelease()
 
 void GraphicsRendererDirectX12::frameRender()
 {
+	ThrowIfFailed(commandAllocator[bufferIndex]->Reset());
+	
+	ThrowIfFailed(commandList->Reset(commandAllocator[bufferIndex].Get(), pipelineState.Get()));
+
+	D3D12_RESOURCE_BARRIER resourceBarrier{};
+	resourceBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	resourceBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	resourceBarrier.Transition.pResource = swapChainBuffersRtv[bufferIndex].Get();
+	resourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
+	resourceBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	resourceBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+	
+	commandList->ResourceBarrier(1, &resourceBarrier);
+
+	auto rtvHeapHandle(swapChainRtvHeap->GetCPUDescriptorHandleForHeapStart());
+	rtvHeapHandle.ptr += bufferIndex * swapChainRtvDescriptorSize;
+
+	commandList->OMSetRenderTargets(1, &rtvHeapHandle, false, nullptr);
+
+	const float clearColor[] = { 0.3f, 0.6f, 0.4f, 1.0f };
+	
+	commandList->ClearRenderTargetView(rtvHeapHandle, clearColor, 0, nullptr);
+
+	ThrowIfFailed(commandList->Close());
+
+	ID3D12CommandList* commandLists[] = { commandList.Get() };
+
+	commandQueue->ExecuteCommandLists(_countof(commandLists), commandLists);
+
 	ThrowIfFailed(swapChain->Present(1, 0));
 
 	prepareNextFrame();
