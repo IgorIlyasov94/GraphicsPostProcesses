@@ -38,7 +38,7 @@ void GraphicsCommonHandler::onKeyDown(uint8_t key)
 	{
 	case VK_ESCAPE:
 	{
-		ExitProcess(0);
+		PostQuitMessage(0);
 
 		break;
 	}
