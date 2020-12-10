@@ -18,7 +18,7 @@ public:
 
 private:
 	GraphicsRendererDirectX12();
-	~GraphicsRendererDirectX12() {};
+	~GraphicsRendererDirectX12() {}
 
 	GraphicsRendererDirectX12(const GraphicsRendererDirectX12&) = delete;
 	GraphicsRendererDirectX12(GraphicsRendererDirectX12&&) = delete;
@@ -34,14 +34,12 @@ private:
 	ComPtr<ID3D12Device> device;
 	ComPtr<ID3D12CommandQueue> commandQueue;
 	ComPtr<ID3D12DescriptorHeap> swapChainRtvHeap;
-	//ComPtr<ID3D12DescriptorHeap> swapChainSrvHeap;
 	ComPtr<ID3D12CommandAllocator> commandAllocator[SWAP_CHAIN_BUFFER_COUNT];
 	ComPtr<ID3D12GraphicsCommandList> commandList;
 	ComPtr<ID3D12PipelineState> pipelineState;
 	ComPtr<ID3D12Fence> fence;
 
 	ComPtr<ID3D12Resource> swapChainBuffersRtv[SWAP_CHAIN_BUFFER_COUNT];
-	//ComPtr<ID3D12Resource> swapChainBuffersSrv[SWAP_CHAIN_BUFFER_COUNT];
 
 	ComPtr<IDXGIFactory4> factory;
 	ComPtr<IDXGISwapChain4> swapChain;

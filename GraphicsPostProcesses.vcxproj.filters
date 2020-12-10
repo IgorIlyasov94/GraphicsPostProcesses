@@ -19,11 +19,14 @@
     <Filter Include="Файлы заголовков\GraphicsCore">
       <UniqueIdentifier>{231f587b-9f2c-42b5-b230-78ccd28d0e31}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Исходные файлы\GraphicsPostProcesses">
+      <UniqueIdentifier>{f85fbaf6-d335-48d5-833b-a9ccf8eb7012}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Файлы заголовков\GraphicsPostProcesses">
+      <UniqueIdentifier>{63978b76-e279-4533-8cb4-382a96973fae}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="GraphicsPostProcesses.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
     <ClCompile Include="stdafx.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
@@ -33,11 +36,17 @@
     <ClCompile Include="GraphicsCommonHandler.cpp">
       <Filter>Исходные файлы\GraphicsCore</Filter>
     </ClCompile>
+    <ClCompile Include="Main.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsPostProcesses.cpp">
+      <Filter>Исходные файлы\GraphicsPostProcesses</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsHelper.cpp">
+      <Filter>Исходные файлы\GraphicsCore</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="GraphicsPostProcesses.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
     <ClInclude Include="stdafx.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
@@ -45,6 +54,15 @@
       <Filter>Файлы заголовков\GraphicsCore</Filter>
     </ClInclude>
     <ClInclude Include="GraphicsCommonHandler.h">
+      <Filter>Файлы заголовков\GraphicsCore</Filter>
+    </ClInclude>
+    <ClInclude Include="Main.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsPostProcesses.h">
+      <Filter>Файлы заголовков\GraphicsPostProcesses</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsHelper.h">
       <Filter>Файлы заголовков\GraphicsCore</Filter>
     </ClInclude>
   </ItemGroup>

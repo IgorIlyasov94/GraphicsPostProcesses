@@ -17,7 +17,7 @@ public:
 
 private:
 	GraphicsCommonHandler();
-	~GraphicsCommonHandler() {};
+	~GraphicsCommonHandler() {}
 
 	GraphicsCommonHandler(const GraphicsCommonHandler&) = delete;
 	GraphicsCommonHandler(GraphicsCommonHandler&&) = delete;

@@ -1,24 +1,25 @@
 #pragma once
 
 #include "stdafx.h"
-#include "GraphicsCommonHandler.h"
 
-class GraphicsWinApplication
+using namespace Microsoft::WRL;
+
+class GraphicsPostProcesses
 {
 public:
-	static GraphicsWinApplication& getInstance();
+	static GraphicsPostProcesses& getInstance();
 
-	int run(const HINSTANCE& instance, const LPSTR& cmdLine, const int& cmdShow);
+	void initialize(const int32_t& resolutionX, const int32_t& resolutionY, const ID3D12Device*& device);
+	void enableHDR();
+
 private:
-	GraphicsWinApplication();
-	~GraphicsWinApplication() {};
+	GraphicsPostProcesses();
+	~GraphicsPostProcesses() {}
 
-	GraphicsWinApplication(const GraphicsWinApplication&) = delete;
-	GraphicsWinApplication(GraphicsWinApplication&&) = delete;
-	GraphicsWinApplication& operator=(const GraphicsWinApplication&) = delete;
-	GraphicsWinApplication& operator=(GraphicsWinApplication&&) = delete;
+	GraphicsPostProcesses(const GraphicsPostProcesses&) = delete;
+	GraphicsPostProcesses(GraphicsPostProcesses&&) = delete;
+	GraphicsPostProcesses& operator=(const GraphicsPostProcesses&) = delete;
+	GraphicsPostProcesses& operator=(GraphicsPostProcesses&&) = delete;
 
-	static LRESULT CALLBACK windowProc(HWND windowHandler, UINT message, WPARAM wParam, LPARAM lParam);
-
-	GraphicsCommonHandler& commonHandler = GraphicsCommonHandler::getInstance();
+	ComPtr<ID3D12PipelineState> hdrPipelineState;
 };

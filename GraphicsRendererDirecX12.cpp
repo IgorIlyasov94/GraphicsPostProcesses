@@ -65,12 +65,6 @@ void GraphicsRendererDirectX12::initialize(HWND& windowHandler)
 	descriptorHeapRtvDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 	ThrowIfFailed(device->CreateDescriptorHeap(&descriptorHeapRtvDesc, IID_PPV_ARGS(&swapChainRtvHeap)));
 
-	/*D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapSrvDesc{};
-	descriptorHeapSrvDesc.NumDescriptors = SWAP_CHAIN_BUFFER_COUNT;
-	descriptorHeapSrvDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	descriptorHeapSrvDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	ThrowIfFailed(device->CreateDescriptorHeap(&descriptorHeapSrvDesc, IID_PPV_ARGS(&swapChainSrvHeap)));*/
-
 	swapChainRtvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	swapChainSrvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
@@ -96,10 +90,6 @@ void GraphicsRendererDirectX12::initialize(HWND& windowHandler)
 		ThrowIfFailed(HRESULT_FROM_WIN32(GetLastError()));
 
 	ThrowIfFailed(device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator[bufferIndex].Get(), nullptr, IID_PPV_ARGS(&commandList)));
-
-	//D3D12_GRAPHICS_PIPELINE_STATE_DESC graphicsPipelineStateDesc{};
-	
-	//ThrowIfFailed(device->CreateGraphicsPipelineState(&graphicsPipelineStateDesc, IID_PPV_ARGS(&pipelineState)));
 
 	pipelineState = nullptr;
 
