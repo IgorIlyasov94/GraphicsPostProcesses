@@ -1,6 +1,6 @@
 #include "GraphicsHelper.h"
 
-void CreateRootSignature(ID3D12Device*& device, ID3D12RootSignature*& rootSignature)
+void CreateRootSignature(ID3D12Device* device, ID3D12RootSignature* rootSignature)
 {
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc{};
 	rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
@@ -12,7 +12,7 @@ void CreateRootSignature(ID3D12Device*& device, ID3D12RootSignature*& rootSignat
 	ThrowIfFailed(device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature)));
 }
 
-void CreateVertexShader(std::wstring shaderPath, ID3DBlob*& vertexShader)
+void CreateVertexShader(LPCWSTR shaderPath, ID3DBlob* vertexShader)
 {
 	vertexShader = nullptr;
 
@@ -22,10 +22,10 @@ void CreateVertexShader(std::wstring shaderPath, ID3DBlob*& vertexShader)
 	UINT compileFlags = 0;
 #endif
 
-	ThrowIfFailed(D3DCompileFromFile(shaderPath.c_str(), nullptr, nullptr, "main", "vs_6_0", compileFlags, 0, &vertexShader, nullptr));
+	ThrowIfFailed(D3DCompileFromFile(shaderPath, nullptr, nullptr, "main", "vs_6_0", compileFlags, 0, &vertexShader, nullptr));
 }
 
-void CreatePixelShader(std::wstring shaderPath, ID3DBlob*& pixelShader)
+void CreatePixelShader(LPCWSTR shaderPath, ID3DBlob* pixelShader)
 {
 	pixelShader = nullptr;
 
@@ -35,12 +35,12 @@ void CreatePixelShader(std::wstring shaderPath, ID3DBlob*& pixelShader)
 	UINT compileFlags = 0;
 #endif
 
-	ThrowIfFailed(D3DCompileFromFile(shaderPath.c_str(), nullptr, nullptr, "main", "ps_6_0", compileFlags, 0, &pixelShader, nullptr));
+	ThrowIfFailed(D3DCompileFromFile(shaderPath, nullptr, nullptr, "main", "ps_6_0", compileFlags, 0, &pixelShader, nullptr));
 }
 
-void CreateGraphicsPipelineState(ID3D12Device*& device, D3D12_INPUT_LAYOUT_DESC& inputLayoutDesc, ID3D12RootSignature*& rootSignature,
+void CreateGraphicsPipelineState(ID3D12Device* device, D3D12_INPUT_LAYOUT_DESC& inputLayoutDesc, ID3D12RootSignature* rootSignature,
 	D3D12_RASTERIZER_DESC& rasterizerDesc, D3D12_BLEND_DESC& blendDesc, D3D12_DEPTH_STENCIL_DESC& depthStencilDesc,
-	DXGI_FORMAT rtvFormat, ID3DBlob*& vertexShader, ID3DBlob*& pixelShader, ID3D12PipelineState*& pipelineState)
+	DXGI_FORMAT rtvFormat, ID3DBlob* vertexShader, ID3DBlob* pixelShader, ID3D12PipelineState* pipelineState)
 {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineStateDesc{};
 	pipelineStateDesc.InputLayout = inputLayoutDesc;

@@ -12,7 +12,7 @@ GraphicsPostProcesses& GraphicsPostProcesses::GetInstance()
 	return instance;
 }
 
-void GraphicsPostProcesses::Initialize(const int32_t& resolutionX, const int32_t& resolutionY, ID3D12Device*& device)
+void GraphicsPostProcesses::Initialize(const int32_t& resolutionX, const int32_t& resolutionY, ID3D12Device* device)
 {
 	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
 	{
@@ -24,7 +24,25 @@ void GraphicsPostProcesses::Initialize(const int32_t& resolutionX, const int32_t
 	inputLayoutDesc.pInputElementDescs = inputElementDescs;
 	inputLayoutDesc.NumElements = sizeof(inputElementDescs);
 
-	//CreateGraphicsPipelineState(device, inputLayoutDesc, );
+	CreateRootSignature(device, hdrRootSignature.Get());
+
+	D3D12_RASTERIZER_DESC rasterizerDesc;
+	SetupRasterizerDesc(rasterizerDesc, D3D12_CULL_MODE_BACK);
+
+	D3D12_BLEND_DESC blendDesc;
+	SetupBlendDesc(blendDesc);
+
+	D3D12_DEPTH_STENCIL_DESC depthStencilDesc;
+	SetupDepthStencilDesc(depthStencilDesc, true);
+
+	ComPtr<ID3DBlob> quadVertexShader;
+	CreateVertexShader(L"Resources\\Shaders\\ScreenQuad.vsh", quadVertexShader.Get());
+
+	ComPtr<ID3DBlob> toneMappingPixelShader;
+	CreateVertexShader(L"Resources\\Shaders\\HDRToneMapping.psh", toneMappingPixelShader.Get());
+
+	CreateGraphicsPipelineState(device, inputLayoutDesc, hdrRootSignature.Get(), rasterizerDesc, blendDesc, depthStencilDesc,
+		DXGI_FORMAT_R8G8B8A8_UNORM, quadVertexShader.Get(), toneMappingPixelShader.Get(), hdrPipelineState.Get());
 }
 
 void GraphicsPostProcesses::EnableHDR()

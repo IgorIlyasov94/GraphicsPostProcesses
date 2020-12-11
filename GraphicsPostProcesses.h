@@ -9,7 +9,7 @@ class GraphicsPostProcesses
 public:
 	static GraphicsPostProcesses& GetInstance();
 
-	void Initialize(const int32_t& resolutionX, const int32_t& resolutionY, ID3D12Device*& device);
+	void Initialize(const int32_t& resolutionX, const int32_t& resolutionY, ID3D12Device* device);
 	void EnableHDR();
 
 private:
@@ -21,5 +21,6 @@ private:
 	GraphicsPostProcesses& operator=(const GraphicsPostProcesses&) = delete;
 	GraphicsPostProcesses& operator=(GraphicsPostProcesses&&) = delete;
 
+	ComPtr<ID3D12RootSignature> hdrRootSignature;
 	ComPtr<ID3D12PipelineState> hdrPipelineState;
 };
