@@ -1,6 +1,6 @@
 #include "GraphicsHelper.h"
 
-void createRootSignature(ID3D12Device*& device, ID3D12RootSignature*& rootSignature)
+void CreateRootSignature(ID3D12Device*& device, ID3D12RootSignature*& rootSignature)
 {
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc{};
 	rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
@@ -12,7 +12,7 @@ void createRootSignature(ID3D12Device*& device, ID3D12RootSignature*& rootSignat
 	ThrowIfFailed(device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature)));
 }
 
-void createVertexShader(std::wstring shaderPath, ID3DBlob*& vertexShader)
+void CreateVertexShader(std::wstring shaderPath, ID3DBlob*& vertexShader)
 {
 	vertexShader = nullptr;
 
@@ -25,7 +25,7 @@ void createVertexShader(std::wstring shaderPath, ID3DBlob*& vertexShader)
 	ThrowIfFailed(D3DCompileFromFile(shaderPath.c_str(), nullptr, nullptr, "main", "vs_6_0", compileFlags, 0, &vertexShader, nullptr));
 }
 
-void createPixelShader(std::wstring shaderPath, ID3DBlob*& pixelShader)
+void CreatePixelShader(std::wstring shaderPath, ID3DBlob*& pixelShader)
 {
 	pixelShader = nullptr;
 
@@ -38,7 +38,7 @@ void createPixelShader(std::wstring shaderPath, ID3DBlob*& pixelShader)
 	ThrowIfFailed(D3DCompileFromFile(shaderPath.c_str(), nullptr, nullptr, "main", "ps_6_0", compileFlags, 0, &pixelShader, nullptr));
 }
 
-void createGraphicsPipelineState(ID3D12Device*& device, D3D12_INPUT_LAYOUT_DESC& inputLayoutDesc, ID3D12RootSignature*& rootSignature,
+void CreateGraphicsPipelineState(ID3D12Device*& device, D3D12_INPUT_LAYOUT_DESC& inputLayoutDesc, ID3D12RootSignature*& rootSignature,
 	D3D12_RASTERIZER_DESC& rasterizerDesc, D3D12_BLEND_DESC& blendDesc, D3D12_DEPTH_STENCIL_DESC& depthStencilDesc,
 	DXGI_FORMAT rtvFormat, ID3DBlob*& vertexShader, ID3DBlob*& pixelShader, ID3D12PipelineState*& pipelineState)
 {
@@ -59,7 +59,7 @@ void createGraphicsPipelineState(ID3D12Device*& device, D3D12_INPUT_LAYOUT_DESC&
 	ThrowIfFailed(device->CreateGraphicsPipelineState(&pipelineStateDesc, IID_PPV_ARGS(&pipelineState)));
 }
 
-void setupRasterizerDesc(D3D12_RASTERIZER_DESC& rasterizerDesc, D3D12_CULL_MODE cullMode = D3D12_CULL_MODE_NONE)
+void SetupRasterizerDesc(D3D12_RASTERIZER_DESC& rasterizerDesc, D3D12_CULL_MODE cullMode = D3D12_CULL_MODE_NONE)
 {
 	rasterizerDesc.AntialiasedLineEnable = false;
 	rasterizerDesc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
@@ -74,7 +74,7 @@ void setupRasterizerDesc(D3D12_RASTERIZER_DESC& rasterizerDesc, D3D12_CULL_MODE 
 	rasterizerDesc.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
 }
 
-void setupBlendDesc(D3D12_BLEND_DESC& blendDesc, bool blendOn = false, 
+void SetupBlendDesc(D3D12_BLEND_DESC& blendDesc, bool blendOn = false, 
 	D3D12_BLEND srcBlend = D3D12_BLEND_ONE, D3D12_BLEND destBlend = D3D12_BLEND_ZERO, D3D12_BLEND_OP blendOp = D3D12_BLEND_OP_ADD,
 	D3D12_BLEND srcBlendAlpha = D3D12_BLEND_ONE, D3D12_BLEND destBlendAlpha = D3D12_BLEND_ZERO, D3D12_BLEND_OP blendOpAlpha = D3D12_BLEND_OP_ADD)
 {
@@ -103,7 +103,7 @@ void setupBlendDesc(D3D12_BLEND_DESC& blendDesc, bool blendOn = false,
 	blendDesc.RenderTarget[0].BlendOpAlpha = blendOpAlpha;
 }
 
-void setupDepthStencilDesc(D3D12_DEPTH_STENCIL_DESC& depthStencilDesc, bool depthEnable)
+void SetupDepthStencilDesc(D3D12_DEPTH_STENCIL_DESC& depthStencilDesc, bool depthEnable)
 {
 	depthStencilDesc.DepthEnable = depthEnable;
 	depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;

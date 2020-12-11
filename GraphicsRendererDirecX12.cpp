@@ -8,7 +8,7 @@ GraphicsRendererDirectX12::GraphicsRendererDirectX12()
 
 }
 
-GraphicsRendererDirectX12& GraphicsRendererDirectX12::getInstance()
+GraphicsRendererDirectX12& GraphicsRendererDirectX12::GetInstance()
 {
 	static GraphicsRendererDirectX12 instance;
 
@@ -25,14 +25,14 @@ int32_t const& GraphicsRendererDirectX12::getResolutionY() const
 	return resolutionY;
 }
 
-void GraphicsRendererDirectX12::initialize(HWND& windowHandler)
+void GraphicsRendererDirectX12::Initialize(HWND& windowHandler)
 {
 	UINT dxgiFactoryFlags = 0;
 
 	ThrowIfFailed(CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&factory)));
 
 	ComPtr<IDXGIAdapter1> adapter;
-	getHardwareAdapter(factory.Get(), &adapter);
+	GetHardwareAdapter(factory.Get(), &adapter);
 
 	ThrowIfFailed(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&device)));
 
@@ -96,14 +96,14 @@ void GraphicsRendererDirectX12::initialize(HWND& windowHandler)
 	ThrowIfFailed(commandList->Close());
 }
 
-void GraphicsRendererDirectX12::gpuRelease()
+void GraphicsRendererDirectX12::GpuRelease()
 {
-	waitForGpu();
+	WaitForGpu();
 
 	CloseHandle(fenceEvent);
 }
 
-void GraphicsRendererDirectX12::frameRender()
+void GraphicsRendererDirectX12::FrameRender()
 {
 	ThrowIfFailed(commandAllocator[bufferIndex]->Reset());
 	
@@ -136,10 +136,10 @@ void GraphicsRendererDirectX12::frameRender()
 
 	ThrowIfFailed(swapChain->Present(1, 0));
 
-	prepareNextFrame();
+	PrepareNextFrame();
 }
 
-void GraphicsRendererDirectX12::getHardwareAdapter(IDXGIFactory4* factory4, IDXGIAdapter1** adapter)
+void GraphicsRendererDirectX12::GetHardwareAdapter(IDXGIFactory4* factory4, IDXGIAdapter1** adapter)
 {
 	*adapter = nullptr;
 
@@ -170,7 +170,7 @@ void GraphicsRendererDirectX12::getHardwareAdapter(IDXGIFactory4* factory4, IDXG
 	*adapter = adapter1.Detach();
 }
 
-void GraphicsRendererDirectX12::prepareNextFrame()
+void GraphicsRendererDirectX12::PrepareNextFrame()
 {
 	auto currentFenceValue = fenceValues[bufferIndex];
 	ThrowIfFailed(commandQueue->Signal(fence.Get(), currentFenceValue));
@@ -186,7 +186,7 @@ void GraphicsRendererDirectX12::prepareNextFrame()
 	fenceValues[bufferIndex] = currentFenceValue + 1;
 }
 
-void GraphicsRendererDirectX12::waitForGpu()
+void GraphicsRendererDirectX12::WaitForGpu()
 {
 	ThrowIfFailed(commandQueue->Signal(fence.Get(), fenceValues[bufferIndex]));
 

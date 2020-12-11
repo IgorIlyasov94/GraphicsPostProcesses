@@ -5,7 +5,7 @@ GraphicsCommonHandler::GraphicsCommonHandler()
 
 }
 
-GraphicsCommonHandler& GraphicsCommonHandler::getInstance()
+GraphicsCommonHandler& GraphicsCommonHandler::GetInstance()
 {
 	static GraphicsCommonHandler instance;
 
@@ -17,22 +17,22 @@ GraphicsRendererDirectX12& GraphicsCommonHandler::getRenderer()
 	return renderer;
 }
 
-void GraphicsCommonHandler::initialize(HWND& windowHandler)
+void GraphicsCommonHandler::Initialize(HWND& windowHandler)
 {
-	renderer.initialize(windowHandler);
+	renderer.Initialize(windowHandler);
 }
 
-void GraphicsCommonHandler::update()
+void GraphicsCommonHandler::Update()
 {
-	renderer.frameRender();
+	renderer.FrameRender();
 }
 
-void GraphicsCommonHandler::stop()
+void GraphicsCommonHandler::Stop()
 {
-	renderer.gpuRelease();
+	renderer.GpuRelease();
 }
 
-void GraphicsCommonHandler::onKeyDown(uint8_t key)
+void GraphicsCommonHandler::OnKeyDown(uint8_t key)
 {
 	switch (key)
 	{
@@ -45,7 +45,7 @@ void GraphicsCommonHandler::onKeyDown(uint8_t key)
 	}
 }
 
-void GraphicsCommonHandler::onKeyUp(uint8_t key)
+void GraphicsCommonHandler::OnKeyUp(uint8_t key)
 {
 
 }

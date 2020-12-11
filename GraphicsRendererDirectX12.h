@@ -7,14 +7,14 @@ using namespace Microsoft::WRL;
 class GraphicsRendererDirectX12
 {
 public:
-	static GraphicsRendererDirectX12& getInstance();
+	static GraphicsRendererDirectX12& GetInstance();
 
 	int32_t const& getResolutionX() const;
 	int32_t const& getResolutionY() const;
 
-	void initialize(HWND& windowHandler);
-	void gpuRelease();
-	void frameRender();
+	void Initialize(HWND& windowHandler);
+	void GpuRelease();
+	void FrameRender();
 
 private:
 	GraphicsRendererDirectX12();
@@ -25,9 +25,9 @@ private:
 	GraphicsRendererDirectX12& operator=(const GraphicsRendererDirectX12&) = delete;
 	GraphicsRendererDirectX12& operator=(GraphicsRendererDirectX12&&) = delete;
 
-	void getHardwareAdapter(IDXGIFactory4* factory4, IDXGIAdapter1** adapter);
-	void prepareNextFrame();
-	void waitForGpu();
+	void GetHardwareAdapter(IDXGIFactory4* factory4, IDXGIAdapter1** adapter);
+	void PrepareNextFrame();
+	void WaitForGpu();
 
 	static const int32_t SWAP_CHAIN_BUFFER_COUNT = 2;
 

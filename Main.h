@@ -6,9 +6,9 @@
 class GraphicsWinApplication
 {
 public:
-	static GraphicsWinApplication& getInstance();
+	static GraphicsWinApplication& GetInstance();
 
-	int run(const HINSTANCE& instance, const LPSTR& cmdLine, const int& cmdShow);
+	int Run(const HINSTANCE& instance, const LPSTR& cmdLine, const int& cmdShow);
 private:
 	GraphicsWinApplication();
 	~GraphicsWinApplication() {}
@@ -18,7 +18,7 @@ private:
 	GraphicsWinApplication& operator=(const GraphicsWinApplication&) = delete;
 	GraphicsWinApplication& operator=(GraphicsWinApplication&&) = delete;
 
-	static LRESULT CALLBACK windowProc(HWND windowHandler, UINT message, WPARAM wParam, LPARAM lParam);
+	static LRESULT CALLBACK WindowProc(HWND windowHandler, UINT message, WPARAM wParam, LPARAM lParam);
 
-	GraphicsCommonHandler& commonHandler = GraphicsCommonHandler::getInstance();
+	GraphicsCommonHandler& commonHandler = GraphicsCommonHandler::GetInstance();
 };

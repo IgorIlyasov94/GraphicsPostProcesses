@@ -2,9 +2,9 @@
 
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdLine, int cmdShow)
 {
-	GraphicsWinApplication& winApp = GraphicsWinApplication::getInstance();
+	GraphicsWinApplication& winApp = GraphicsWinApplication::GetInstance();
 
-	return winApp.run(instance, cmdLine, cmdShow);
+	return winApp.Run(instance, cmdLine, cmdShow);
 }
 
 GraphicsWinApplication::GraphicsWinApplication()
@@ -12,14 +12,14 @@ GraphicsWinApplication::GraphicsWinApplication()
 	
 }
 
-GraphicsWinApplication& GraphicsWinApplication::getInstance()
+GraphicsWinApplication& GraphicsWinApplication::GetInstance()
 {
 	static GraphicsWinApplication instance;
 
 	return instance;
 }
 
-int GraphicsWinApplication::run(const HINSTANCE& instance, const LPSTR& cmdLine, const int& cmdShow)
+int GraphicsWinApplication::Run(const HINSTANCE& instance, const LPSTR& cmdLine, const int& cmdShow)
 {
 	try
 	{
@@ -30,7 +30,7 @@ int GraphicsWinApplication::run(const HINSTANCE& instance, const LPSTR& cmdLine,
 
 		windowClass.cbSize = sizeof(WNDCLASSEX);
 		windowClass.style = CS_HREDRAW | CS_VREDRAW;
-		windowClass.lpfnWndProc = windowProc;
+		windowClass.lpfnWndProc = WindowProc;
 		windowClass.hInstance = instance;
 		windowClass.hIcon = LoadIcon(instance, IDI_APPLICATION);
 		windowClass.hCursor = LoadCursor(nullptr, IDC_ARROW);
@@ -52,7 +52,7 @@ int GraphicsWinApplication::run(const HINSTANCE& instance, const LPSTR& cmdLine,
 
 		MSG message{};
 
-		commonHandler.initialize(windowHandler);
+		commonHandler.Initialize(windowHandler);
 
 		while (message.message != WM_QUIT)
 		{
@@ -62,7 +62,7 @@ int GraphicsWinApplication::run(const HINSTANCE& instance, const LPSTR& cmdLine,
 			DispatchMessage(&message);
 		}
 
-		commonHandler.stop();
+		commonHandler.Stop();
 
 		return static_cast<int>(message.wParam);
 	}
@@ -70,13 +70,13 @@ int GraphicsWinApplication::run(const HINSTANCE& instance, const LPSTR& cmdLine,
 	{
 		MessageBoxA(nullptr, e.what(), "Error", MB_ICONERROR | MB_DEFAULT_DESKTOP_ONLY);
 
-		commonHandler.stop();
+		commonHandler.Stop();
 
 		return EXIT_FAILURE;
 	}
 }
 
-LRESULT GraphicsWinApplication::windowProc(HWND windowHandler, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT GraphicsWinApplication::WindowProc(HWND windowHandler, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	GraphicsCommonHandler* transmittedCommonHandler = reinterpret_cast<GraphicsCommonHandler*>(GetWindowLongPtr(windowHandler, GWLP_USERDATA));
 
@@ -95,7 +95,7 @@ LRESULT GraphicsWinApplication::windowProc(HWND windowHandler, UINT message, WPA
 		{
 			auto keyData = static_cast<uint8_t>(wParam);
 
-			transmittedCommonHandler->onKeyDown(keyData);
+			transmittedCommonHandler->OnKeyDown(keyData);
 
 			return 0;
 		}
@@ -103,13 +103,13 @@ LRESULT GraphicsWinApplication::windowProc(HWND windowHandler, UINT message, WPA
 		{
 			auto keyData = static_cast<uint8_t>(wParam);
 
-			transmittedCommonHandler->onKeyUp(keyData);
+			transmittedCommonHandler->OnKeyUp(keyData);
 
 			return 0;
 		}
 		case WM_PAINT:
 		{
-			transmittedCommonHandler->update();
+			transmittedCommonHandler->Update();
 
 			return 0;
 		}
@@ -135,7 +135,7 @@ LRESULT GraphicsWinApplication::windowProc(HWND windowHandler, UINT message, WPA
 	{
 		MessageBoxA(nullptr, e.what(), "Error", MB_ICONERROR | MB_DEFAULT_DESKTOP_ONLY);
 
-		transmittedCommonHandler->stop();
+		transmittedCommonHandler->Stop();
 
 		ExitProcess(0);
 	}

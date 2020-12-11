@@ -5,15 +5,15 @@
 class GraphicsCommonHandler
 {
 public:
-	static GraphicsCommonHandler& getInstance();
+	static GraphicsCommonHandler& GetInstance();
 	GraphicsRendererDirectX12& getRenderer();
 
-	void initialize(HWND& windowHandler);
-	void update();
-	void stop();
+	void Initialize(HWND& windowHandler);
+	void Update();
+	void Stop();
 
-	void onKeyDown(uint8_t key);
-	void onKeyUp(uint8_t key);
+	void OnKeyDown(uint8_t key);
+	void OnKeyUp(uint8_t key);
 
 private:
 	GraphicsCommonHandler();
@@ -24,5 +24,5 @@ private:
 	GraphicsCommonHandler& operator=(const GraphicsCommonHandler&) = delete;
 	GraphicsCommonHandler& operator=(GraphicsCommonHandler&&) = delete;
 
-	GraphicsRendererDirectX12& renderer = GraphicsRendererDirectX12::getInstance();
+	GraphicsRendererDirectX12& renderer = GraphicsRendererDirectX12::GetInstance();
 };

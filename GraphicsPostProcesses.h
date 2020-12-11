@@ -1,16 +1,16 @@
 #pragma once
 
-#include "stdafx.h"
+#include "GraphicsHelper.h"
 
 using namespace Microsoft::WRL;
 
 class GraphicsPostProcesses
 {
 public:
-	static GraphicsPostProcesses& getInstance();
+	static GraphicsPostProcesses& GetInstance();
 
-	void initialize(const int32_t& resolutionX, const int32_t& resolutionY, const ID3D12Device*& device);
-	void enableHDR();
+	void Initialize(const int32_t& resolutionX, const int32_t& resolutionY, ID3D12Device*& device);
+	void EnableHDR();
 
 private:
 	GraphicsPostProcesses();
