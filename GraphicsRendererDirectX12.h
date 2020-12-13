@@ -1,6 +1,6 @@
 #pragma once
 
-#include "stdafx.h"
+#include "GraphicsPostProcesses.h"
 
 using namespace Microsoft::WRL;
 
@@ -55,4 +55,6 @@ private:
 
 	int32_t resolutionX;
 	int32_t resolutionY;
+
+	GraphicsPostProcesses& postProcesses = GraphicsPostProcesses::GetInstance();
 };

@@ -1,6 +1,6 @@
 #include "GraphicsHelper.h"
 
-void CreateRootSignature(ID3D12Device* device, ID3D12RootSignature* rootSignature)
+void CreateRootSignature(ID3D12Device* device, ID3D12RootSignature** rootSignature)
 {
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc{};
 	rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
@@ -9,10 +9,10 @@ void CreateRootSignature(ID3D12Device* device, ID3D12RootSignature* rootSignatur
 	ComPtr<ID3DBlob> error;
 
 	ThrowIfFailed(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error));
-	ThrowIfFailed(device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&rootSignature)));
+	ThrowIfFailed(device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(rootSignature)));
 }
 
-void CreateVertexShader(LPCWSTR shaderPath, ID3DBlob* vertexShader)
+void CreateVertexShader(LPCWSTR shaderPath, ID3DBlob** vertexShader)
 {
 	vertexShader = nullptr;
 
@@ -22,10 +22,10 @@ void CreateVertexShader(LPCWSTR shaderPath, ID3DBlob* vertexShader)
 	UINT compileFlags = 0;
 #endif
 
-	ThrowIfFailed(D3DCompileFromFile(shaderPath, nullptr, nullptr, "main", "vs_6_0", compileFlags, 0, &vertexShader, nullptr));
+	ThrowIfFailed(D3DCompileFromFile(shaderPath, nullptr, nullptr, "main", "vs_6_0", compileFlags, 0, vertexShader, nullptr));
 }
 
-void CreatePixelShader(LPCWSTR shaderPath, ID3DBlob* pixelShader)
+void CreatePixelShader(LPCWSTR shaderPath, ID3DBlob** pixelShader)
 {
 	pixelShader = nullptr;
 
@@ -35,12 +35,12 @@ void CreatePixelShader(LPCWSTR shaderPath, ID3DBlob* pixelShader)
 	UINT compileFlags = 0;
 #endif
 
-	ThrowIfFailed(D3DCompileFromFile(shaderPath, nullptr, nullptr, "main", "ps_6_0", compileFlags, 0, &pixelShader, nullptr));
+	ThrowIfFailed(D3DCompileFromFile(shaderPath, nullptr, nullptr, "main", "ps_6_0", compileFlags, 0, pixelShader, nullptr));
 }
 
 void CreateGraphicsPipelineState(ID3D12Device* device, D3D12_INPUT_LAYOUT_DESC& inputLayoutDesc, ID3D12RootSignature* rootSignature,
 	D3D12_RASTERIZER_DESC& rasterizerDesc, D3D12_BLEND_DESC& blendDesc, D3D12_DEPTH_STENCIL_DESC& depthStencilDesc,
-	DXGI_FORMAT rtvFormat, ID3DBlob* vertexShader, ID3DBlob* pixelShader, ID3D12PipelineState* pipelineState)
+	DXGI_FORMAT rtvFormat, ID3DBlob* vertexShader, ID3DBlob* pixelShader, ID3D12PipelineState** pipelineState)
 {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineStateDesc{};
 	pipelineStateDesc.InputLayout = inputLayoutDesc;
@@ -56,10 +56,41 @@ void CreateGraphicsPipelineState(ID3D12Device* device, D3D12_INPUT_LAYOUT_DESC& 
 	pipelineStateDesc.RTVFormats[0] = rtvFormat;
 	pipelineStateDesc.SampleDesc.Count = 1;
 
-	ThrowIfFailed(device->CreateGraphicsPipelineState(&pipelineStateDesc, IID_PPV_ARGS(&pipelineState)));
+	ThrowIfFailed(device->CreateGraphicsPipelineState(&pipelineStateDesc, IID_PPV_ARGS(pipelineState)));
 }
 
-void SetupRasterizerDesc(D3D12_RASTERIZER_DESC& rasterizerDesc, D3D12_CULL_MODE cullMode = D3D12_CULL_MODE_NONE)
+void CreateVertexBuffer(ID3D12Device* device, uint8_t* data, uint32_t dataSize, uint32_t dataStride,
+	D3D12_VERTEX_BUFFER_VIEW& vertexBufferView, ID3D12Resource** vertexBuffer, ID3D12Resource** vertexBufferUpload)
+{
+	D3D12_HEAP_PROPERTIES heapProperties;
+	SetupHeapProperties(heapProperties, D3D12_HEAP_TYPE_DEFAULT);
+
+	D3D12_RESOURCE_DESC resourceDesc;
+	SetupResourceBufferDesc(resourceDesc, dataSize);
+
+	ThrowIfFailed(device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &resourceDesc,
+		D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, nullptr, IID_PPV_ARGS(vertexBuffer)));
+
+	heapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
+
+	ThrowIfFailed(device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &resourceDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(vertexBufferUpload)));
+
+	uint8_t* mappedUploadHeap = nullptr;
+	D3D12_RANGE readRange = { 0, 0 };
+
+	ThrowIfFailed((*vertexBufferUpload)->Map(0, &readRange, reinterpret_cast<void**>(&mappedUploadHeap)));
+
+	std::copy(data, data + dataSize, mappedUploadHeap);
+
+	(*vertexBufferUpload)->Unmap(0, &readRange);
+
+	vertexBufferView.BufferLocation = (*vertexBuffer)->GetGPUVirtualAddress();
+	vertexBufferView.SizeInBytes = dataSize;
+	vertexBufferView.StrideInBytes = dataStride;
+}
+
+void SetupRasterizerDesc(D3D12_RASTERIZER_DESC& rasterizerDesc, D3D12_CULL_MODE cullMode = D3D12_CULL_MODE_NONE) noexcept
 {
 	rasterizerDesc.AntialiasedLineEnable = false;
 	rasterizerDesc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
@@ -76,7 +107,7 @@ void SetupRasterizerDesc(D3D12_RASTERIZER_DESC& rasterizerDesc, D3D12_CULL_MODE 
 
 void SetupBlendDesc(D3D12_BLEND_DESC& blendDesc, bool blendOn = false, 
 	D3D12_BLEND srcBlend = D3D12_BLEND_ONE, D3D12_BLEND destBlend = D3D12_BLEND_ZERO, D3D12_BLEND_OP blendOp = D3D12_BLEND_OP_ADD,
-	D3D12_BLEND srcBlendAlpha = D3D12_BLEND_ONE, D3D12_BLEND destBlendAlpha = D3D12_BLEND_ZERO, D3D12_BLEND_OP blendOpAlpha = D3D12_BLEND_OP_ADD)
+	D3D12_BLEND srcBlendAlpha = D3D12_BLEND_ONE, D3D12_BLEND destBlendAlpha = D3D12_BLEND_ZERO, D3D12_BLEND_OP blendOpAlpha = D3D12_BLEND_OP_ADD) noexcept
 {
 	blendDesc.AlphaToCoverageEnable = false;
 	blendDesc.IndependentBlendEnable = false;
@@ -103,7 +134,7 @@ void SetupBlendDesc(D3D12_BLEND_DESC& blendDesc, bool blendOn = false,
 	blendDesc.RenderTarget[0].BlendOpAlpha = blendOpAlpha;
 }
 
-void SetupDepthStencilDesc(D3D12_DEPTH_STENCIL_DESC& depthStencilDesc, bool depthEnable)
+void SetupDepthStencilDesc(D3D12_DEPTH_STENCIL_DESC& depthStencilDesc, bool depthEnable) noexcept
 {
 	depthStencilDesc.DepthEnable = depthEnable;
 	depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
@@ -119,4 +150,28 @@ void SetupDepthStencilDesc(D3D12_DEPTH_STENCIL_DESC& depthStencilDesc, bool dept
 
 	depthStencilDesc.BackFace = depthStencilOpDesc;
 	depthStencilDesc.FrontFace = depthStencilOpDesc;
+}
+
+void SetupResourceBufferDesc(D3D12_RESOURCE_DESC& resourceDesc, uint64_t bufferSize, D3D12_RESOURCE_FLAGS resourceFlag, uint64_t alignment) noexcept
+{
+	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	resourceDesc.DepthOrArraySize = 1;
+	resourceDesc.Alignment = alignment;
+	resourceDesc.Flags = resourceFlag;
+	resourceDesc.Format = DXGI_FORMAT_UNKNOWN;
+	resourceDesc.Height = 1;
+	resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+	resourceDesc.MipLevels = 1;
+	resourceDesc.SampleDesc.Count = 1;
+	resourceDesc.SampleDesc.Quality = 0;
+	resourceDesc.Width = bufferSize;
+}
+
+void SetupHeapProperties(D3D12_HEAP_PROPERTIES& heapProperties, D3D12_HEAP_TYPE heapType) noexcept
+{
+	heapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+	heapProperties.CreationNodeMask = 1;
+	heapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+	heapProperties.VisibleNodeMask = 1;
+	heapProperties.Type = heapType;
 }

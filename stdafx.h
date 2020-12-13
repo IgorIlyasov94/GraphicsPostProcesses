@@ -15,6 +15,8 @@
 
 #include <d3dcompiler.h>
 
+#include <DirectXMath.h>
+
 #include <wrl/client.h>
 
 #include <cstdint>

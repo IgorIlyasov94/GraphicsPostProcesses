@@ -23,4 +23,8 @@ private:
 
 	ComPtr<ID3D12RootSignature> hdrRootSignature;
 	ComPtr<ID3D12PipelineState> hdrPipelineState;
+	ComPtr<ID3D12Resource> screenQuadVertexBuffer;
+	ComPtr<ID3D12Resource> screenQuadVertexBufferUpload;
+
+	D3D12_VERTEX_BUFFER_VIEW screenQuadVertexBufferView;
 };

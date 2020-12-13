@@ -93,6 +93,8 @@ void GraphicsRendererDirectX12::Initialize(HWND& windowHandler)
 
 	pipelineState = nullptr;
 
+	postProcesses.Initialize(resolutionX, resolutionY, device.Get());
+
 	ThrowIfFailed(commandList->Close());
 }
 

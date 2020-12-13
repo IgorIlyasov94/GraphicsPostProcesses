@@ -1,6 +1,7 @@
 #include "GraphicsPostProcesses.h"
 
 GraphicsPostProcesses::GraphicsPostProcesses()
+	: screenQuadVertexBufferView{}
 {
 
 }
@@ -24,7 +25,7 @@ void GraphicsPostProcesses::Initialize(const int32_t& resolutionX, const int32_t
 	inputLayoutDesc.pInputElementDescs = inputElementDescs;
 	inputLayoutDesc.NumElements = sizeof(inputElementDescs);
 
-	CreateRootSignature(device, hdrRootSignature.Get());
+	CreateRootSignature(device, &hdrRootSignature);
 
 	D3D12_RASTERIZER_DESC rasterizerDesc;
 	SetupRasterizerDesc(rasterizerDesc, D3D12_CULL_MODE_BACK);
@@ -36,13 +37,24 @@ void GraphicsPostProcesses::Initialize(const int32_t& resolutionX, const int32_t
 	SetupDepthStencilDesc(depthStencilDesc, true);
 
 	ComPtr<ID3DBlob> quadVertexShader;
-	CreateVertexShader(L"Resources\\Shaders\\ScreenQuad.vsh", quadVertexShader.Get());
+	CreateVertexShader(L"Resources\\Shaders\\ScreenQuad.vsh", &quadVertexShader);
 
 	ComPtr<ID3DBlob> toneMappingPixelShader;
-	CreateVertexShader(L"Resources\\Shaders\\HDRToneMapping.psh", toneMappingPixelShader.Get());
+	CreateVertexShader(L"Resources\\Shaders\\HDRToneMapping.psh", &toneMappingPixelShader);
 
 	CreateGraphicsPipelineState(device, inputLayoutDesc, hdrRootSignature.Get(), rasterizerDesc, blendDesc, depthStencilDesc,
-		DXGI_FORMAT_R8G8B8A8_UNORM, quadVertexShader.Get(), toneMappingPixelShader.Get(), hdrPipelineState.Get());
+		DXGI_FORMAT_R8G8B8A8_UNORM, quadVertexShader.Get(), toneMappingPixelShader.Get(), &hdrPipelineState);
+
+	ScreenQuadVertex vertices[] =
+	{
+		{ XMFLOAT3(-1.0f, 1.0f, 0.5f), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(1.0f, 1.0f, 0.5f), XMFLOAT2(1.0f, 0.0f) },
+		{ XMFLOAT3(-1.0f, -1.0f, 0.5f), XMFLOAT2(0.0f, 1.0f) },
+		{ XMFLOAT3(1.0f, -1.0f, 0.5f), XMFLOAT2(1.0f, 1.0f) }
+	};
+
+	CreateVertexBuffer(device, reinterpret_cast<uint8_t*>(vertices), sizeof(vertices), sizeof(ScreenQuadVertex),
+		screenQuadVertexBufferView, &screenQuadVertexBuffer, &screenQuadVertexBufferUpload);
 }
 
 void GraphicsPostProcesses::EnableHDR()
