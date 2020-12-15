@@ -33,8 +33,8 @@ void CreateGraphicsPipelineState(ID3D12Device* device, D3D12_INPUT_LAYOUT_DESC&&
 	ThrowIfFailed(device->CreateGraphicsPipelineState(&pipelineStateDesc, IID_PPV_ARGS(pipelineState)));
 }
 
-void CreateVertexBuffer(ID3D12Device* device, uint8_t* data, uint32_t dataSize, uint32_t dataStride,
-	D3D12_VERTEX_BUFFER_VIEW& vertexBufferView, ID3D12Resource** vertexBuffer, ID3D12Resource** vertexBufferUpload)
+void CreateVertexBuffer(ID3D12Device* device, uint8_t* data, uint32_t dataSize, uint32_t dataStride, D3D12_VERTEX_BUFFER_VIEW& vertexBufferView,
+	ID3D12Resource** vertexBuffer, ID3D12Resource** vertexBufferUpload, ID3D12GraphicsCommandList* commandList)
 {
 	D3D12_HEAP_PROPERTIES heapProperties;
 	SetupHeapProperties(heapProperties, D3D12_HEAP_TYPE_DEFAULT);
@@ -62,6 +62,22 @@ void CreateVertexBuffer(ID3D12Device* device, uint8_t* data, uint32_t dataSize, 
 	vertexBufferView.BufferLocation = (*vertexBuffer)->GetGPUVirtualAddress();
 	vertexBufferView.SizeInBytes = dataSize;
 	vertexBufferView.StrideInBytes = dataStride;
+
+	D3D12_RESOURCE_BARRIER vertexBufferResourceBarrier{};
+	vertexBufferResourceBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	vertexBufferResourceBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	vertexBufferResourceBarrier.Transition.pResource = *vertexBuffer;
+	vertexBufferResourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+	vertexBufferResourceBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_DEST;
+	vertexBufferResourceBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+
+	commandList->ResourceBarrier(1, &vertexBufferResourceBarrier);
+	commandList->CopyBufferRegion(*vertexBuffer, 0, *vertexBufferUpload, 0, (*vertexBuffer)->GetDesc().Width);
+
+	vertexBufferResourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
+	vertexBufferResourceBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+
+	commandList->ResourceBarrier(1, &vertexBufferResourceBarrier);
 }
 
 void SetupRasterizerDesc(D3D12_RASTERIZER_DESC& rasterizerDesc, D3D12_CULL_MODE cullMode) noexcept
