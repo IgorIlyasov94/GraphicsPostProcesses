@@ -11,13 +11,11 @@ using ScreenQuadVertex = struct
 	XMFLOAT2 texCoord;
 };
 
-void CreateRootSignature(ID3D12Device* device, ID3D12RootSignature** rootSignature);
-void CreateVertexShader(LPCWSTR shaderPath, ID3DBlob** vertexShader);
-void CreatePixelShader(LPCWSTR shaderPath, ID3DBlob** pixelShader);
+void CreateRootSignature(ID3D12Device* device, ID3D12RootSignature** rootSignature, D3D12_ROOT_SIGNATURE_FLAGS flags);
 
-void CreateGraphicsPipelineState(ID3D12Device* device, D3D12_INPUT_LAYOUT_DESC& inputLayoutDesc, ID3D12RootSignature* rootSignature,
+void CreateGraphicsPipelineState(ID3D12Device* device, D3D12_INPUT_LAYOUT_DESC&& inputLayoutDesc, ID3D12RootSignature* rootSignature,
 	D3D12_RASTERIZER_DESC& rasterizerDesc, D3D12_BLEND_DESC& blendDesc, D3D12_DEPTH_STENCIL_DESC& depthStencilDesc,
-	DXGI_FORMAT rtvFormat, ID3DBlob* vertexShader, ID3DBlob* pixelShader, ID3D12PipelineState** pipelineState);
+	DXGI_FORMAT rtvFormat, D3D12_SHADER_BYTECODE&& vertexShader, D3D12_SHADER_BYTECODE&& pixelShader, ID3D12PipelineState** pipelineState);
 
 void CreateVertexBuffer(ID3D12Device* device, uint8_t* data, uint32_t dataSize, uint32_t dataStride,
 	D3D12_VERTEX_BUFFER_VIEW& vertexBufferView, ID3D12Resource** vertexBuffer, ID3D12Resource** vertexBufferUpload);

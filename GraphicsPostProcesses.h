@@ -9,8 +9,8 @@ class GraphicsPostProcesses
 public:
 	static GraphicsPostProcesses& GetInstance();
 
-	void Initialize(const int32_t& resolutionX, const int32_t& resolutionY, ID3D12Device* device);
-	void EnableHDR();
+	void Initialize(const int32_t& resolutionX, const int32_t& resolutionY, ID3D12Device* device, D3D12_VIEWPORT& _sceneViewport);
+	void EnableHDR(ID3D12GraphicsCommandList* commandList, ID3D12DescriptorHeap* outputRenderTargetDescHeap, size_t outputRenderTargetOffset);
 
 private:
 	GraphicsPostProcesses();
@@ -25,6 +25,15 @@ private:
 	ComPtr<ID3D12PipelineState> hdrPipelineState;
 	ComPtr<ID3D12Resource> screenQuadVertexBuffer;
 	ComPtr<ID3D12Resource> screenQuadVertexBufferUpload;
+	ComPtr<ID3D12DescriptorHeap> renderTargetDescHeap;
 
 	D3D12_VERTEX_BUFFER_VIEW screenQuadVertexBufferView;
+
+	D3D12_VIEWPORT sceneViewport;
+	D3D12_RECT sceneScissorRect;
+
+	const uint32_t RENDER_TARGETS_NUMBER = 1;
+
+	uint32_t renderTargetViewDescriptorSize;
+	uint32_t shaderResourceViewDescriptorSize;
 };

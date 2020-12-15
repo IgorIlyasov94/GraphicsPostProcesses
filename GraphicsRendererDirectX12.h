@@ -46,12 +46,14 @@ private:
 
 	HANDLE fenceEvent;
 
+	D3D12_VIEWPORT sceneViewport;
+
 	int32_t swapChainRtvDescriptorSize;
 	int32_t swapChainSrvDescriptorSize;
 
 	int32_t gpuMemory;
 	uint32_t bufferIndex;
-	uint64_t fenceValues[SWAP_CHAIN_BUFFER_COUNT] = {};
+	uint64_t fenceValues[SWAP_CHAIN_BUFFER_COUNT];
 
 	int32_t resolutionX;
 	int32_t resolutionY;

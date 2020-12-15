@@ -1,11 +1,18 @@
 #include "GraphicsRendererDirectX12.h"
 
 GraphicsRendererDirectX12::GraphicsRendererDirectX12()
-	: fenceEvent(nullptr), gpuMemory(0), bufferIndex(0), resolutionX(1024),
-	resolutionY(768), swapChainRtvDescriptorSize(0), swapChainSrvDescriptorSize(0),
-	fenceValues{}
+	: fenceEvent(nullptr), gpuMemory(0), bufferIndex(0), swapChainRtvDescriptorSize(0),
+	swapChainSrvDescriptorSize(0), fenceValues{}
 {
+	resolutionX = 1024;
+	resolutionY = 768;
 
+	sceneViewport.TopLeftX = 0.0f;
+	sceneViewport.TopLeftY = 0.0f;
+	sceneViewport.Width = static_cast<float>(resolutionX);
+	sceneViewport.Height = static_cast<float>(resolutionY);
+	sceneViewport.MinDepth = D3D12_MIN_DEPTH;
+	sceneViewport.MaxDepth = D3D12_MAX_DEPTH;
 }
 
 GraphicsRendererDirectX12& GraphicsRendererDirectX12::GetInstance()
@@ -93,7 +100,7 @@ void GraphicsRendererDirectX12::Initialize(HWND& windowHandler)
 
 	pipelineState = nullptr;
 
-	postProcesses.Initialize(resolutionX, resolutionY, device.Get());
+	postProcesses.Initialize(resolutionX, resolutionY, device.Get(), sceneViewport);
 
 	ThrowIfFailed(commandList->Close());
 }
@@ -121,14 +128,16 @@ void GraphicsRendererDirectX12::FrameRender()
 	
 	commandList->ResourceBarrier(1, &resourceBarrier);
 
-	auto rtvHeapHandle(swapChainRtvHeap->GetCPUDescriptorHandleForHeapStart());
+	/*auto rtvHeapHandle(swapChainRtvHeap->GetCPUDescriptorHandleForHeapStart());
 	rtvHeapHandle.ptr += bufferIndex * swapChainRtvDescriptorSize;
 
 	commandList->OMSetRenderTargets(1, &rtvHeapHandle, false, nullptr);
 
 	const float clearColor[] = { 0.3f, 0.6f, 0.4f, 1.0f };
 	
-	commandList->ClearRenderTargetView(rtvHeapHandle, clearColor, 0, nullptr);
+	commandList->ClearRenderTargetView(rtvHeapHandle, clearColor, 0, nullptr);*/
+
+	postProcesses.EnableHDR(commandList.Get(), swapChainRtvHeap.Get(), bufferIndex * swapChainRtvDescriptorSize);
 
 	ThrowIfFailed(commandList->Close());
 
