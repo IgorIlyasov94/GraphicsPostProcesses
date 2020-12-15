@@ -55,7 +55,8 @@ void CreateVertexBuffer(ID3D12Device* device, uint8_t* data, uint32_t dataSize, 
 
 	ThrowIfFailed((*vertexBufferUpload)->Map(0, &readRange, reinterpret_cast<void**>(&mappedUploadHeap)));
 
-	std::copy(data, data + dataSize, mappedUploadHeap);
+	//std::copy(data, data + dataSize, mappedUploadHeap);
+	memcpy(mappedUploadHeap, data, dataSize);
 
 	(*vertexBufferUpload)->Unmap(0, &readRange);
 

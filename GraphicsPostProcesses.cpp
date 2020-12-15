@@ -16,7 +16,8 @@ GraphicsPostProcesses& GraphicsPostProcesses::GetInstance()
 	return instance;
 }
 
-void GraphicsPostProcesses::Initialize(const int32_t& resolutionX, const int32_t& resolutionY, ID3D12Device* device, D3D12_VIEWPORT& _sceneViewport)
+void GraphicsPostProcesses::Initialize(const int32_t& resolutionX, const int32_t& resolutionY, ID3D12Device* device, D3D12_VIEWPORT& _sceneViewport,
+	ID3D12GraphicsCommandList* commandList)
 {
 	sceneViewport = _sceneViewport;
 	sceneScissorRect.left = 0;
@@ -59,14 +60,23 @@ void GraphicsPostProcesses::Initialize(const int32_t& resolutionX, const int32_t
 	CreateVertexBuffer(device, reinterpret_cast<uint8_t*>(vertices), sizeof(vertices), sizeof(ScreenQuadVertex),
 		screenQuadVertexBufferView, &screenQuadVertexBuffer, &screenQuadVertexBufferUpload);
 
-	/*D3D12_DESCRIPTOR_HEAP_DESC renderTargetDescHeapDesc{};
-	renderTargetDescHeapDesc.NumDescriptors = RENDER_TARGETS_NUMBER;
-	renderTargetDescHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	renderTargetDescHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-
-	ThrowIfFailed(device->CreateDescriptorHeap(&renderTargetDescHeapDesc, IID_PPV_ARGS(&renderTargetDescHeap)));*/
-
 	renderTargetViewDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+	D3D12_RESOURCE_BARRIER vertexBufferResourceBarrier{};
+	vertexBufferResourceBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	vertexBufferResourceBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	vertexBufferResourceBarrier.Transition.pResource = screenQuadVertexBuffer.Get();
+	vertexBufferResourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+	vertexBufferResourceBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_DEST;
+	vertexBufferResourceBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+
+	commandList->ResourceBarrier(1, &vertexBufferResourceBarrier);
+	commandList->CopyBufferRegion(screenQuadVertexBuffer.Get(), 0, screenQuadVertexBufferUpload.Get(), 0, screenQuadVertexBuffer->GetDesc().Width);
+	
+	vertexBufferResourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
+	vertexBufferResourceBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+	
+	commandList->ResourceBarrier(1, &vertexBufferResourceBarrier);
 }
 
 void GraphicsPostProcesses::EnableHDR(ID3D12GraphicsCommandList* commandList, ID3D12DescriptorHeap* outputRenderTargetDescHeap, size_t outputRenderTargetOffset)
@@ -75,8 +85,6 @@ void GraphicsPostProcesses::EnableHDR(ID3D12GraphicsCommandList* commandList, ID
 
 	commandList->SetGraphicsRootSignature(hdrRootSignature.Get());
 	
-	//ID3D12DescriptorHeap* descHeaps[] = { renderTargetDescHeap.Get() };
-
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 	commandList->IASetVertexBuffers(0, 1, &screenQuadVertexBufferView);
 	commandList->RSSetViewports(1, &sceneViewport);
@@ -84,10 +92,6 @@ void GraphicsPostProcesses::EnableHDR(ID3D12GraphicsCommandList* commandList, ID
 	
 	D3D12_CPU_DESCRIPTOR_HANDLE renderTargetHandle(outputRenderTargetDescHeap->GetCPUDescriptorHandleForHeapStart());
 	renderTargetHandle.ptr += outputRenderTargetOffset;
-
-	const float clearColor[] = { 0.3f, 0.6f, 0.4f, 1.0f };
-
-	commandList->ClearRenderTargetView(renderTargetHandle, clearColor, 0, nullptr);
 
 	commandList->OMSetRenderTargets(1, &renderTargetHandle, false, nullptr);
 

@@ -100,9 +100,13 @@ void GraphicsRendererDirectX12::Initialize(HWND& windowHandler)
 
 	pipelineState = nullptr;
 
-	postProcesses.Initialize(resolutionX, resolutionY, device.Get(), sceneViewport);
+	postProcesses.Initialize(resolutionX, resolutionY, device.Get(), sceneViewport, commandList.Get());
 
 	ThrowIfFailed(commandList->Close());
+
+	ID3D12CommandList* commandLists[] = { commandList.Get() };
+
+	commandQueue->ExecuteCommandLists(_countof(commandLists), commandLists);
 }
 
 void GraphicsRendererDirectX12::GpuRelease()

@@ -30,13 +30,13 @@ Output main(Input input, uint vertexId : SV_VertexID)
 {
 	Output output = (Output)0;
 	
-	//output.position = float4(input.position.x, input.position.y, 0.5f, 1.0f);
-	//output.texCoord = input.texCoord;
+	output.position = float4(input.position.x, input.position.y, 0.5f, 1.0f);
+	output.texCoord = input.texCoord;
 	
-	output.position.xy = vertices[vertexId];
+	/*output.position.xy = vertices[vertexId];
 	output.position.zw = float2(0.5f, 1.0);
 	
 	output.texCoord = texCoords[vertexId];
-	
+	*/
 	return output;
 }
