@@ -8,7 +8,8 @@ class GraphicsBufferAllocator
 public:
 	static GraphicsBufferAllocator& GetInstance();
 
-	void Allocate(ID3D12Device* device, size_t size, size_t alignment, GraphicsBufferAllocation& allocation);
+	void AllocateDefault(ID3D12Device* device, size_t size, size_t alignment, GraphicsBufferAllocation& allocation);
+	void AllocateUpload(ID3D12Device* device, size_t size, size_t alignment, GraphicsBufferAllocation& allocation);
 
 private:
 	GraphicsBufferAllocator() {};
@@ -19,12 +20,20 @@ private:
 	GraphicsBufferAllocator& operator=(const GraphicsBufferAllocator&) = delete;
 	GraphicsBufferAllocator& operator=(GraphicsBufferAllocator&&) = delete;
 
-	void SetNewPageAsCurrent(ID3D12Device* device, std::shared_ptr<GraphicsBufferAllocationPage>& oldCurrentPage);
+	using DefaultBufferAllocation = GraphicsBufferAllocationPage<D3D12_HEAP_TYPE_DEFAULT>;
+	using UploadBufferAllocation = GraphicsBufferAllocationPage<D3D12_HEAP_TYPE_UPLOAD>;
 
-	std::deque<std::shared_ptr<GraphicsBufferAllocationPage>> usedPages;
-	std::deque<std::shared_ptr<GraphicsBufferAllocationPage>> emptyPages;
+	void SetNewDefaultPageAsCurrent(ID3D12Device* device, std::shared_ptr<DefaultBufferAllocation>& oldCurrentPage);
+	void SetNewUploadPageAsCurrent(ID3D12Device* device, std::shared_ptr<UploadBufferAllocation>& oldCurrentPage);
 
-	std::shared_ptr<GraphicsBufferAllocationPage> currentPage;
+	std::deque<std::shared_ptr<DefaultBufferAllocation>> usedDefaultPages;
+	std::deque<std::shared_ptr<UploadBufferAllocation>> usedUploadPages;
 
-	const size_t pageSize = 64 * 1024;
+	std::deque<std::shared_ptr<DefaultBufferAllocation>> emptyDefaultPages;
+	std::deque<std::shared_ptr<UploadBufferAllocation>> emptyUploadPages;
+	
+	std::shared_ptr<DefaultBufferAllocation> currentDefaultPage;
+	std::shared_ptr<UploadBufferAllocation> currentUploadPage;
+
+	const size_t pageSize = 2 * _MB;
 };

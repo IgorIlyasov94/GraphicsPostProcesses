@@ -25,9 +25,12 @@ private:
 	GraphicsRendererDirectX12& operator=(const GraphicsRendererDirectX12&) = delete;
 	GraphicsRendererDirectX12& operator=(GraphicsRendererDirectX12&&) = delete;
 
-	void GetHardwareAdapter(IDXGIFactory4* factory4, IDXGIAdapter1** adapter);
 	void PrepareNextFrame();
 	void WaitForGpu();
+
+#if defined(_DEBUG)
+	void EnableDebugLayer();
+#endif
 
 	static const int32_t SWAP_CHAIN_BUFFER_COUNT = 2;
 
@@ -58,5 +61,6 @@ private:
 	int32_t resolutionX;
 	int32_t resolutionY;
 
+	GraphicsResourceManager& resourceManager = GraphicsResourceManager::GetInstance();
 	GraphicsPostProcesses& postProcesses = GraphicsPostProcesses::GetInstance();
 };

@@ -25,6 +25,12 @@
     <Filter Include="Файлы заголовков\GraphicsPostProcesses">
       <UniqueIdentifier>{63978b76-e279-4533-8cb4-382a96973fae}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Файлы заголовков\GraphicsCore\GraphicsResourceManagement">
+      <UniqueIdentifier>{a55a7c7d-4006-4d5e-befb-039203a398f3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\GraphicsCore\GraphicsResourceManagement">
+      <UniqueIdentifier>{0ef524a1-2427-45c1-b840-f5d5db009314}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -45,6 +51,24 @@
     <ClCompile Include="GraphicsHelper.cpp">
       <Filter>Исходные файлы\GraphicsCore</Filter>
     </ClCompile>
+    <ClCompile Include="GraphicsDescriptorAllocation.cpp">
+      <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsDescriptorAllocationPage.cpp">
+      <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsDescriptorAllocator.cpp">
+      <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsResourceManager.cpp">
+      <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsBufferAllocator.cpp">
+      <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsBufferAllocationPage.cpp">
+      <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -64,6 +88,24 @@
     </ClInclude>
     <ClInclude Include="GraphicsHelper.h">
       <Filter>Файлы заголовков\GraphicsCore</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsDescriptorAllocation.h">
+      <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsDescriptorAllocationPage.h">
+      <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsDescriptorAllocator.h">
+      <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsResourceManager.h">
+      <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsBufferAllocator.h">
+      <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsBufferAllocationPage.h">
+      <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
