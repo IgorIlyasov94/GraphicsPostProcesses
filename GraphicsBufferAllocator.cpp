@@ -7,60 +7,55 @@ GraphicsBufferAllocator& GraphicsBufferAllocator::GetInstance()
 	return thisInstance;
 }
 
-void GraphicsBufferAllocator::AllocateDefault(ID3D12Device* device, size_t size, size_t alignment, GraphicsBufferAllocation& allocation)
+void GraphicsBufferAllocator::Allocate(ID3D12Device* device, size_t size, size_t alignment, D3D12_HEAP_TYPE heapType, GraphicsBufferAllocation& allocation)
 {
 	if (size > pageSize)
-		throw std::bad_alloc();
+		throw std::exception("GraphicsBufferAllocator::Allocate: Bad allocation");
 
-	if (!currentDefaultPage || !currentDefaultPage->HasSpace(size, alignment))
-		SetNewDefaultPageAsCurrent(device, currentDefaultPage);
-
-	currentDefaultPage->Allocate(size, alignment, allocation);
-}
-
-void GraphicsBufferAllocator::AllocateUpload(ID3D12Device* device, size_t size, size_t alignment, GraphicsBufferAllocation& allocation)
-{
-	if (size > pageSize)
-		throw std::bad_alloc();
-
-	if (!currentUploadPage || !currentUploadPage->HasSpace(size, alignment))
-		SetNewUploadPageAsCurrent(device, currentUploadPage);
-
-	currentUploadPage->Allocate(size, alignment, allocation);
-}
-
-void GraphicsBufferAllocator::SetNewDefaultPageAsCurrent(ID3D12Device* device, std::shared_ptr<DefaultBufferAllocation>& oldCurrentPage)
-{
-	if (emptyDefaultPages.empty())
+	if (heapType == D3D12_HEAP_TYPE_DEFAULT)
 	{
-		GraphicsBufferAllocationPage<D3D12_HEAP_TYPE_DEFAULT> newPage(device, pageSize);
+		Allocate(device, size, alignment, heapType, emptyDefaultPages, usedDefaultPages, currentDefaultPage, allocation);
+	}
+	else if (heapType == D3D12_HEAP_TYPE_UPLOAD)
+	{
+		Allocate(device, size, alignment, heapType, emptyUploadPages, usedUploadPages, currentUploadPage, allocation);
+	}
+}
 
-		oldCurrentPage = std::make_shared<GraphicsBufferAllocationPage<D3D12_HEAP_TYPE_DEFAULT>>(device, pageSize);
+void GraphicsBufferAllocator::AllocateTemporaryUpload(ID3D12Device* device, size_t size, GraphicsBufferAllocation& allocation)
+{
+	tempUploadPages.push_back(std::make_shared<GraphicsBufferAllocationPage>(device, D3D12_HEAP_TYPE_UPLOAD, size));
 
-		usedDefaultPages.push_back(oldCurrentPage);
+	tempUploadPages[tempUploadPages.size() - 1]->Allocate(size, 1, allocation);
+}
+
+void GraphicsBufferAllocator::ReleaseTemporaryBuffers()
+{
+	tempUploadPages.clear();
+}
+
+void GraphicsBufferAllocator::Allocate(ID3D12Device* device, size_t size, size_t alignment, D3D12_HEAP_TYPE heapType, BufferAllocationPagePool& emptyPagePool,
+	BufferAllocationPagePool& usedPagePool, std::shared_ptr<GraphicsBufferAllocationPage>& currentPage, GraphicsBufferAllocation& allocation)
+{
+	if (!currentPage || !currentPage->HasSpace(size, alignment))
+		SetNewPageAsCurrent(device, heapType, emptyPagePool, usedPagePool, currentPage);
+
+	currentPage->Allocate(size, alignment, allocation);
+}
+
+void GraphicsBufferAllocator::SetNewPageAsCurrent(ID3D12Device* device, D3D12_HEAP_TYPE heapType, BufferAllocationPagePool& emptyPagePool,
+	BufferAllocationPagePool& usedPagePool, std::shared_ptr<GraphicsBufferAllocationPage>& currentPage)
+{
+	if (emptyPagePool.empty())
+	{
+		currentPage = std::make_shared<GraphicsBufferAllocationPage>(device, heapType, pageSize);
+
+		usedPagePool.push_back(currentPage);
 	}
 	else
 	{
-		oldCurrentPage = emptyDefaultPages.front();
+		currentPage = emptyPagePool.front();
 
-		emptyDefaultPages.pop_front();
-	}
-}
-
-void GraphicsBufferAllocator::SetNewUploadPageAsCurrent(ID3D12Device* device, std::shared_ptr<UploadBufferAllocation>& oldCurrentPage)
-{
-	if (emptyUploadPages.empty())
-	{
-		GraphicsBufferAllocationPage<D3D12_HEAP_TYPE_UPLOAD> newPage(device, pageSize);
-
-		oldCurrentPage = std::make_shared<GraphicsBufferAllocationPage<D3D12_HEAP_TYPE_UPLOAD>>(device, pageSize);
-
-		usedUploadPages.push_back(oldCurrentPage);
-	}
-	else
-	{
-		oldCurrentPage = emptyUploadPages.front();
-
-		emptyUploadPages.pop_front();
+		emptyPagePool.pop_front();
 	}
 }

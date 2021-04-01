@@ -13,6 +13,7 @@
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
 
+#include <d3d11.h>
 #include <d3d12.h>
 #include <dxgi1_6.h>
 
@@ -22,8 +23,10 @@
 
 #include <cstdint>
 #include <sstream>
+#include <fstream>
 #include <iostream>
 #include <iomanip>
+#include <filesystem>
 #include <exception>
 #include <stdexcept>
 #include <vector>
@@ -31,6 +34,8 @@
 #include <mutex>
 #include <set>
 #include <algorithm>
+#include <regex>
+#include <set>
 
 inline void ThrowIfFailed(HRESULT hResult, const char* errorMessage)
 {

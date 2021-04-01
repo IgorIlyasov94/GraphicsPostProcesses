@@ -40,9 +40,12 @@ void CreateSwapChain(IDXGIFactory4* _factory, ID3D12CommandQueue* _commandQueue,
 		"CreateSwapChain: Swap Chain creating failed!");
 }
 
-void CreateRootSignature(ID3D12Device* device, ID3D12RootSignature** rootSignature, D3D12_ROOT_SIGNATURE_FLAGS flags)
+void CreateRootSignature(ID3D12Device* device, std::vector<D3D12_ROOT_PARAMETER>& rootParameters, D3D12_ROOT_SIGNATURE_FLAGS flags,
+	ID3D12RootSignature** rootSignature)
 {
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc{};
+	rootSignatureDesc.NumParameters = rootParameters.size();
+	rootSignatureDesc.pParameters = rootParameters.data();
 	rootSignatureDesc.Flags = flags;
 
 	ComPtr<ID3DBlob> signature;
@@ -66,17 +69,20 @@ void CreateDescriptorHeap(ID3D12Device* device, uint32_t numDescriptors, D3D12_D
 		"CreateDescriptorHeap: Descriptor Heap creating failed!");
 }
 
-void CreateGraphicsPipelineState(ID3D12Device* device, D3D12_INPUT_LAYOUT_DESC&& inputLayoutDesc, ID3D12RootSignature* rootSignature,
-	D3D12_RASTERIZER_DESC& rasterizerDesc, D3D12_BLEND_DESC& blendDesc, D3D12_DEPTH_STENCIL_DESC& depthStencilDesc,
-	DXGI_FORMAT rtvFormat, D3D12_SHADER_BYTECODE&& vertexShader, D3D12_SHADER_BYTECODE&& pixelShader, ID3D12PipelineState** pipelineState)
+void CreateGraphicsPipelineState(ID3D12Device* device, const D3D12_INPUT_LAYOUT_DESC& inputLayoutDesc, ID3D12RootSignature* rootSignature,
+	const D3D12_RASTERIZER_DESC& rasterizerDesc, const D3D12_BLEND_DESC& blendDesc, const D3D12_DEPTH_STENCIL_DESC& depthStencilDesc,
+	DXGI_FORMAT rtvFormat, const ShaderList& shaderList, ID3D12PipelineState** pipelineState)
 {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineStateDesc{};
 	pipelineStateDesc.InputLayout = inputLayoutDesc;
 	pipelineStateDesc.pRootSignature = rootSignature;
 	pipelineStateDesc.RasterizerState = rasterizerDesc;
 	pipelineStateDesc.BlendState = blendDesc;
-	pipelineStateDesc.VS = vertexShader;
-	pipelineStateDesc.PS = pixelShader;
+	pipelineStateDesc.VS = shaderList.vertexShader;
+	pipelineStateDesc.HS = shaderList.hullShader;
+	pipelineStateDesc.DS = shaderList.domainShader;
+	pipelineStateDesc.GS = shaderList.geometryShader;
+	pipelineStateDesc.PS = shaderList.pixelShader;
 	pipelineStateDesc.DepthStencilState = depthStencilDesc;
 	pipelineStateDesc.SampleMask = UINT_MAX;
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
@@ -88,102 +94,81 @@ void CreateGraphicsPipelineState(ID3D12Device* device, D3D12_INPUT_LAYOUT_DESC&&
 		"CreateGraphicsPipelineState: Graphics Pipeline State creating failed!");
 }
 
-/*void CreateVertexBuffer(ID3D12Device* device, uint8_t* data, uint32_t dataSize, uint32_t dataStride, D3D12_VERTEX_BUFFER_VIEW& vertexBufferView,
-	ID3D12Resource** vertexBuffer, ID3D12Resource** vertexBufferUpload, ID3D12GraphicsCommandList* commandList)
+void ReadShaderConstantBuffers(const D3D12_SHADER_BYTECODE& shaderBytecode, std::set<size_t>& constantBufferIndices)
 {
-	D3D12_HEAP_PROPERTIES heapProperties;
-	SetupHeapProperties(heapProperties, D3D12_HEAP_TYPE_DEFAULT);
+	auto shaderText = reinterpret_cast<const char*>(shaderBytecode.pShaderBytecode);
 
-	D3D12_RESOURCE_DESC resourceDesc;
-	SetupResourceBufferDesc(resourceDesc, dataSize);
+	std::regex constantBufferPattern(" cb\\d+ ");
 
-	ThrowIfFailed(device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &resourceDesc,
-		D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, nullptr, IID_PPV_ARGS(vertexBuffer)),"");
+	std::vector<std::string> constantBufferHLSLBinds;
 
-	heapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
+	std::copy(std::cregex_token_iterator(shaderText, shaderText + shaderBytecode.BytecodeLength, constantBufferPattern),
+		std::cregex_token_iterator(), std::back_inserter(constantBufferHLSLBinds));
 
-	ThrowIfFailed(device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &resourceDesc,
-		D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(vertexBufferUpload)),"");
-
-	uint8_t* mappedUploadHeap = nullptr;
-	D3D12_RANGE readRange = { 0, 0 };
-
-	ThrowIfFailed((*vertexBufferUpload)->Map(0, &readRange, reinterpret_cast<void**>(&mappedUploadHeap)),"");
-
-	std::copy(data, data + dataSize, mappedUploadHeap);
-	
-	(*vertexBufferUpload)->Unmap(0, &readRange);
-
-	vertexBufferView.BufferLocation = (*vertexBuffer)->GetGPUVirtualAddress();
-	vertexBufferView.SizeInBytes = dataSize;
-	vertexBufferView.StrideInBytes = dataStride;
-
-	D3D12_RESOURCE_BARRIER vertexBufferResourceBarrier{};
-	vertexBufferResourceBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	vertexBufferResourceBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	vertexBufferResourceBarrier.Transition.pResource = *vertexBuffer;
-	vertexBufferResourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
-	vertexBufferResourceBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_DEST;
-	vertexBufferResourceBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-
-	commandList->ResourceBarrier(1, &vertexBufferResourceBarrier);
-	commandList->CopyBufferRegion(*vertexBuffer, 0, *vertexBufferUpload, 0, (*vertexBuffer)->GetDesc().Width);
-
-	vertexBufferResourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
-	vertexBufferResourceBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
-
-	commandList->ResourceBarrier(1, &vertexBufferResourceBarrier);
-}*/
-
-/*void CreateConstantBuffer(ID3D12Device* device, std::vector<uint8_t*>& data, std::vector<uint64_t>& bufferSizes, ID3D12DescriptorHeap* descriptorHeap,
-	ID3D12Resource** constantBuffer, ID3D12GraphicsCommandList* commandList)
-{
-	if (data.size() > bufferSizes.size())
-		throw std::exception("Not all constant buffers have size information");
-
-	uint64_t constantBufferTotalSize = 0;
-
-	for (auto& constantBufferSize : bufferSizes)
+	for (auto& hlslBind: constantBufferHLSLBinds)
 	{
-		constantBufferTotalSize += constantBufferSize;
+		size_t constantBufferIndex = 0;
+
+		std::istringstream hlslBindStringStream(hlslBind.substr(3));
+
+		hlslBindStringStream >> constantBufferIndex;
+
+		constantBufferIndices.insert(constantBufferIndex);
 	}
 
-	constantBufferTotalSize = 1024 * 64;
-	//constantBufferTotalSize &= ~(1024 * 64);
+	std::stringstream str(std::string(shaderText).substr(0, 50));
 
-	D3D12_HEAP_PROPERTIES heapProperties;
-	SetupHeapProperties(heapProperties, D3D12_HEAP_TYPE_UPLOAD);
+	str << constantBufferHLSLBinds.size();
 
-	D3D12_RESOURCE_DESC resourceDesc;
-	SetupResourceBufferDesc(resourceDesc, constantBufferTotalSize);
+	throw std::exception(str.str().c_str());
+}
 
-	ThrowIfFailed(device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr, IID_PPV_ARGS(constantBuffer)),"");
+void CreateRootParameters(const ShaderList& shaderList, const std::set<size_t>& constantBufferIndices, D3D12_ROOT_SIGNATURE_FLAGS& rootSignatureFlags,
+	std::vector<D3D12_ROOT_PARAMETER>& rootParameters)
+{
+	if (shaderList.vertexShader.pShaderBytecode == nullptr)
+		rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS;
 	
-	D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorHandle = descriptorHeap->GetCPUDescriptorHandleForHeapStart();
-
-	D3D12_CONSTANT_BUFFER_VIEW_DESC constantBufferViewDesc{};
-	constantBufferViewDesc.BufferLocation = (*constantBuffer)->GetGPUVirtualAddress();
-
-	uint32_t shaderResourceViewDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	if (shaderList.hullShader.pShaderBytecode == nullptr)
+		rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
 	
-	for (auto& constantBufferSize : bufferSizes)
+	if (shaderList.domainShader.pShaderBytecode == nullptr)
+		rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS;
+	
+	if (shaderList.geometryShader.pShaderBytecode == nullptr)
+		rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
+	
+	if (shaderList.pixelShader.pShaderBytecode == nullptr)
+		rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
+	
+	for (auto& constantBufferIndex: constantBufferIndices)
 	{
-		constantBufferViewDesc.SizeInBytes = (constantBufferSize + 255) & ~255;
+		D3D12_ROOT_PARAMETER rootParameter{};
 
-		device->CreateConstantBufferView(&constantBufferViewDesc, cpuDescriptorHandle);
+		rootParameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+		rootParameter.Descriptor.RegisterSpace = 0;
+		rootParameter.Descriptor.ShaderRegister = constantBufferIndex;
+		rootParameter.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-		constantBufferViewDesc.BufferLocation += (constantBufferSize + 255) & ~255;
-		cpuDescriptorHandle.ptr += shaderResourceViewDescriptorSize;
+		rootParameters.push_back(rootParameter);
 	}
-	
-	uint8_t* mappedUploadHeap = nullptr;
-	D3D12_RANGE readRange = { 0, 0 };
+}
 
-	ThrowIfFailed((*constantBuffer)->Map(0, &readRange, reinterpret_cast<void**>(&mappedUploadHeap)),"");
-	
-	std::copy(data.begin(), data.end(), &mappedUploadHeap);
-}*/
+void CreatePipelineStateAndRootSignature(ID3D12Device* device, const D3D12_INPUT_LAYOUT_DESC& inputLayoutDesc, const D3D12_RASTERIZER_DESC& rasterizerDesc,
+	const D3D12_BLEND_DESC& blendDesc, const D3D12_DEPTH_STENCIL_DESC& depthStencilDesc, DXGI_FORMAT rtvFormat, const ShaderList& shaderList,
+	const std::set<size_t>& constantBufferIndices, ID3D12RootSignature** rootSignature, ID3D12PipelineState** pipelineState)
+{
+	D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+
+	std::vector<D3D12_ROOT_PARAMETER> rootParameters;
+
+	CreateRootParameters(shaderList, constantBufferIndices, rootSignatureFlags, rootParameters);
+
+	CreateRootSignature(device, rootParameters, rootSignatureFlags, rootSignature);
+
+	CreateGraphicsPipelineState(device, inputLayoutDesc, *rootSignature, rasterizerDesc, blendDesc,
+		depthStencilDesc, rtvFormat, shaderList, pipelineState);
+}
 
 void GetHardwareAdapter(IDXGIFactory4* factory4, IDXGIAdapter1** adapter)
 {

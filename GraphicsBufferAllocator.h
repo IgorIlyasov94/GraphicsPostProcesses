@@ -8,8 +8,10 @@ class GraphicsBufferAllocator
 public:
 	static GraphicsBufferAllocator& GetInstance();
 
-	void AllocateDefault(ID3D12Device* device, size_t size, size_t alignment, GraphicsBufferAllocation& allocation);
-	void AllocateUpload(ID3D12Device* device, size_t size, size_t alignment, GraphicsBufferAllocation& allocation);
+	void Allocate(ID3D12Device* device, size_t size, size_t alignment, D3D12_HEAP_TYPE heapType, GraphicsBufferAllocation& allocation);
+	void AllocateTemporaryUpload(ID3D12Device* device, size_t size, GraphicsBufferAllocation& allocation);
+
+	void ReleaseTemporaryBuffers();
 
 private:
 	GraphicsBufferAllocator() {};
@@ -20,20 +22,24 @@ private:
 	GraphicsBufferAllocator& operator=(const GraphicsBufferAllocator&) = delete;
 	GraphicsBufferAllocator& operator=(GraphicsBufferAllocator&&) = delete;
 
-	using DefaultBufferAllocation = GraphicsBufferAllocationPage<D3D12_HEAP_TYPE_DEFAULT>;
-	using UploadBufferAllocation = GraphicsBufferAllocationPage<D3D12_HEAP_TYPE_UPLOAD>;
+	using BufferAllocationPagePool = std::deque<std::shared_ptr<GraphicsBufferAllocationPage>>;
 
-	void SetNewDefaultPageAsCurrent(ID3D12Device* device, std::shared_ptr<DefaultBufferAllocation>& oldCurrentPage);
-	void SetNewUploadPageAsCurrent(ID3D12Device* device, std::shared_ptr<UploadBufferAllocation>& oldCurrentPage);
+	void Allocate(ID3D12Device* device, size_t size, size_t alignment, D3D12_HEAP_TYPE heapType, BufferAllocationPagePool& emptyPagePool,
+		BufferAllocationPagePool& usedPagePool, std::shared_ptr<GraphicsBufferAllocationPage>& currentPage, GraphicsBufferAllocation& allocation);
 
-	std::deque<std::shared_ptr<DefaultBufferAllocation>> usedDefaultPages;
-	std::deque<std::shared_ptr<UploadBufferAllocation>> usedUploadPages;
-
-	std::deque<std::shared_ptr<DefaultBufferAllocation>> emptyDefaultPages;
-	std::deque<std::shared_ptr<UploadBufferAllocation>> emptyUploadPages;
+	void SetNewPageAsCurrent(ID3D12Device* device, D3D12_HEAP_TYPE heapType, BufferAllocationPagePool& emptyPagePool,
+		BufferAllocationPagePool& usedPagePool, std::shared_ptr<GraphicsBufferAllocationPage>& currentPage);
 	
-	std::shared_ptr<DefaultBufferAllocation> currentDefaultPage;
-	std::shared_ptr<UploadBufferAllocation> currentUploadPage;
+	BufferAllocationPagePool usedDefaultPages;
+	BufferAllocationPagePool usedUploadPages;
+
+	BufferAllocationPagePool emptyDefaultPages;
+	BufferAllocationPagePool emptyUploadPages;
+	
+	std::shared_ptr<GraphicsBufferAllocationPage> currentDefaultPage;
+	std::shared_ptr<GraphicsBufferAllocationPage> currentUploadPage;
+
+	BufferAllocationPagePool tempUploadPages;
 
 	const size_t pageSize = 2 * _MB;
 };
