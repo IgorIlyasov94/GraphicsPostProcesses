@@ -31,6 +31,12 @@
     <Filter Include="Исходные файлы\GraphicsCore\GraphicsResourceManagement">
       <UniqueIdentifier>{0ef524a1-2427-45c1-b840-f5d5db009314}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Исходные файлы\GraphicsCore\GraphicsResourceManagement\TextureLoaders">
+      <UniqueIdentifier>{27b47c16-b6fa-4121-a1e5-71a5096235a8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Файлы заголовков\GraphicsCore\GraphicsResourceManagement\TextureLoaders">
+      <UniqueIdentifier>{aa1d4289-db5e-44d5-8e43-e366705bd3c4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -51,9 +57,6 @@
     <ClCompile Include="GraphicsHelper.cpp">
       <Filter>Исходные файлы\GraphicsCore</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsDescriptorAllocation.cpp">
-      <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement</Filter>
-    </ClCompile>
     <ClCompile Include="GraphicsDescriptorAllocationPage.cpp">
       <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement</Filter>
     </ClCompile>
@@ -67,6 +70,15 @@
       <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement</Filter>
     </ClCompile>
     <ClCompile Include="GraphicsBufferAllocationPage.cpp">
+      <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsDDSLoader.cpp">
+      <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement\TextureLoaders</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsTextureAllocator.cpp">
+      <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsTextureAllocationPage.cpp">
       <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement</Filter>
     </ClCompile>
   </ItemGroup>
@@ -89,9 +101,6 @@
     <ClInclude Include="GraphicsHelper.h">
       <Filter>Файлы заголовков\GraphicsCore</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsDescriptorAllocation.h">
-      <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement</Filter>
-    </ClInclude>
     <ClInclude Include="GraphicsDescriptorAllocationPage.h">
       <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement</Filter>
     </ClInclude>
@@ -105,6 +114,15 @@
       <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement</Filter>
     </ClInclude>
     <ClInclude Include="GraphicsBufferAllocationPage.h">
+      <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsDDSLoader.h">
+      <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement\TextureLoaders</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsTextureAllocator.h">
+      <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsTextureAllocationPage.h">
       <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement</Filter>
     </ClInclude>
   </ItemGroup>

@@ -88,6 +88,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -147,12 +148,14 @@
     <ClCompile Include="GraphicsBufferAllocationPage.cpp" />
     <ClCompile Include="GraphicsCommonHandler.cpp" />
     <ClCompile Include="GraphicsBufferAllocator.cpp" />
-    <ClCompile Include="GraphicsDescriptorAllocation.cpp" />
+    <ClCompile Include="GraphicsDDSLoader.cpp" />
     <ClCompile Include="GraphicsDescriptorAllocationPage.cpp" />
     <ClCompile Include="GraphicsDescriptorAllocator.cpp" />
     <ClCompile Include="GraphicsHelper.cpp" />
     <ClCompile Include="GraphicsPostProcesses.cpp" />
     <ClCompile Include="GraphicsResourceManager.cpp" />
+    <ClCompile Include="GraphicsTextureAllocationPage.cpp" />
+    <ClCompile Include="GraphicsTextureAllocator.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="GraphicsRendererDirecX12.cpp" />
     <ClCompile Include="stdafx.cpp" />
@@ -161,12 +164,14 @@
     <ClInclude Include="GraphicsBufferAllocationPage.h" />
     <ClInclude Include="GraphicsCommonHandler.h" />
     <ClInclude Include="GraphicsBufferAllocator.h" />
-    <ClInclude Include="GraphicsDescriptorAllocation.h" />
+    <ClInclude Include="GraphicsDDSLoader.h" />
     <ClInclude Include="GraphicsDescriptorAllocationPage.h" />
     <ClInclude Include="GraphicsDescriptorAllocator.h" />
     <ClInclude Include="GraphicsHelper.h" />
     <ClInclude Include="GraphicsPostProcesses.h" />
     <ClInclude Include="GraphicsResourceManager.h" />
+    <ClInclude Include="GraphicsTextureAllocationPage.h" />
+    <ClInclude Include="GraphicsTextureAllocator.h" />
     <ClInclude Include="Main.h" />
     <ClInclude Include="GraphicsRendererDirectX12.h" />
     <ClInclude Include="stdafx.h" />

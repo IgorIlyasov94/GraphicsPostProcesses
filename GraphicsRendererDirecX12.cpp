@@ -101,6 +101,10 @@ void GraphicsRendererDirectX12::Initialize(HWND& windowHandler)
 	ID3D12CommandList* commandLists[] = { commandList.Get() };
 
 	commandQueue->ExecuteCommandLists(_countof(commandLists), commandLists);
+
+	WaitForGpu();
+
+	resourceManager.ReleaseTemporaryUploadBuffers();
 }
 
 void GraphicsRendererDirectX12::GpuRelease()
@@ -128,6 +132,8 @@ void GraphicsRendererDirectX12::FrameRender()
 	commandList->ClearRenderTargetView(rtvHeapHandle, clearColor, 0, nullptr);
 
 	postProcesses.EnableHDR(commandList.Get(), swapChainRtvHeap.Get(), bufferIndex);
+
+	SetResourceBarrier(commandList.Get(), swapChainBuffersRtv[bufferIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
 	ThrowIfFailed(commandList->Close(), "GraphicsRendererDirectX12::FrameRender: Command List closing error!");
 

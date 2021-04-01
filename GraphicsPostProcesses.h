@@ -25,11 +25,12 @@ private:
 
 	ComPtr<ID3D12RootSignature> hdrRootSignature;
 	ComPtr<ID3D12PipelineState> hdrPipelineState;
-	//ComPtr<ID3D12Resource> constantBuffer;
 	ComPtr<ID3D12DescriptorHeap> renderTargetDescHeap;
-	//ComPtr<ID3D12DescriptorHeap> shaderResourceViewDescHeap;
 
 	VertexBufferId screenQuadVertexBufferId;
+	ConstantBufferId hdrConstantBufferId;
+
+	TextureId noiseTextureId;
 
 	D3D12_VIEWPORT sceneViewport;
 	D3D12_RECT sceneScissorRect;
@@ -38,7 +39,6 @@ private:
 	const uint32_t CONST_BUFFERS_NUMBER = 1;
 	
 	uint32_t renderTargetViewDescriptorSize;
-	//uint32_t shaderResourceViewDescriptorSize;
 
 	using HdrConstantBuffer = struct
 	{
@@ -51,8 +51,6 @@ private:
 	};
 
 	HdrConstantBuffer hdrConstantBuffer;
-	//std::vector<uint8_t*> constantBuffersData;
-	//std::vector<uint64_t> constantBufferSizes;
 
 	GraphicsResourceManager& resourceManager = GraphicsResourceManager::GetInstance();
 };
