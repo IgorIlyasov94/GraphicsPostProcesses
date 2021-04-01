@@ -8,8 +8,7 @@ class GraphicsDescriptorAllocator
 public:
 	static GraphicsDescriptorAllocator& GetInstance();
 
-	void Allocate(ID3D12Device* device, const uint32_t numDescriptors, const D3D12_DESCRIPTOR_HEAP_TYPE descriptorType,
-		GraphicsDescriptorAllocation& allocation);
+	void Allocate(ID3D12Device* device, uint32_t numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE descriptorType, GraphicsDescriptorAllocation& allocation);
 
 private:
 	GraphicsDescriptorAllocator() {};
@@ -20,22 +19,28 @@ private:
 	GraphicsDescriptorAllocator& operator=(const GraphicsDescriptorAllocator&) = delete;
 	GraphicsDescriptorAllocator& operator=(GraphicsDescriptorAllocator&&) = delete;
 
-	using DescriptorHeapPool = std::vector<std::shared_ptr<GraphicsDescriptorAllocationPage>>;
+	using DescriptorHeapPool = std::deque<std::shared_ptr<GraphicsDescriptorAllocationPage>>;
 
-	void Allocate(ID3D12Device* device, const uint32_t numDescriptors, const D3D12_DESCRIPTOR_HEAP_TYPE descriptorType, DescriptorHeapPool& heapPool,
-		std::set<size_t>& availableHeapIndices, GraphicsDescriptorAllocation& allocation);
+	void Allocate(ID3D12Device* device, uint32_t numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE descriptorType, DescriptorHeapPool& usedHeapPool,
+		DescriptorHeapPool& emptyHeapPool, std::shared_ptr<GraphicsDescriptorAllocationPage>& currentPage, GraphicsDescriptorAllocation& allocation);
 
-	DescriptorHeapPool cbvSrvUavDescriptorHeapPages;
-	DescriptorHeapPool samplerDescriptorHeapPages;
-	DescriptorHeapPool rtvDescriptorHeapPages;
-	DescriptorHeapPool dsvDescriptorHeapPages;
+	void SetNewPageAsCurrent(ID3D12Device* device, uint32_t numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE descriptorType, DescriptorHeapPool& usedHeapPool,
+		DescriptorHeapPool& emptyHeapPool, std::shared_ptr<GraphicsDescriptorAllocationPage>& currentPage);
 
-	std::set<size_t> availableCbvSrvUavHeapIndices;
-	std::set<size_t> availableSamplerHeapIndices;
-	std::set<size_t> availableRtvHeapIndices;
-	std::set<size_t> availableDsvHeapIndices;
+	DescriptorHeapPool usedCbvSrvUavDescriptorHeapPages;
+	DescriptorHeapPool usedSamplerDescriptorHeapPages;
+	DescriptorHeapPool usedRtvDescriptorHeapPages;
+	DescriptorHeapPool usedDsvDescriptorHeapPages;
+
+	DescriptorHeapPool emptyCbvSrvUavDescriptorHeapPages;
+	DescriptorHeapPool emptySamplerDescriptorHeapPages;
+	DescriptorHeapPool emptyRtvDescriptorHeapPages;
+	DescriptorHeapPool emptyDsvDescriptorHeapPages;
+
+	std::shared_ptr<GraphicsDescriptorAllocationPage> currentCbvSrvUavDescriptorHeapPage;
+	std::shared_ptr<GraphicsDescriptorAllocationPage> currentSamplerDescriptorHeapPage;
+	std::shared_ptr<GraphicsDescriptorAllocationPage> currentRtvUavDescriptorHeapPage;
+	std::shared_ptr<GraphicsDescriptorAllocationPage> currentDsvDescriptorHeapPage;
 
 	uint32_t numDescriptorsPerHeap = 256;
-
-	std::mutex descriptorAllocatorMutex;
 };
