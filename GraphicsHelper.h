@@ -26,6 +26,8 @@ using TextureInfo = struct
 	uint32_t height;
 	uint16_t depth;
 	uint16_t mipLevels;
+	uint64_t rowPitch;
+	uint64_t slicePitch;
 	DXGI_FORMAT format;
 	D3D12_RESOURCE_DIMENSION dimension;
 	D3D12_SRV_DIMENSION srvDimension;
@@ -42,8 +44,8 @@ void CreateCommandQueue(ID3D12Device* _device, ID3D12CommandQueue** _commandQueu
 void CreateSwapChain(IDXGIFactory4* _factory, ID3D12CommandQueue* _commandQueue, HWND& _windowHandler, const uint32_t buffersCount,
 	const int32_t& _resolutionX, const int32_t& _resolutionY, IDXGISwapChain1** _swapChain);
 
-void CreateRootSignature(ID3D12Device* device, std::vector<D3D12_ROOT_PARAMETER>& rootParameters, D3D12_ROOT_SIGNATURE_FLAGS flags,
-	ID3D12RootSignature** rootSignature);
+void CreateRootSignature(ID3D12Device* device, const std::vector<D3D12_ROOT_PARAMETER>& rootParameters, const std::vector<D3D12_STATIC_SAMPLER_DESC>& samplerDescs,
+	D3D12_ROOT_SIGNATURE_FLAGS flags, ID3D12RootSignature** rootSignature);
 
 void CreateDescriptorHeap(ID3D12Device* device, uint32_t numDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS flags, D3D12_DESCRIPTOR_HEAP_TYPE type,
 	ID3D12DescriptorHeap** descriptorHeap);
@@ -54,12 +56,16 @@ void CreateGraphicsPipelineState(ID3D12Device* device, const D3D12_INPUT_LAYOUT_
 
 void ReadShaderConstantBuffers(const D3D12_SHADER_BYTECODE& shaderBytecode, std::set<size_t>& constantBufferIndices);
 
-void CreateRootParameters(const ShaderList& shaderList, const std::set<size_t>& constantBufferIndices, D3D12_ROOT_SIGNATURE_FLAGS& rootSignatureFlags,
-	std::vector<D3D12_ROOT_PARAMETER>& rootParameters);
+void CreateRootParameters(const ShaderList& shaderList, const std::set<size_t>& constantBufferRegisterIndices, const D3D12_ROOT_DESCRIPTOR_TABLE& rootDescriptorTable,
+	D3D12_ROOT_SIGNATURE_FLAGS& rootSignatureFlags, std::vector<D3D12_ROOT_PARAMETER>& rootParameters);
+void CreateTextureRootDescriptorTable(const std::vector<size_t>& textureRegisterIndices, const std::vector<size_t>& descriptorIndices,
+	std::vector<D3D12_DESCRIPTOR_RANGE>& descriptorRange, D3D12_ROOT_DESCRIPTOR_TABLE& rootDescriptorTable);
+void CreateStandardSamplerDescs(std::vector<D3D12_STATIC_SAMPLER_DESC>& samplerDescs);
 
 void CreatePipelineStateAndRootSignature(ID3D12Device* device, const D3D12_INPUT_LAYOUT_DESC& inputLayoutDesc, const D3D12_RASTERIZER_DESC& rasterizerDesc,
 	const D3D12_BLEND_DESC& blendDesc, const D3D12_DEPTH_STENCIL_DESC& depthStencilDesc, DXGI_FORMAT rtvFormat, const ShaderList& shaderList,
-	const std::set<size_t>& constantBufferIndices, ID3D12RootSignature** rootSignature, ID3D12PipelineState** pipelineState);
+	const std::set<size_t>& constantBufferIndices, const D3D12_ROOT_DESCRIPTOR_TABLE& texturesRootDescriptorTable, const std::vector<D3D12_STATIC_SAMPLER_DESC>& samplerDescs,
+	ID3D12RootSignature** rootSignature, ID3D12PipelineState** pipelineState);
 
 void GetHardwareAdapter(IDXGIFactory4* factory4, IDXGIAdapter1** adapter);
 
@@ -71,6 +77,9 @@ void SetupBlendDesc(D3D12_BLEND_DESC& blendDesc, bool blendOn = false,
 
 void SetupDepthStencilDesc(D3D12_DEPTH_STENCIL_DESC& depthStencilDesc, bool depthEnable) noexcept;
 void SetupResourceBufferDesc(D3D12_RESOURCE_DESC& resourceDesc, uint64_t bufferSize, D3D12_RESOURCE_FLAGS resourceFlag = D3D12_RESOURCE_FLAG_NONE,
+	uint64_t alignment = 0) noexcept;
+
+void SetupResourceTextureDesc(D3D12_RESOURCE_DESC& resourceDesc, const TextureInfo& textureInfo, D3D12_RESOURCE_FLAGS resourceFlag = D3D12_RESOURCE_FLAG_NONE,
 	uint64_t alignment = 0) noexcept;
 
 void SetupHeapProperties(D3D12_HEAP_PROPERTIES& heapProperties, D3D12_HEAP_TYPE heapType) noexcept;

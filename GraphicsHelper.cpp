@@ -40,12 +40,20 @@ void CreateSwapChain(IDXGIFactory4* _factory, ID3D12CommandQueue* _commandQueue,
 		"CreateSwapChain: Swap Chain creating failed!");
 }
 
-void CreateRootSignature(ID3D12Device* device, std::vector<D3D12_ROOT_PARAMETER>& rootParameters, D3D12_ROOT_SIGNATURE_FLAGS flags,
-	ID3D12RootSignature** rootSignature)
+void CreateRootSignature(ID3D12Device* device, const std::vector<D3D12_ROOT_PARAMETER>& rootParameters, const std::vector<D3D12_STATIC_SAMPLER_DESC>& samplerDescs,
+	D3D12_ROOT_SIGNATURE_FLAGS flags, ID3D12RootSignature** rootSignature)
 {
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc{};
 	rootSignatureDesc.NumParameters = rootParameters.size();
-	rootSignatureDesc.pParameters = rootParameters.data();
+
+	if (rootSignatureDesc.NumParameters > 0)
+		rootSignatureDesc.pParameters = rootParameters.data();
+
+	rootSignatureDesc.NumStaticSamplers = samplerDescs.size();
+
+	if (rootSignatureDesc.NumStaticSamplers > 0)
+		rootSignatureDesc.pStaticSamplers = samplerDescs.data();
+
 	rootSignatureDesc.Flags = flags;
 
 	ComPtr<ID3DBlob> signature;
@@ -123,8 +131,8 @@ void ReadShaderConstantBuffers(const D3D12_SHADER_BYTECODE& shaderBytecode, std:
 	throw std::exception(str.str().c_str());
 }
 
-void CreateRootParameters(const ShaderList& shaderList, const std::set<size_t>& constantBufferIndices, D3D12_ROOT_SIGNATURE_FLAGS& rootSignatureFlags,
-	std::vector<D3D12_ROOT_PARAMETER>& rootParameters)
+void CreateRootParameters(const ShaderList& shaderList, const std::set<size_t>& constantBufferRegisterIndices, const D3D12_ROOT_DESCRIPTOR_TABLE& rootDescriptorTable,
+	D3D12_ROOT_SIGNATURE_FLAGS& rootSignatureFlags, std::vector<D3D12_ROOT_PARAMETER>& rootParameters)
 {
 	if (shaderList.vertexShader.pShaderBytecode == nullptr)
 		rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS;
@@ -140,8 +148,8 @@ void CreateRootParameters(const ShaderList& shaderList, const std::set<size_t>& 
 	
 	if (shaderList.pixelShader.pShaderBytecode == nullptr)
 		rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
-	
-	for (auto& constantBufferIndex: constantBufferIndices)
+
+	for (auto& constantBufferIndex: constantBufferRegisterIndices)
 	{
 		D3D12_ROOT_PARAMETER rootParameter{};
 
@@ -152,22 +160,96 @@ void CreateRootParameters(const ShaderList& shaderList, const std::set<size_t>& 
 
 		rootParameters.push_back(rootParameter);
 	}
+
+	D3D12_ROOT_PARAMETER rootParameter{};
+	rootParameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParameter.DescriptorTable = rootDescriptorTable;
+	rootParameter.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	
+	rootParameters.push_back(rootParameter);
+}
+
+void CreateTextureRootDescriptorTable(const std::vector<size_t>& textureRegisterIndices, const std::vector<size_t>& descriptorIndices,
+	std::vector<D3D12_DESCRIPTOR_RANGE>& descriptorRange, D3D12_ROOT_DESCRIPTOR_TABLE& rootDescriptorTable)
+{
+	for (uint32_t textureRegisterId = 0; textureRegisterId < textureRegisterIndices.size(); textureRegisterId++)
+	{
+		D3D12_DESCRIPTOR_RANGE descRange{};
+		descRange.NumDescriptors = 1;
+		descRange.BaseShaderRegister = textureRegisterIndices[textureRegisterId];
+		descRange.OffsetInDescriptorsFromTableStart = descriptorIndices[textureRegisterId];
+		descRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		descRange.RegisterSpace = 0;
+
+		descriptorRange.push_back(descRange);
+	}
+
+	rootDescriptorTable.NumDescriptorRanges = descriptorRange.size();
+	rootDescriptorTable.pDescriptorRanges = descriptorRange.data();
+}
+
+void CreateStandardSamplerDescs(std::vector<D3D12_STATIC_SAMPLER_DESC>& samplerDescs)
+{
+	D3D12_STATIC_SAMPLER_DESC samplerDesc{};
+	samplerDesc.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+	samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplerDesc.MaxAnisotropy = 1;
+	samplerDesc.MinLOD = 0;
+	samplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
+	samplerDesc.ShaderRegister = 0;
+
+	samplerDescs.push_back(samplerDesc);
+
+	samplerDesc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+	samplerDesc.ShaderRegister = 1;
+
+	samplerDescs.push_back(samplerDesc);
+
+	samplerDesc.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+	samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	samplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	samplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	samplerDesc.ShaderRegister = 2;
+
+	samplerDescs.push_back(samplerDesc);
+
+	samplerDesc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+	samplerDesc.ShaderRegister = 3;
+
+	samplerDescs.push_back(samplerDesc);
+
+	samplerDesc.Filter = D3D12_FILTER_ANISOTROPIC;
+	samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplerDesc.MaxAnisotropy = 16;
+	samplerDesc.ShaderRegister = 4;
+
+	samplerDescs.push_back(samplerDesc);
+
+	samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	samplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	samplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	samplerDesc.ShaderRegister = 5;
+
+	samplerDescs.push_back(samplerDesc);
 }
 
 void CreatePipelineStateAndRootSignature(ID3D12Device* device, const D3D12_INPUT_LAYOUT_DESC& inputLayoutDesc, const D3D12_RASTERIZER_DESC& rasterizerDesc,
 	const D3D12_BLEND_DESC& blendDesc, const D3D12_DEPTH_STENCIL_DESC& depthStencilDesc, DXGI_FORMAT rtvFormat, const ShaderList& shaderList,
-	const std::set<size_t>& constantBufferIndices, ID3D12RootSignature** rootSignature, ID3D12PipelineState** pipelineState)
+	const std::set<size_t>& constantBufferIndices, const D3D12_ROOT_DESCRIPTOR_TABLE& texturesRootDescriptorTable, const std::vector<D3D12_STATIC_SAMPLER_DESC>& samplerDescs,
+	ID3D12RootSignature** rootSignature, ID3D12PipelineState** pipelineState)
 {
 	D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
 	std::vector<D3D12_ROOT_PARAMETER> rootParameters;
+	CreateRootParameters(shaderList, constantBufferIndices, texturesRootDescriptorTable, rootSignatureFlags, rootParameters);
 
-	CreateRootParameters(shaderList, constantBufferIndices, rootSignatureFlags, rootParameters);
+	CreateRootSignature(device, rootParameters, samplerDescs, rootSignatureFlags, rootSignature);
 
-	CreateRootSignature(device, rootParameters, rootSignatureFlags, rootSignature);
-
-	CreateGraphicsPipelineState(device, inputLayoutDesc, *rootSignature, rasterizerDesc, blendDesc,
-		depthStencilDesc, rtvFormat, shaderList, pipelineState);
+	CreateGraphicsPipelineState(device, inputLayoutDesc, *rootSignature, rasterizerDesc, blendDesc, depthStencilDesc, rtvFormat, shaderList, pipelineState);
 }
 
 void GetHardwareAdapter(IDXGIFactory4* factory4, IDXGIAdapter1** adapter)
@@ -274,6 +356,21 @@ void SetupResourceBufferDesc(D3D12_RESOURCE_DESC& resourceDesc, uint64_t bufferS
 	resourceDesc.SampleDesc.Count = 1;
 	resourceDesc.SampleDesc.Quality = 0;
 	resourceDesc.Width = (bufferSize + 255Ui64) & ~255Ui64;
+}
+
+void SetupResourceTextureDesc(D3D12_RESOURCE_DESC& resourceDesc, const TextureInfo& textureInfo, D3D12_RESOURCE_FLAGS resourceFlag, uint64_t alignment) noexcept
+{
+	resourceDesc.Dimension = textureInfo.dimension;
+	resourceDesc.DepthOrArraySize = textureInfo.depth;
+	resourceDesc.Alignment = 0;
+	resourceDesc.Flags = resourceFlag;
+	resourceDesc.Format = textureInfo.format;
+	resourceDesc.Height = textureInfo.height;
+	resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+	resourceDesc.MipLevels = textureInfo.mipLevels;
+	resourceDesc.SampleDesc.Count = 1;
+	resourceDesc.SampleDesc.Quality = 0;
+	resourceDesc.Width = textureInfo.width;
 }
 
 void SetupHeapProperties(D3D12_HEAP_PROPERTIES& heapProperties, D3D12_HEAP_TYPE heapType) noexcept

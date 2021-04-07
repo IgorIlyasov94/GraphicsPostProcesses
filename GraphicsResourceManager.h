@@ -21,10 +21,12 @@ public:
 
 	}
 
+	uint32_t value;
+
 private:
 	friend class GraphicsResourceManager;
 
-	uint32_t value;
+	
 	uint8_t category;
 };
 
@@ -67,11 +69,11 @@ public:
 
 	void Initialize(ID3D12Device* _device, ID3D12GraphicsCommandList* _commandList);
 
-	VertexBufferId&& CreateVertexBuffer(std::vector<uint8_t>& data, uint32_t vertexStride);
-	ConstantBufferId&& CreateConstantBuffer(std::vector<uint8_t>& data);
-	TextureId&& CreateTexture(const std::filesystem::path& fileName);
-	TextureId&& CreateTexture(const std::vector<uint8_t>& data, const TextureInfo& textureInfo, D3D12_RESOURCE_FLAGS resourceFlags);
-	SamplerId&& CreateSampler(const D3D12_SAMPLER_DESC& samplerDesc);
+	VertexBufferId CreateVertexBuffer(std::vector<uint8_t>& data, uint32_t vertexStride);
+	ConstantBufferId CreateConstantBuffer(std::vector<uint8_t>& data);
+	TextureId CreateTexture(const std::filesystem::path& fileName);
+	TextureId CreateTexture(const std::vector<uint8_t>& data, const TextureInfo& textureInfo, D3D12_RESOURCE_FLAGS resourceFlags);
+	SamplerId CreateSampler(const D3D12_SAMPLER_DESC& samplerDesc);
 
 	const GraphicsVertexBuffer& GetVertexBuffer(const VertexBufferId& resourceId);
 	const GraphicsConstantBuffer& GetConstantBuffer(const ConstantBufferId& resourceId);
@@ -88,6 +90,11 @@ private:
 	GraphicsResourceManager(GraphicsResourceManager&&) = delete;
 	GraphicsResourceManager& operator=(const GraphicsResourceManager&) = delete;
 	GraphicsResourceManager& operator=(GraphicsResourceManager&&) = delete;
+
+	void UploadTexture(ID3D12Resource* uploadBuffer, ID3D12Resource* targetTexture, const TextureInfo& textureInfo, const std::vector<uint8_t>& data,
+		uint8_t* uploadBufferCPUAddress);
+	void CopyRawDataToSubresource(const TextureInfo& srcTextureInfo, uint32_t numRows, uint16_t numSlices, uint64_t destRowPitch, uint64_t destSlicePitch,
+		uint64_t rowSizeInBytes, const uint8_t* srcAddress, uint8_t* destAddress);
 
 	ID3D12Device* device;
 	ID3D12GraphicsCommandList* commandList;

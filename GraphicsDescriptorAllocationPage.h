@@ -4,9 +4,11 @@
 
 struct GraphicsDescriptorAllocation
 {
-	uint32_t numDescriptors;
+	uint32_t descriptorStartIndex;
 	UINT descriptorIncrementSize;
 	D3D12_CPU_DESCRIPTOR_HANDLE descriptorBase;
+	D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptorBase;
+	ID3D12DescriptorHeap* descriptorHeap;
 };
 
 class GraphicsDescriptorAllocationPage
@@ -26,5 +28,6 @@ private:
 	ComPtr<ID3D12DescriptorHeap> descriptorHeap;
 
 	SIZE_T descriptorBaseOffset;
+	UINT64 gpuDescriptorBaseOffset;
 	D3D12_DESCRIPTOR_HEAP_TYPE descriptorHeapType;
 };

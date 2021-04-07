@@ -13,7 +13,7 @@ void GraphicsResourceManager::Initialize(ID3D12Device* _device, ID3D12GraphicsCo
 	commandList = _commandList;
 }
 
-VertexBufferId&& GraphicsResourceManager::CreateVertexBuffer(std::vector<uint8_t>& data, uint32_t vertexStride)
+VertexBufferId GraphicsResourceManager::CreateVertexBuffer(std::vector<uint8_t>& data, uint32_t vertexStride)
 {
 	GraphicsBufferAllocation vertexBufferAllocation{};
 
@@ -48,10 +48,10 @@ VertexBufferId&& GraphicsResourceManager::CreateVertexBuffer(std::vector<uint8_t
 
 	vertexBufferPool.push_back(graphicsVertexBuffer);
 
-	return std::move(VertexBufferId(vertexBufferPool.size() - 1));
+	return VertexBufferId(vertexBufferPool.size() - 1);
 }
 
-ConstantBufferId&& GraphicsResourceManager::CreateConstantBuffer(std::vector<uint8_t>& data)
+ConstantBufferId GraphicsResourceManager::CreateConstantBuffer(std::vector<uint8_t>& data)
 {
 	GraphicsBufferAllocation constantBufferAllocation{};
 
@@ -76,23 +76,23 @@ ConstantBufferId&& GraphicsResourceManager::CreateConstantBuffer(std::vector<uin
 
 	constantBufferPool.push_back(graphicsConstantBuffer);
 
-	return std::move(ConstantBufferId(constantBufferPool.size() - 1));
+	return ConstantBufferId(constantBufferPool.size() - 1);
 }
 
-TextureId&& GraphicsResourceManager::CreateTexture(const std::filesystem::path& fileName)
+TextureId GraphicsResourceManager::CreateTexture(const std::filesystem::path& fileName)
 {
 	std::vector<uint8_t> textureData;
 	TextureInfo textureInfo;
 
-	if (fileName.extension() == "dds")
+	if (fileName.extension() == ".dds")
 		GraphicsDDSLoader::Load(fileName, textureData, textureInfo);
 	else
 		throw std::exception("GraphicsResourceManager::CreateTexture: Unsupported file format!");
 
-	return std::forward<TextureId>(CreateTexture(textureData, textureInfo, D3D12_RESOURCE_FLAG_NONE));
+	return CreateTexture(textureData, textureInfo, D3D12_RESOURCE_FLAG_NONE);
 }
 
-TextureId&& GraphicsResourceManager::CreateTexture(const std::vector<uint8_t>& data, const TextureInfo& textureInfo, D3D12_RESOURCE_FLAGS resourceFlags)
+TextureId GraphicsResourceManager::CreateTexture(const std::vector<uint8_t>& data, const TextureInfo& textureInfo, D3D12_RESOURCE_FLAGS resourceFlags)
 {
 	GraphicsTextureAllocation textureAllocation{};
 
@@ -101,8 +101,6 @@ TextureId&& GraphicsResourceManager::CreateTexture(const std::vector<uint8_t>& d
 	GraphicsTextureAllocation uploadTextureAllocation{};
 
 	textureAllocator.AllocateTemporaryUpload(device, resourceFlags, textureInfo, uploadTextureAllocation);
-
-	std::copy(data.begin(), data.end(), uploadTextureAllocation.cpuAddress);
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc{};
 	shaderResourceViewDesc.Format = textureInfo.format;
@@ -147,8 +145,12 @@ TextureId&& GraphicsResourceManager::CreateTexture(const std::vector<uint8_t>& d
 	if (uploadTextureAllocation.textureResource == nullptr)
 		throw std::exception("GraphicsResourceManager::CreateTexture: Upload Texture Resource is null!");
 
-	commandList->CopyResource(textureAllocation.textureResource, uploadTextureAllocation.textureResource);
-	
+	SetResourceBarrier(commandList, textureAllocation.textureResource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+
+	UploadTexture(uploadTextureAllocation.textureResource, textureAllocation.textureResource, textureInfo, data, uploadTextureAllocation.cpuAddress);
+
+	SetResourceBarrier(commandList, textureAllocation.textureResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COMMON);
+
 	GraphicsDescriptorAllocation shaderResourceDescriptorAllocation{};
 
 	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, shaderResourceDescriptorAllocation);
@@ -163,10 +165,10 @@ TextureId&& GraphicsResourceManager::CreateTexture(const std::vector<uint8_t>& d
 
 	texturePool.push_back(graphicsTexture);
 
-	return std::move(TextureId(texturePool.size() - 1));
+	return TextureId(texturePool.size() - 1);
 }
 
-SamplerId&& GraphicsResourceManager::CreateSampler(const D3D12_SAMPLER_DESC& samplerDesc)
+SamplerId GraphicsResourceManager::CreateSampler(const D3D12_SAMPLER_DESC& samplerDesc)
 {
 	GraphicsDescriptorAllocation samplerDescriptorAllocation{};
 
@@ -180,7 +182,7 @@ SamplerId&& GraphicsResourceManager::CreateSampler(const D3D12_SAMPLER_DESC& sam
 
 	samplerPool.push_back(graphicsSampler);
 
-	return std::move(SamplerId(samplerPool.size() - 1));
+	return SamplerId(samplerPool.size() - 1);
 }
 
 const GraphicsVertexBuffer& GraphicsResourceManager::GetVertexBuffer(const VertexBufferId& resourceId)
@@ -207,4 +209,59 @@ void GraphicsResourceManager::ReleaseTemporaryUploadBuffers()
 {
 	bufferAllocator.ReleaseTemporaryBuffers();
 	textureAllocator.ReleaseTemporaryBuffers();
+}
+
+void GraphicsResourceManager::UploadTexture(ID3D12Resource* uploadBuffer, ID3D12Resource* targetTexture, const TextureInfo& textureInfo, const std::vector<uint8_t>& data,
+	uint8_t* uploadBufferCPUAddress)
+{
+	uint32_t numSubresources = textureInfo.depth * textureInfo.mipLevels;
+
+	std::vector<uint8_t> srcLayouts((sizeof(D3D12_PLACED_SUBRESOURCE_FOOTPRINT) + sizeof(uint32_t) + sizeof(uint64_t)) * numSubresources);
+
+	auto targetTextureDesc = targetTexture->GetDesc();
+	std::vector<uint32_t> numRows(numSubresources);
+	std::vector<uint64_t> rowSizesPerByte(numSubresources);
+	uint64_t requiredSize;
+
+	device->GetCopyableFootprints(&targetTextureDesc, 0, numSubresources, 0, reinterpret_cast<D3D12_PLACED_SUBRESOURCE_FOOTPRINT*>(srcLayouts.data()), numRows.data(),
+		rowSizesPerByte.data(), &requiredSize);
+
+	for (uint32_t subresourceIndex = 0; subresourceIndex < numSubresources; subresourceIndex++)
+	{
+		D3D12_PLACED_SUBRESOURCE_FOOTPRINT srcLayout = reinterpret_cast<D3D12_PLACED_SUBRESOURCE_FOOTPRINT*>(&srcLayouts[0])[subresourceIndex];
+
+		CopyRawDataToSubresource(textureInfo, numRows[subresourceIndex], srcLayout.Footprint.Depth, srcLayout.Footprint.RowPitch,
+			static_cast<uint64_t>(srcLayout.Footprint.RowPitch) * numRows[subresourceIndex], rowSizesPerByte[subresourceIndex], &data[0] + srcLayout.Offset*0, uploadBufferCPUAddress);
+	}
+	
+	for (uint32_t subresourceIndex = 0; subresourceIndex < numSubresources; subresourceIndex++)
+	{
+		D3D12_TEXTURE_COPY_LOCATION srcLocation{};
+		srcLocation.pResource = uploadBuffer;
+		srcLocation.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+		srcLocation.PlacedFootprint = reinterpret_cast<D3D12_PLACED_SUBRESOURCE_FOOTPRINT*>(&srcLayouts[0])[subresourceIndex];
+
+		D3D12_TEXTURE_COPY_LOCATION destLocation{};
+		destLocation.pResource = targetTexture;
+		destLocation.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+		destLocation.SubresourceIndex = subresourceIndex;
+
+		commandList->CopyTextureRegion(&destLocation, 0, 0, 0, &srcLocation, nullptr);
+	}
+}
+
+void GraphicsResourceManager::CopyRawDataToSubresource(const TextureInfo& srcTextureInfo, uint32_t numRows, uint16_t numSlices, uint64_t destRowPitch,
+	uint64_t destSlicePitch, uint64_t rowSizeInBytes, const uint8_t* srcAddress, uint8_t* destAddress)
+{
+	for (uint16_t sliceIndex = 0; sliceIndex < numSlices; sliceIndex++)
+	{
+		for (uint64_t rowIndex = 0; rowIndex < numRows; rowIndex++)
+		{
+			const uint8_t* srcBeginAddress = srcAddress + sliceIndex * srcTextureInfo.slicePitch + rowIndex * srcTextureInfo.rowPitch;
+			const uint8_t* srcEndAddress = srcBeginAddress + rowSizeInBytes;
+			uint8_t* destBeginAddress = destAddress + sliceIndex * destSlicePitch + rowIndex * destRowPitch;
+
+			std::copy(srcBeginAddress, srcEndAddress, destBeginAddress);
+		}
+	}
 }

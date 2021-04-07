@@ -149,8 +149,7 @@ void GraphicsRendererDirectX12::FrameRender()
 void GraphicsRendererDirectX12::PrepareNextFrame()
 {
 	auto currentFenceValue = fenceValues[bufferIndex];
-	ThrowIfFailed(commandQueue->Signal(fence.Get(), currentFenceValue),
-		"GraphicsRendererDirectX12::PrepareNextFrame: Signal error!");
+	ThrowIfFailed(commandQueue->Signal(fence.Get(), currentFenceValue), "GraphicsRendererDirectX12::PrepareNextFrame: Signal error!");
 
 	bufferIndex = swapChain->GetCurrentBackBufferIndex();
 

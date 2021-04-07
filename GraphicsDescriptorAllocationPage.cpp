@@ -2,7 +2,7 @@
 
 GraphicsDescriptorAllocationPage::GraphicsDescriptorAllocationPage(ID3D12Device* device, const D3D12_DESCRIPTOR_HEAP_TYPE _descriptorHeapType,
 	uint32_t _numDescriptors)
-	: numDescriptors(_numDescriptors), descriptorHeapType(_descriptorHeapType), descriptorBaseOffset(0u)
+	: numDescriptors(_numDescriptors), descriptorHeapType(_descriptorHeapType), descriptorBaseOffset(0u), gpuDescriptorBaseOffset(0u)
 {
 	D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc{};
 	descriptorHeapDesc.NumDescriptors = numDescriptors;
@@ -16,6 +16,7 @@ GraphicsDescriptorAllocationPage::GraphicsDescriptorAllocationPage(ID3D12Device*
 	descriptorIncrementSize =  device->GetDescriptorHandleIncrementSize(descriptorHeapType);
 
 	descriptorBaseOffset = descriptorHeap->GetCPUDescriptorHandleForHeapStart().ptr;
+	gpuDescriptorBaseOffset = descriptorHeap->GetGPUDescriptorHandleForHeapStart().ptr;
 }
 
 void GraphicsDescriptorAllocationPage::Allocate(uint32_t _numDescriptors, GraphicsDescriptorAllocation& allocation)
@@ -24,10 +25,13 @@ void GraphicsDescriptorAllocationPage::Allocate(uint32_t _numDescriptors, Graphi
 		throw std::exception("GraphicsDescriptorAllocationPage::Allocate: Bad allocation");
 
 	allocation.descriptorBase.ptr = descriptorBaseOffset;
+	allocation.gpuDescriptorBase.ptr = gpuDescriptorBaseOffset;
 	allocation.descriptorIncrementSize = descriptorIncrementSize;
-	allocation.numDescriptors = _numDescriptors;
+	allocation.descriptorStartIndex = numDescriptors - numFreeHandles;
+	allocation.descriptorHeap = descriptorHeap.Get();
 
 	descriptorBaseOffset += static_cast<SIZE_T>(static_cast<INT64>(_numDescriptors) * static_cast<INT64>(descriptorIncrementSize));
+	gpuDescriptorBaseOffset += static_cast<UINT64>(static_cast<INT64>(_numDescriptors) * static_cast<INT64>(descriptorIncrementSize));
 	numFreeHandles -= _numDescriptors;
 }
 

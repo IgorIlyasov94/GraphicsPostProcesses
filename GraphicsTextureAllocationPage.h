@@ -5,7 +5,6 @@
 struct GraphicsTextureAllocation
 {
 	uint8_t* cpuAddress;
-	D3D12_GPU_VIRTUAL_ADDRESS gpuAddress;
 	ID3D12Resource* textureResource;
 };
 
@@ -19,7 +18,6 @@ public:
 
 private:
 	uint8_t* cpuAddress;
-	D3D12_GPU_VIRTUAL_ADDRESS gpuAddress;
 
 	D3D12_HEAP_TYPE heapType;
 

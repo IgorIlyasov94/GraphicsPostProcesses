@@ -14,6 +14,9 @@ void GraphicsDDSLoader::Load(const std::filesystem::path& filePath, std::vector<
 	textureInfo.width = header.width;
 	textureInfo.height = header.height;
 	textureInfo.depth = header.depth;
+	textureInfo.mipLevels = header.mipMapCount;
+	textureInfo.rowPitch = header.pitchOrLinearSize;
+	textureInfo.slicePitch = textureInfo.rowPitch * textureInfo.height;
 
 	if (MakeFourCC('D', 'X', '1', '0') == header.pixelFormat.fourCC)
 	{
@@ -37,7 +40,7 @@ void GraphicsDDSLoader::Load(const std::filesystem::path& filePath, std::vector<
 		}
 		else if (textureInfo.dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D)
 		{
-			if ((header.flags & D3D11_RESOURCE_MISC_TEXTURECUBE) > 0)
+			if ((headerDXT10.miscFlag & D3D11_RESOURCE_MISC_TEXTURECUBE) > 0)
 				if (arraySize > 1)
 					textureInfo.srvDimension = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
 				else
@@ -60,7 +63,10 @@ void GraphicsDDSLoader::Load(const std::filesystem::path& filePath, std::vector<
 		textureInfo.srvDimension = D3D12_SRV_DIMENSION_UNKNOWN;
 	}
 
-	std::vector<uint8_t> textureData{ std::istream_iterator<uint8_t>(ddsFile),std::istream_iterator<uint8_t>() };
+	auto textureSizeInBytes = textureInfo.rowPitch * textureInfo.height * textureInfo.depth;
+
+	std::vector<uint8_t> textureData(textureSizeInBytes);
+	ddsFile.read(reinterpret_cast<char*>(&textureData[0]), textureSizeInBytes);
 
 	data = textureData;
 }
