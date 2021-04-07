@@ -1,6 +1,6 @@
-/*Texture2D texScene : register(t0);
-Texture2D texBloom : register(t1);
-Texture2D texLuminance : register(t2);
+Texture2D texScene : register(t0);
+/*Texture2D texBloom : register(t1);
+Texture2D texLuminance : register(t2);*/
 
 cbuffer CB : register(b0)
 {
@@ -10,7 +10,7 @@ cbuffer CB : register(b0)
 	float whiteCutoff;
 	float brightPassThreshold;
 	float brightPassOffset;
-};*/
+};
 
 struct Input
 {
@@ -27,9 +27,9 @@ Output main(Input input)
 {
 	Output output = (Output)0;
 	
-	/*float3 color = texScene.Load(int3((int2) input.position.xy, 0)).xyz;
+	float3 color = texScene.Load(int3((int2) input.position.xy, 0) % 256).xyz;
 	
-	float gray = dot(color, float3(0.2125f, 0.7154f, 0.0721f));
+	/*float gray = dot(color, float3(0.2125f, 0.7154f, 0.0721f));
 	
 	float luminance = texLuminance.Load(int3(0, 0, 0)).x;
 	
@@ -45,7 +45,16 @@ Output main(Input input)
 	color *= 1.0f + color / (whiteCutoff * whiteCutoff);
 	color /= 1.0f + color;*/
 	
-	output.color = float4(input.texCoord, 0.0f, 1.0f);//float4(saturate(color + bloom), 1.0f);
+	float4 outputColor = 0.0f.xxxx;
+	
+	/*if (WaveIsFirstLane())
+		outputColor = float4(1., 1., 1., 1.);
+	if (WaveGetLaneIndex() == WaveActiveMax(WaveGetLaneIndex()))
+		outputColor = float4(1., 0., 0., 1.);*/
+	
+	outputColor.xyz = color;// + shiftVector;
+	
+	output.color = outputColor;//float4(saturate(color + bloom), 1.0f);
 	
 	return output;
 }
