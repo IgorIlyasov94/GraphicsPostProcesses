@@ -271,7 +271,7 @@ float3 GraphicsOBJLoader::CalculatePolygonNormal(VertexFormat vertexFormat, cons
 		normal += XMVector3Cross(vector0, vector1);
 	}
 
-	normal = XMVector3Normalize(normal);
+	normal = XMVector3NormalizeEst(normal);
 
 	float3 result{};
 
@@ -332,6 +332,7 @@ float3 GraphicsOBJLoader::CalculateNormal(float3 position0, float3 position1, fl
 	floatN vector1_2 = XMLoadFloat3(&position2) - XMLoadFloat3(&position1);
 
 	floatN normal = XMVector3Cross(vector0_1, vector1_2);
+	normal = XMVector3NormalizeEst(normal);
 
 	float3 result;
 
@@ -348,7 +349,7 @@ void GraphicsOBJLoader::CalculateNormals(VertexFormat vertexFormat, const std::v
 	uint32_t faceStride = (vertexFormat == VertexFormat::POSITION) ? 1 : (vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD) ? 3 : 2;
 	uint32_t trianglesCount = faces.size() / (3 * faceStride);
 
-	for (uint32_t triangleId = 0; triangleId < trianglesCount; triangleId += faceStride)
+	for (uint32_t triangleId = 0; triangleId < trianglesCount; triangleId++)
 	{
 		std::array<uint32_t, 3> positionIndex{};
 		std::array<uint32_t, 3> texCoordIndex{};
@@ -358,20 +359,20 @@ void GraphicsOBJLoader::CalculateNormals(VertexFormat vertexFormat, const std::v
 
 		if (vertexFormat == VertexFormat::POSITION_TEXCOORD || vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD)
 			for (uint32_t localVertexId = 0; localVertexId < 3; localVertexId++)
-				texCoordIndex[localVertexId] = faces[(triangleId * 3 + localVertexId) * faceStride + (vertexFormat == VertexFormat::POSITION_TEXCOORD) ? 1 : 2];
+				texCoordIndex[localVertexId] = faces[(triangleId * 3 + localVertexId) * faceStride + 1];
 
-		float3 position0 = positions[positionIndex[0]];
-		float3 position1 = positions[positionIndex[1]];
-		float3 position2 = positions[positionIndex[2]];
+		auto& position0 = positions[positionIndex[0]];
+		auto& position1 = positions[positionIndex[1]];
+		auto& position2 = positions[positionIndex[2]];
 
 		float3 normal = CalculateNormal(position0, position1, position2);
 
 		for (uint32_t localVertexId = 0; localVertexId < 3; localVertexId++)
 		{
 			newFaces.push_back(positionIndex[localVertexId]);
-			newFaces.push_back(newNormals.size());
 			if (vertexFormat == VertexFormat::POSITION_TEXCOORD || vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD)
 				newFaces.push_back(texCoordIndex[localVertexId]);
+			newFaces.push_back(newNormals.size());
 		}
 
 		newNormals.push_back(normal);
@@ -384,24 +385,27 @@ void GraphicsOBJLoader::CalculateNormals(VertexFormat vertexFormat, const std::v
 void GraphicsOBJLoader::SmoothNormals(VertexFormat vertexFormat, const std::vector<float3>& positions, const std::vector<uint32_t>& faces,
 	std::vector<float3>& normals)
 {
-	uint32_t faceStride = (vertexFormat == VertexFormat::POSITION) ? 1 : (vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD) ? 3 : 2;
+	uint32_t faceStride = (vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD) ? 3 : 2;
+
+	std::vector<float3> newNormals(normals.begin(), normals.end());
 
 	for (uint32_t faceId = 0; faceId < faces.size(); faceId += faceStride)
 	{
-		std::vector<uint32_t> samePositionFaceIndices = GetFaceIndicesForSamePosition(vertexFormat, positions, faces, faceId, positions[faces[faceId]]);
+		std::vector<uint32_t> samePositionFaceIndices = GetFaceIndicesForSamePosition(vertexFormat, positions, faces, 0, positions[faces[faceId]]);
 
 		floatN averageNormal{};
 
 		for (auto& samePositionFaceIndex : samePositionFaceIndices)
-			averageNormal+= XMLoadFloat3(&normals[faces[samePositionFaceIndex + 1]]);
+			averageNormal += XMLoadFloat3(&normals[faces[samePositionFaceIndex + 2]]);
 
 		averageNormal /= static_cast<float>(samePositionFaceIndices.size());
+		averageNormal = XMVector3NormalizeEst(averageNormal);
 
 		for (auto& samePositionFaceIndex : samePositionFaceIndices)
-		{
-			XMStoreFloat3(&normals[faces[samePositionFaceIndex + 1]], averageNormal);
-		}
+			XMStoreFloat3(&newNormals[faces[samePositionFaceIndex + 2]], averageNormal);
 	}
+
+	normals = newNormals;
 }
 
 void GraphicsOBJLoader::ComposeVertices(VertexFormat vertexFormat, const std::vector<float3>& positions, const std::vector<float3>& normals,
@@ -464,13 +468,13 @@ const std::vector<uint32_t> GraphicsOBJLoader::GetFaceIndicesForSamePosition(Ver
 
 	for (uint32_t faceId = startFaceIndex; faceId < faces.size(); faceId += faceStride)
 	{
-		if (positions[faces[faceId]].x - position.x > epsilon)
+		if (std::abs(positions[faces[faceId]].x - position.x) > epsilon)
 			continue;
 
-		if (positions[faces[faceId]].y - position.y > epsilon)
+		if (std::abs(positions[faces[faceId]].y - position.y) > epsilon)
 			continue;
 
-		if (positions[faces[faceId]].z - position.z > epsilon)
+		if (std::abs(positions[faces[faceId]].z - position.z) > epsilon)
 			continue;
 
 		positionIndices.push_back(faceId);
