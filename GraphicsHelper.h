@@ -5,10 +5,14 @@
 using namespace Microsoft::WRL;
 using namespace DirectX;
 
+using floatN = XMVECTOR;
+using float3 = XMFLOAT3;
+using float2 = XMFLOAT2;
+
 using ScreenQuadVertex = struct
 {
-	XMFLOAT3 position;
-	XMFLOAT2 texCoord;
+	float3 position;
+	float2 texCoord;
 };
 
 using ShaderList = struct
@@ -31,6 +35,15 @@ using TextureInfo = struct
 	DXGI_FORMAT format;
 	D3D12_RESOURCE_DIMENSION dimension;
 	D3D12_SRV_DIMENSION srvDimension;
+};
+
+enum class VertexFormat
+{
+	UNDEFINED,
+	POSITION,
+	POSITION_TEXCOORD,
+	POSITION_NORMAL,
+	POSITION_NORMAL_TEXCOORD
 };
 
 constexpr size_t _KB = 1024;

@@ -151,6 +151,7 @@
     <ClCompile Include="GraphicsDDSLoader.cpp" />
     <ClCompile Include="GraphicsDescriptorAllocationPage.cpp" />
     <ClCompile Include="GraphicsDescriptorAllocator.cpp" />
+    <ClCompile Include="GraphicsOBJLoader.cpp" />
     <ClCompile Include="GraphicsHelper.cpp" />
     <ClCompile Include="GraphicsPostProcesses.cpp" />
     <ClCompile Include="GraphicsResourceManager.cpp" />
@@ -167,6 +168,7 @@
     <ClInclude Include="GraphicsDDSLoader.h" />
     <ClInclude Include="GraphicsDescriptorAllocationPage.h" />
     <ClInclude Include="GraphicsDescriptorAllocator.h" />
+    <ClInclude Include="GraphicsOBJLoader.h" />
     <ClInclude Include="GraphicsHelper.h" />
     <ClInclude Include="GraphicsPostProcesses.h" />
     <ClInclude Include="GraphicsResourceManager.h" />

@@ -43,11 +43,14 @@ void GraphicsPostProcesses::Initialize(const int32_t& resolutionX, const int32_t
 	hdrShaderList.vertexShader = { quadVertexShader, sizeof(quadVertexShader) };
 	hdrShaderList.pixelShader = { toneMappingPixelShader, sizeof(toneMappingPixelShader) };
 
-	noiseTextureId = std::move(resourceManager.CreateTexture("Resources\\Textures\\Noise.dds"));
-
+	noiseTextureId = resourceManager.CreateTexture("Resources\\Textures\\Noise.dds");
+	diffuseTextureId = resourceManager.CreateTexture("Resources\\Textures\\Diffuse0.dds");
+	
 	const std::set<size_t> hdrConstantBufferIndices = { 0 };
-	const std::vector<size_t> hdrTextureIndices = { 0 };
-	const std::vector<size_t> hdrTextureDescriptorIndices = { resourceManager.GetTexture(noiseTextureId).descriptorAllocation.descriptorStartIndex };
+	const std::vector<size_t> hdrTextureIndices = { 0, 1 };
+	const std::vector<size_t> hdrTextureDescriptorIndices = { resourceManager.GetTexture(noiseTextureId).descriptorAllocation.descriptorStartIndex, 
+		resourceManager.GetTexture(diffuseTextureId).descriptorAllocation.descriptorStartIndex };
+
 	const std::vector<D3D12_STATIC_SAMPLER_DESC> postProcessSamplerDescs;
 
 	std::vector<D3D12_DESCRIPTOR_RANGE> hdrTextureDescRange;
@@ -65,27 +68,28 @@ void GraphicsPostProcesses::Initialize(const int32_t& resolutionX, const int32_t
 
 	ScreenQuadVertex vertices[] =
 	{
-		{ XMFLOAT3(-1.0f, 1.0f, 0.5f), XMFLOAT2(0.0f, 0.0f) },
-		{ XMFLOAT3(1.0f, 1.0f, 0.5f), XMFLOAT2(1.0f, 0.0f) },
-		{ XMFLOAT3(-1.0f, -1.0f, 0.5f), XMFLOAT2(0.0f, 1.0f) },
-		{ XMFLOAT3(1.0f, -1.0f, 0.5f), XMFLOAT2(1.0f, 1.0f) }
+		{ float3(-1.0f, 1.0f, 0.5f), float2(0.0f, 0.0f) },
+		{ float3(1.0f, 1.0f, 0.5f), float2(1.0f, 0.0f) },
+		{ float3(-1.0f, -1.0f, 0.5f), float2(0.0f, 1.0f) },
+		{ float3(1.0f, -1.0f, 0.5f), float2(1.0f, 1.0f) }
 	};
 
 	std::vector<uint8_t> vertexBufferRawData;
 
 	std::copy(reinterpret_cast<uint8_t*>(&vertices[0]), reinterpret_cast<uint8_t*>(&vertices[0]) + sizeof(vertices), std::back_inserter(vertexBufferRawData));
 
-	screenQuadVertexBufferId = std::move(resourceManager.CreateVertexBuffer(vertexBufferRawData, sizeof(ScreenQuadVertex)));
+	screenQuadVertexBufferId = resourceManager.CreateVertexBuffer(vertexBufferRawData, sizeof(ScreenQuadVertex));
 
 	std::vector<uint8_t> hdrConstantBufferRawData;
 
 	std::copy(reinterpret_cast<uint8_t*>(&hdrConstantBuffer), reinterpret_cast<uint8_t*>(&hdrConstantBuffer) + sizeof(HdrConstantBuffer), std::back_inserter(hdrConstantBufferRawData));
 
-	hdrConstantBufferId = std::move(resourceManager.CreateConstantBuffer(hdrConstantBufferRawData));
+	hdrConstantBufferId = resourceManager.CreateConstantBuffer(hdrConstantBufferRawData);
 
 	renderTargetViewDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	
 	SetResourceBarrier(commandList, resourceManager.GetTexture(noiseTextureId).textureAllocation.textureResource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	SetResourceBarrier(commandList, resourceManager.GetTexture(diffuseTextureId).textureAllocation.textureResource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 }
 
 void GraphicsPostProcesses::EnableHDR(ID3D12GraphicsCommandList* commandList, ID3D12DescriptorHeap* outputRenderTargetDescHeap, size_t bufferIndex)
@@ -100,7 +104,7 @@ void GraphicsPostProcesses::EnableHDR(ID3D12GraphicsCommandList* commandList, ID
 
 	commandList->SetGraphicsRootConstantBufferView(0, resourceManager.GetConstantBuffer(hdrConstantBufferId).constantBufferViewDesc.BufferLocation);
 	commandList->SetGraphicsRootDescriptorTable(1, resourceManager.GetTexture(noiseTextureId).descriptorAllocation.gpuDescriptorBase);
-
+	
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 	commandList->IASetVertexBuffers(0, 1, &resourceManager.GetVertexBuffer(screenQuadVertexBufferId).vertexBufferView);
 	commandList->RSSetViewports(1, &sceneViewport);

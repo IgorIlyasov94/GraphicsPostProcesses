@@ -177,7 +177,7 @@ void CreateTextureRootDescriptorTable(const std::vector<size_t>& textureRegister
 		D3D12_DESCRIPTOR_RANGE descRange{};
 		descRange.NumDescriptors = 1;
 		descRange.BaseShaderRegister = textureRegisterIndices[textureRegisterId];
-		descRange.OffsetInDescriptorsFromTableStart = descriptorIndices[textureRegisterId];
+		descRange.OffsetInDescriptorsFromTableStart = descriptorIndices[textureRegisterId];// D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 		descRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 		descRange.RegisterSpace = 0;
 

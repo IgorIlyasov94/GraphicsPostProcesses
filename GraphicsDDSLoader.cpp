@@ -63,7 +63,7 @@ void GraphicsDDSLoader::Load(const std::filesystem::path& filePath, std::vector<
 		textureInfo.srvDimension = D3D12_SRV_DIMENSION_UNKNOWN;
 	}
 
-	auto textureSizeInBytes = textureInfo.rowPitch * textureInfo.height * textureInfo.depth;
+	size_t textureSizeInBytes = static_cast<size_t>(textureInfo.rowPitch * textureInfo.height * textureInfo.depth);
 
 	std::vector<uint8_t> textureData(textureSizeInBytes);
 	ddsFile.read(reinterpret_cast<char*>(&textureData[0]), textureSizeInBytes);

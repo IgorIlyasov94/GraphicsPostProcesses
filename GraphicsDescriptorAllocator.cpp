@@ -28,7 +28,7 @@ void GraphicsDescriptorAllocator::Allocate(ID3D12Device* device, uint32_t numDes
     DescriptorHeapPool& usedHeapPool, DescriptorHeapPool& emptyHeapPool, std::shared_ptr<GraphicsDescriptorAllocationPage>& currentPage,
     GraphicsDescriptorAllocation& allocation)
 {
-    if (!currentPage || !currentPage->HasSpace(numDescriptors))
+    if (currentPage.get() == nullptr || !currentPage->HasSpace(numDescriptors))
         SetNewPageAsCurrent(device, numDescriptors, descriptorType, usedHeapPool, emptyHeapPool, currentPage);
 
     currentPage->Allocate(numDescriptors, allocation);

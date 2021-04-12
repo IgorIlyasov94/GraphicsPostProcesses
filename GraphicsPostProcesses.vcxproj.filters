@@ -37,6 +37,12 @@
     <Filter Include="Файлы заголовков\GraphicsCore\GraphicsResourceManagement\TextureLoaders">
       <UniqueIdentifier>{aa1d4289-db5e-44d5-8e43-e366705bd3c4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Исходные файлы\GraphicsCore\GraphicsResourceManagement\MeshLoaders">
+      <UniqueIdentifier>{f4dc2fb3-a8f4-405b-8414-968be1c31d76}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Файлы заголовков\GraphicsCore\GraphicsResourceManagement\MeshLoaders">
+      <UniqueIdentifier>{6de81a9e-e18f-48b6-af68-b4342ae4bbe5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -81,6 +87,9 @@
     <ClCompile Include="GraphicsTextureAllocationPage.cpp">
       <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement</Filter>
     </ClCompile>
+    <ClCompile Include="GraphicsOBJLoader.cpp">
+      <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement\MeshLoaders</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -124,6 +133,9 @@
     </ClInclude>
     <ClInclude Include="GraphicsTextureAllocationPage.h">
       <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsOBJLoader.h">
+      <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement\MeshLoaders</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -37,5 +37,5 @@ void GraphicsDescriptorAllocationPage::Allocate(uint32_t _numDescriptors, Graphi
 
 bool GraphicsDescriptorAllocationPage::HasSpace(uint32_t _numDescriptors) const noexcept
 {
-	return numFreeHandles < _numDescriptors;
+	return numFreeHandles > _numDescriptors;
 }

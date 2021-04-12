@@ -30,7 +30,9 @@
 #include <exception>
 #include <stdexcept>
 #include <vector>
+#include <array>
 #include <deque>
+#include <list>
 #include <mutex>
 #include <set>
 #include <algorithm>

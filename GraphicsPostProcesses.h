@@ -31,6 +31,7 @@ private:
 	ConstantBufferId hdrConstantBufferId;
 
 	TextureId noiseTextureId;
+	TextureId diffuseTextureId;
 
 	D3D12_VIEWPORT sceneViewport;
 	D3D12_RECT sceneScissorRect;
@@ -42,7 +43,7 @@ private:
 
 	using HdrConstantBuffer = struct
 	{
-		XMFLOAT3 shiftVector;
+		float3 shiftVector;
 		float elapsedTime;
 		float middleGray;
 		float whiteCutoff;
