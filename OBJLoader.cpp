@@ -1,6 +1,6 @@
-#include "GraphicsOBJLoader.h"
+#include "OBJLoader.h"
 
-void GraphicsOBJLoader::Load(const std::filesystem::path& filePath, bool calculateNormals, VertexFormat& vertexFormat, std::vector<uint8_t>& verticesData,
+void Graphics::OBJLoader::Load(const std::filesystem::path& filePath, bool calculateNormals, VertexFormat& vertexFormat, std::vector<uint8_t>& verticesData,
 	std::vector<uint8_t>& indicesData)
 {
 	std::ifstream objFile(filePath, std::ios::in);
@@ -39,7 +39,7 @@ void GraphicsOBJLoader::Load(const std::filesystem::path& filePath, bool calcula
 	}
 
 	if (vertexFormat == VertexFormat::UNDEFINED)
-		throw std::exception("GraphicsOBJLoader::Load: Wrong file format");
+		throw std::exception("OBJLoader::Load: Wrong file format");
 
 	if (calculateNormals)
 	{
@@ -64,7 +64,7 @@ void GraphicsOBJLoader::Load(const std::filesystem::path& filePath, bool calcula
 	std::copy(reinterpret_cast<uint8_t*>(indices.data()), reinterpret_cast<uint8_t*>(indices.data()) + indices.size() * sizeof(uint32_t), indicesData.data());
 }
 
-std::string GraphicsOBJLoader::GetToken(const std::string& objLine)
+std::string Graphics::OBJLoader::GetToken(const std::string& objLine)
 {
 	std::stringstream objLineStream(objLine);
 
@@ -75,7 +75,7 @@ std::string GraphicsOBJLoader::GetToken(const std::string& objLine)
 	return token;
 }
 
-float2 GraphicsOBJLoader::GetVector2(const std::string& objLine)
+float2 Graphics::OBJLoader::GetVector2(const std::string& objLine)
 {
 	std::stringstream objLineStream(objLine);
 
@@ -87,7 +87,7 @@ float2 GraphicsOBJLoader::GetVector2(const std::string& objLine)
 	return result;
 }
 
-float3 GraphicsOBJLoader::GetVector3(const std::string& objLine)
+float3 Graphics::OBJLoader::GetVector3(const std::string& objLine)
 {
 	std::stringstream objLineStream(objLine);
 
@@ -99,7 +99,7 @@ float3 GraphicsOBJLoader::GetVector3(const std::string& objLine)
 	return result;
 }
 
-VertexFormat GraphicsOBJLoader::GetFaceFormat(size_t texCoordCount, size_t normalCount)
+Graphics::VertexFormat Graphics::OBJLoader::GetFaceFormat(size_t texCoordCount, size_t normalCount)
 {
 	VertexFormat faceFormat = VertexFormat::UNDEFINED;
 
@@ -119,7 +119,7 @@ VertexFormat GraphicsOBJLoader::GetFaceFormat(size_t texCoordCount, size_t norma
 	return faceFormat;
 }
 
-void GraphicsOBJLoader::GetFace(const std::string& objLine, VertexFormat faceFormat, std::vector<uint32_t>& face)
+void Graphics::OBJLoader::GetFace(const std::string& objLine, VertexFormat faceFormat, std::vector<uint32_t>& face)
 {
 	std::stringstream objLineStream(objLine);
 
@@ -149,7 +149,7 @@ void GraphicsOBJLoader::GetFace(const std::string& objLine, VertexFormat faceFor
 	}
 }
 
-void GraphicsOBJLoader::TriangulateFace(VertexFormat vertexFormat, const std::vector<float3>& positions, std::vector<uint32_t>& face)
+void Graphics::OBJLoader::TriangulateFace(VertexFormat vertexFormat, const std::vector<float3>& positions, std::vector<uint32_t>& face)
 {
 	uint32_t faceStride = (vertexFormat == VertexFormat::POSITION) ? 1 : (vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD) ? 3 : 2;
 	uint32_t verticesCount = face.size() / faceStride;
@@ -232,7 +232,7 @@ void GraphicsOBJLoader::TriangulateFace(VertexFormat vertexFormat, const std::ve
 	face = newFace;
 }
 
-float3 GraphicsOBJLoader::CalculatePolygonCenter(VertexFormat vertexFormat, const std::vector<float3>& positions, const std::vector<uint32_t>& face)
+float3 Graphics::OBJLoader::CalculatePolygonCenter(VertexFormat vertexFormat, const std::vector<float3>& positions, const std::vector<uint32_t>& face)
 {
 	uint32_t faceStride = (vertexFormat == VertexFormat::POSITION) ? 1 : (vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD) ? 3 : 2;
 	uint32_t verticesCount = face.size() / faceStride;
@@ -251,7 +251,7 @@ float3 GraphicsOBJLoader::CalculatePolygonCenter(VertexFormat vertexFormat, cons
 	return result;
 }
 
-float3 GraphicsOBJLoader::CalculatePolygonNormal(VertexFormat vertexFormat, const std::vector<float3>& positions, const std::vector<uint32_t>& face)
+float3 Graphics::OBJLoader::CalculatePolygonNormal(VertexFormat vertexFormat, const std::vector<float3>& positions, const std::vector<uint32_t>& face)
 {
 	uint32_t faceStride = (vertexFormat == VertexFormat::POSITION) ? 1 : (vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD) ? 3 : 2;
 	uint32_t verticesCount = face.size() / faceStride;
@@ -280,7 +280,7 @@ float3 GraphicsOBJLoader::CalculatePolygonNormal(VertexFormat vertexFormat, cons
 	return result;
 }
 
-float GraphicsOBJLoader::CalculateTriangleArea(float3 position0, float3 position1, float3 position2)
+float Graphics::OBJLoader::CalculateTriangleArea(float3 position0, float3 position1, float3 position2)
 {
 	floatN vector0_1 = XMLoadFloat3(&position1) - XMLoadFloat3(&position0);
 	floatN vector1_2 = XMLoadFloat3(&position2) - XMLoadFloat3(&position1);
@@ -294,7 +294,7 @@ float GraphicsOBJLoader::CalculateTriangleArea(float3 position0, float3 position
 	return std::sqrt(result);
 }
 
-float3 GraphicsOBJLoader::CalculateBarycentric(float3 position0, float3 position1, float3 position2, float3 point)
+float3 Graphics::OBJLoader::CalculateBarycentric(float3 position0, float3 position1, float3 position2, float3 point)
 {
 	float triangleArea = CalculateTriangleArea(position0, position1, position2);
 	
@@ -306,7 +306,7 @@ float3 GraphicsOBJLoader::CalculateBarycentric(float3 position0, float3 position
 	return result;
 }
 
-bool GraphicsOBJLoader::CheckPointInTriangle(float3 position0, float3 position1, float3 position2, float3 point)
+bool Graphics::OBJLoader::CheckPointInTriangle(float3 position0, float3 position1, float3 position2, float3 point)
 {
 	float3 barycentric = CalculateBarycentric(position0, position1, position2, point);
 
@@ -316,7 +316,7 @@ bool GraphicsOBJLoader::CheckPointInTriangle(float3 position0, float3 position1,
 	return false;
 }
 
-bool GraphicsOBJLoader::CheckTriangleInPolygon(float3 position0, float3 position1, float3 position2, float3 polygonNormal)
+bool Graphics::OBJLoader::CheckTriangleInPolygon(float3 position0, float3 position1, float3 position2, float3 polygonNormal)
 {
 	float3 triangleNormal = CalculateNormal(position0, position1, position2);
 
@@ -326,7 +326,7 @@ bool GraphicsOBJLoader::CheckTriangleInPolygon(float3 position0, float3 position
 	return dotNN > 0.0f;
 }
 
-float3 GraphicsOBJLoader::CalculateNormal(float3 position0, float3 position1, float3 position2)
+float3 Graphics::OBJLoader::CalculateNormal(float3 position0, float3 position1, float3 position2)
 {
 	floatN vector0_1 = XMLoadFloat3(&position1) - XMLoadFloat3(&position0);
 	floatN vector1_2 = XMLoadFloat3(&position2) - XMLoadFloat3(&position1);
@@ -341,7 +341,7 @@ float3 GraphicsOBJLoader::CalculateNormal(float3 position0, float3 position1, fl
 	return result;
 }
 
-void GraphicsOBJLoader::CalculateNormals(VertexFormat vertexFormat, const std::vector<float3>& positions, std::vector<uint32_t>& faces, std::vector<float3>& normals)
+void Graphics::OBJLoader::CalculateNormals(VertexFormat vertexFormat, const std::vector<float3>& positions, std::vector<uint32_t>& faces, std::vector<float3>& normals)
 {
 	std::vector<uint32_t> newFaces;
 	std::vector<float3> newNormals;
@@ -382,7 +382,7 @@ void GraphicsOBJLoader::CalculateNormals(VertexFormat vertexFormat, const std::v
 	normals = newNormals;
 }
 
-void GraphicsOBJLoader::SmoothNormals(VertexFormat vertexFormat, const std::vector<float3>& positions, const std::vector<uint32_t>& faces,
+void Graphics::OBJLoader::SmoothNormals(VertexFormat vertexFormat, const std::vector<float3>& positions, const std::vector<uint32_t>& faces,
 	std::vector<float3>& normals)
 {
 	uint32_t faceStride = (vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD) ? 3 : 2;
@@ -408,7 +408,7 @@ void GraphicsOBJLoader::SmoothNormals(VertexFormat vertexFormat, const std::vect
 	normals = newNormals;
 }
 
-void GraphicsOBJLoader::ComposeVertices(VertexFormat vertexFormat, const std::vector<float3>& positions, const std::vector<float3>& normals,
+void Graphics::OBJLoader::ComposeVertices(VertexFormat vertexFormat, const std::vector<float3>& positions, const std::vector<float3>& normals,
 	const std::vector<float2>& texCoords, const std::vector<uint32_t>& faces, std::vector<float>& vertices, std::vector<uint32_t>& indices)
 {
 	auto facesIterator = faces.begin();
@@ -457,7 +457,7 @@ void GraphicsOBJLoader::ComposeVertices(VertexFormat vertexFormat, const std::ve
 	}
 }
 
-const std::vector<uint32_t> GraphicsOBJLoader::GetFaceIndicesForSamePosition(VertexFormat vertexFormat, const std::vector<float3>& positions,
+const std::vector<uint32_t> Graphics::OBJLoader::GetFaceIndicesForSamePosition(VertexFormat vertexFormat, const std::vector<float3>& positions,
 	const std::vector<uint32_t>& faces, uint32_t startFaceIndex, float3 position)
 {
 	const float epsilon = 0.00001f;
@@ -483,7 +483,7 @@ const std::vector<uint32_t> GraphicsOBJLoader::GetFaceIndicesForSamePosition(Ver
 	return positionIndices;
 }
 
-int64_t GraphicsOBJLoader::GetIndexForSameVertex(uint32_t vertex4ByteStride, const std::vector<float>& vertices, const std::vector<uint32_t>& indices,
+int64_t Graphics::OBJLoader::GetIndexForSameVertex(uint32_t vertex4ByteStride, const std::vector<float>& vertices, const std::vector<uint32_t>& indices,
 	float3 position, float3 normal, float2 texCoord)
 {
 	const float epsilon = 0.00001f;
@@ -536,7 +536,7 @@ int64_t GraphicsOBJLoader::GetIndexForSameVertex(uint32_t vertex4ByteStride, con
 	return -1;
 }
 
-uint32_t GraphicsOBJLoader::GetVertex4ByteStride(VertexFormat vertexFormat)
+uint32_t Graphics::OBJLoader::GetVertex4ByteStride(VertexFormat vertexFormat)
 {
 	if (vertexFormat == VertexFormat::POSITION_TEXCOORD)
 		return 5;

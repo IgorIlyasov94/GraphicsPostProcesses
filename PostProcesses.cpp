@@ -1,21 +1,21 @@
-#include "GraphicsPostProcesses.h"
+#include "PostProcesses.h"
 #include "Resources/Shaders/ScreenQuad.vsh.h"
 #include "Resources/Shaders/HDRToneMapping.psh.h"
 
-GraphicsPostProcesses::GraphicsPostProcesses()
+Graphics::PostProcesses::PostProcesses()
 	: sceneViewport{}, renderTargetViewDescriptorSize(0), hdrConstantBuffer{}
 {
 
 }
 
-GraphicsPostProcesses& GraphicsPostProcesses::GetInstance()
+Graphics::PostProcesses& Graphics::PostProcesses::GetInstance()
 {
-	static GraphicsPostProcesses instance;
+	static PostProcesses instance;
 
 	return instance;
 }
 
-void GraphicsPostProcesses::Initialize(const int32_t& resolutionX, const int32_t& resolutionY, ID3D12Device* device, D3D12_VIEWPORT& _sceneViewport,
+void Graphics::PostProcesses::Initialize(const int32_t& resolutionX, const int32_t& resolutionY, ID3D12Device* device, D3D12_VIEWPORT& _sceneViewport,
 	ID3D12GraphicsCommandList* commandList)
 {
 	sceneViewport = _sceneViewport;
@@ -92,7 +92,7 @@ void GraphicsPostProcesses::Initialize(const int32_t& resolutionX, const int32_t
 	SetResourceBarrier(commandList, resourceManager.GetTexture(diffuseTextureId).textureAllocation.textureResource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 }
 
-void GraphicsPostProcesses::EnableHDR(ID3D12GraphicsCommandList* commandList, ID3D12DescriptorHeap* outputRenderTargetDescHeap, size_t bufferIndex)
+void Graphics::PostProcesses::EnableHDR(ID3D12GraphicsCommandList* commandList, ID3D12DescriptorHeap* outputRenderTargetDescHeap, size_t bufferIndex)
 {
 	commandList->SetPipelineState(hdrPipelineState.Get());
 

@@ -1,6 +1,6 @@
-#include "GraphicsBufferAllocationPage.h"
+#include "BufferAllocationPage.h"
 
-GraphicsBufferAllocationPage::GraphicsBufferAllocationPage(ID3D12Device* device, D3D12_HEAP_TYPE _heapType, uint64_t _pageSize)
+Graphics::BufferAllocationPage::BufferAllocationPage(ID3D12Device* device, D3D12_HEAP_TYPE _heapType, uint64_t _pageSize)
 	: heapType(_heapType), pageSize(_pageSize), offset(0), currentCPUAddress(nullptr), currentGPUAddress(D3D12_GPU_VIRTUAL_ADDRESS(0))
 {
 	D3D12_HEAP_PROPERTIES heapProperties;
@@ -17,18 +17,18 @@ GraphicsBufferAllocationPage::GraphicsBufferAllocationPage(ID3D12Device* device,
 		resourceState = D3D12_RESOURCE_STATE_COPY_DEST;
 
 	ThrowIfFailed(device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &resourceDesc, resourceState, nullptr,
-		IID_PPV_ARGS(&pageResource)), "GraphicsBufferAllocationPage::GraphicsBufferAllocationPage: Resource creating error");
+		IID_PPV_ARGS(&pageResource)), "BufferAllocationPage::BufferAllocationPage: Resource creating error");
 
 	D3D12_RANGE range = { 0, 0 };
 
 	if (heapType == D3D12_HEAP_TYPE_UPLOAD)
 		ThrowIfFailed(pageResource->Map(0, &range, reinterpret_cast<void**>(&currentCPUAddress)),
-			"GraphicsBufferAllocationPage::GraphicsBufferAllocationPage: Resource mapping error");
+			"BufferAllocationPage::BufferAllocationPage: Resource mapping error");
 
 	currentGPUAddress = pageResource->GetGPUVirtualAddress();
 }
 
-GraphicsBufferAllocationPage::~GraphicsBufferAllocationPage()
+Graphics::BufferAllocationPage::~BufferAllocationPage()
 {
 	if (heapType == D3D12_HEAP_TYPE_UPLOAD)
 		pageResource->Unmap(0, nullptr);
@@ -39,10 +39,10 @@ GraphicsBufferAllocationPage::~GraphicsBufferAllocationPage()
 	offset = 0;
 }
 
-void GraphicsBufferAllocationPage::Allocate(uint64_t _size, uint64_t alignment, GraphicsBufferAllocation& allocation)
+void Graphics::BufferAllocationPage::Allocate(uint64_t _size, uint64_t alignment, BufferAllocation& allocation)
 {
 	if (!HasSpace(_size, alignment))
-		throw std::exception("GraphicsBufferAllocationPage::Allocate: Bad allocation");
+		throw std::exception("BufferAllocationPage::Allocate: Bad allocation");
 
 	auto alignedSize = AlignSize(_size, alignment);
 	offset = AlignSize(offset, alignment);
@@ -55,7 +55,7 @@ void GraphicsBufferAllocationPage::Allocate(uint64_t _size, uint64_t alignment, 
 	offset += alignedSize;
 }
 
-bool GraphicsBufferAllocationPage::HasSpace(uint64_t _size, uint64_t alignment) const noexcept
+bool Graphics::BufferAllocationPage::HasSpace(uint64_t _size, uint64_t alignment) const noexcept
 {
 	auto alignedSize = AlignSize(_size, alignment);
 	auto alignedOffset = AlignSize(offset, alignment);

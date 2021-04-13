@@ -25,8 +25,11 @@
     <Filter Include="Файлы заголовков\GraphicsPostProcesses">
       <UniqueIdentifier>{63978b76-e279-4533-8cb4-382a96973fae}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Файлы заголовков\GraphicsCore\GraphicsResourceManagement">
-      <UniqueIdentifier>{a55a7c7d-4006-4d5e-befb-039203a398f3}</UniqueIdentifier>
+    <Filter Include="Файлы заголовков\GraphicsCore\GraphicsObjects">
+      <UniqueIdentifier>{a257ad8f-287e-4fc3-a1fb-31d517d269d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\GraphicsCore\GraphicsObjects">
+      <UniqueIdentifier>{ec5f4340-975d-4991-9c09-9c54ded11e7b}</UniqueIdentifier>
     </Filter>
     <Filter Include="Исходные файлы\GraphicsCore\GraphicsResourceManagement">
       <UniqueIdentifier>{0ef524a1-2427-45c1-b840-f5d5db009314}</UniqueIdentifier>
@@ -34,11 +37,14 @@
     <Filter Include="Исходные файлы\GraphicsCore\GraphicsResourceManagement\TextureLoaders">
       <UniqueIdentifier>{27b47c16-b6fa-4121-a1e5-71a5096235a8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Файлы заголовков\GraphicsCore\GraphicsResourceManagement\TextureLoaders">
-      <UniqueIdentifier>{aa1d4289-db5e-44d5-8e43-e366705bd3c4}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Исходные файлы\GraphicsCore\GraphicsResourceManagement\MeshLoaders">
       <UniqueIdentifier>{f4dc2fb3-a8f4-405b-8414-968be1c31d76}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Файлы заголовков\GraphicsCore\GraphicsResourceManagement">
+      <UniqueIdentifier>{a55a7c7d-4006-4d5e-befb-039203a398f3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Файлы заголовков\GraphicsCore\GraphicsResourceManagement\TextureLoaders">
+      <UniqueIdentifier>{aa1d4289-db5e-44d5-8e43-e366705bd3c4}</UniqueIdentifier>
     </Filter>
     <Filter Include="Файлы заголовков\GraphicsCore\GraphicsResourceManagement\MeshLoaders">
       <UniqueIdentifier>{6de81a9e-e18f-48b6-af68-b4342ae4bbe5}</UniqueIdentifier>
@@ -48,94 +54,100 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsRendererDirecX12.cpp">
-      <Filter>Исходные файлы\GraphicsCore</Filter>
-    </ClCompile>
-    <ClCompile Include="GraphicsCommonHandler.cpp">
-      <Filter>Исходные файлы\GraphicsCore</Filter>
-    </ClCompile>
     <ClCompile Include="Main.cpp">
       <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="GraphicsPostProcesses.cpp">
-      <Filter>Исходные файлы\GraphicsPostProcesses</Filter>
     </ClCompile>
     <ClCompile Include="GraphicsHelper.cpp">
       <Filter>Исходные файлы\GraphicsCore</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsDescriptorAllocationPage.cpp">
-      <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement</Filter>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>Исходные файлы\GraphicsCore\GraphicsObjects</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsDescriptorAllocator.cpp">
-      <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement</Filter>
+    <ClCompile Include="OBJLoader.cpp">
+      <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement\MeshLoaders</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsResourceManager.cpp">
-      <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement</Filter>
-    </ClCompile>
-    <ClCompile Include="GraphicsBufferAllocator.cpp">
-      <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement</Filter>
-    </ClCompile>
-    <ClCompile Include="GraphicsBufferAllocationPage.cpp">
-      <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement</Filter>
-    </ClCompile>
-    <ClCompile Include="GraphicsDDSLoader.cpp">
+    <ClCompile Include="DDSLoader.cpp">
       <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement\TextureLoaders</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsTextureAllocator.cpp">
+    <ClCompile Include="BufferAllocationPage.cpp">
       <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsTextureAllocationPage.cpp">
+    <ClCompile Include="BufferAllocator.cpp">
       <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement</Filter>
     </ClCompile>
-    <ClCompile Include="GraphicsOBJLoader.cpp">
-      <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement\MeshLoaders</Filter>
+    <ClCompile Include="DescriptorAllocationPage.cpp">
+      <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement</Filter>
+    </ClCompile>
+    <ClCompile Include="DescriptorAllocator.cpp">
+      <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceManager.cpp">
+      <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureAllocationPage.cpp">
+      <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureAllocator.cpp">
+      <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement</Filter>
+    </ClCompile>
+    <ClCompile Include="CommonHandler.cpp">
+      <Filter>Исходные файлы\GraphicsCore</Filter>
+    </ClCompile>
+    <ClCompile Include="RendererDirecX12.cpp">
+      <Filter>Исходные файлы\GraphicsCore</Filter>
+    </ClCompile>
+    <ClCompile Include="PostProcesses.cpp">
+      <Filter>Исходные файлы\GraphicsPostProcesses</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsRendererDirectX12.h">
-      <Filter>Файлы заголовков\GraphicsCore</Filter>
-    </ClInclude>
-    <ClInclude Include="GraphicsCommonHandler.h">
-      <Filter>Файлы заголовков\GraphicsCore</Filter>
-    </ClInclude>
     <ClInclude Include="Main.h">
       <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="GraphicsPostProcesses.h">
-      <Filter>Файлы заголовков\GraphicsPostProcesses</Filter>
     </ClInclude>
     <ClInclude Include="GraphicsHelper.h">
       <Filter>Файлы заголовков\GraphicsCore</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsDescriptorAllocationPage.h">
-      <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement</Filter>
+    <ClInclude Include="Mesh.h">
+      <Filter>Файлы заголовков\GraphicsCore\GraphicsObjects</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsDescriptorAllocator.h">
-      <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement</Filter>
+    <ClInclude Include="OBJLoader.h">
+      <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement\MeshLoaders</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsResourceManager.h">
-      <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement</Filter>
-    </ClInclude>
-    <ClInclude Include="GraphicsBufferAllocator.h">
-      <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement</Filter>
-    </ClInclude>
-    <ClInclude Include="GraphicsBufferAllocationPage.h">
-      <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement</Filter>
-    </ClInclude>
-    <ClInclude Include="GraphicsDDSLoader.h">
+    <ClInclude Include="DDSLoader.h">
       <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement\TextureLoaders</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsTextureAllocator.h">
+    <ClInclude Include="BufferAllocationPage.h">
       <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsTextureAllocationPage.h">
+    <ClInclude Include="BufferAllocator.h">
       <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsOBJLoader.h">
-      <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement\MeshLoaders</Filter>
+    <ClInclude Include="DescriptorAllocationPage.h">
+      <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="DescriptorAllocator.h">
+      <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceManager.h">
+      <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureAllocationPage.h">
+      <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureAllocator.h">
+      <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="CommonHandler.h">
+      <Filter>Файлы заголовков\GraphicsCore</Filter>
+    </ClInclude>
+    <ClInclude Include="RendererDirectX12.h">
+      <Filter>Файлы заголовков\GraphicsCore</Filter>
+    </ClInclude>
+    <ClInclude Include="PostProcesses.h">
+      <Filter>Файлы заголовков\GraphicsPostProcesses</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

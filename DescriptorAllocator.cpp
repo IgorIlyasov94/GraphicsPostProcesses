@@ -1,14 +1,14 @@
-#include "GraphicsDescriptorAllocator.h"
+#include "DescriptorAllocator.h"
 
-GraphicsDescriptorAllocator& GraphicsDescriptorAllocator::GetInstance()
+Graphics::DescriptorAllocator& Graphics::DescriptorAllocator::GetInstance()
 {
-    static GraphicsDescriptorAllocator thisInstance;
+    static DescriptorAllocator thisInstance;
 
     return thisInstance;
 }
 
-void GraphicsDescriptorAllocator::Allocate(ID3D12Device* device, uint32_t numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE descriptorType,
-    GraphicsDescriptorAllocation& allocation)
+void Graphics::DescriptorAllocator::Allocate(ID3D12Device* device, uint32_t numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE descriptorType,
+    DescriptorAllocation& allocation)
 {
     if (descriptorType == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
         Allocate(device, numDescriptors, descriptorType, usedCbvSrvUavDescriptorHeapPages, emptyCbvSrvUavDescriptorHeapPages,
@@ -24,9 +24,9 @@ void GraphicsDescriptorAllocator::Allocate(ID3D12Device* device, uint32_t numDes
             currentDsvDescriptorHeapPage, allocation);
 }
 
-void GraphicsDescriptorAllocator::Allocate(ID3D12Device* device, uint32_t numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE descriptorType,
-    DescriptorHeapPool& usedHeapPool, DescriptorHeapPool& emptyHeapPool, std::shared_ptr<GraphicsDescriptorAllocationPage>& currentPage,
-    GraphicsDescriptorAllocation& allocation)
+void Graphics::DescriptorAllocator::Allocate(ID3D12Device* device, uint32_t numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE descriptorType,
+    DescriptorHeapPool& usedHeapPool, DescriptorHeapPool& emptyHeapPool, std::shared_ptr<DescriptorAllocationPage>& currentPage,
+    DescriptorAllocation& allocation)
 {
     if (currentPage.get() == nullptr || !currentPage->HasSpace(numDescriptors))
         SetNewPageAsCurrent(device, numDescriptors, descriptorType, usedHeapPool, emptyHeapPool, currentPage);
@@ -34,12 +34,12 @@ void GraphicsDescriptorAllocator::Allocate(ID3D12Device* device, uint32_t numDes
     currentPage->Allocate(numDescriptors, allocation);
 }
 
-void GraphicsDescriptorAllocator::SetNewPageAsCurrent(ID3D12Device* device, uint32_t numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE descriptorType,
-    DescriptorHeapPool& usedHeapPool, DescriptorHeapPool& emptyHeapPool, std::shared_ptr<GraphicsDescriptorAllocationPage>& currentPage)
+void Graphics::DescriptorAllocator::SetNewPageAsCurrent(ID3D12Device* device, uint32_t numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE descriptorType,
+    DescriptorHeapPool& usedHeapPool, DescriptorHeapPool& emptyHeapPool, std::shared_ptr<DescriptorAllocationPage>& currentPage)
 {
     if (emptyHeapPool.empty())
     {
-        currentPage = std::make_shared<GraphicsDescriptorAllocationPage>(device, descriptorType, numDescriptorsPerHeap);
+        currentPage = std::make_shared<DescriptorAllocationPage>(device, descriptorType, numDescriptorsPerHeap);
 
         usedHeapPool.push_back(currentPage);
     }

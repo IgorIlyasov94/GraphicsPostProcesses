@@ -1,25 +1,25 @@
-#include "GraphicsResourceManager.h"
+#include "ResourceManager.h"
 
-GraphicsResourceManager& GraphicsResourceManager::GetInstance()
+Graphics::ResourceManager& Graphics::ResourceManager::GetInstance()
 {
-	static GraphicsResourceManager thisInstance;
+	static ResourceManager thisInstance;
 
 	return thisInstance;
 }
 
-void GraphicsResourceManager::Initialize(ID3D12Device* _device, ID3D12GraphicsCommandList* _commandList)
+void Graphics::ResourceManager::Initialize(ID3D12Device* _device, ID3D12GraphicsCommandList* _commandList)
 {
 	device = _device;
 	commandList = _commandList;
 }
 
-VertexBufferId GraphicsResourceManager::CreateVertexBuffer(std::vector<uint8_t>& data, uint32_t vertexStride)
+Graphics::VertexBufferId Graphics::ResourceManager::CreateVertexBuffer(std::vector<uint8_t>& data, uint32_t vertexStride)
 {
-	GraphicsBufferAllocation vertexBufferAllocation{};
+	BufferAllocation vertexBufferAllocation{};
 
 	bufferAllocator.Allocate(device, data.size(), 64 * _KB, D3D12_HEAP_TYPE_DEFAULT, vertexBufferAllocation);
 
-	GraphicsBufferAllocation uploadBufferAllocation{};
+	BufferAllocation uploadBufferAllocation{};
 
 	bufferAllocator.AllocateTemporaryUpload(device, data.size(), uploadBufferAllocation);
 
@@ -31,10 +31,10 @@ VertexBufferId GraphicsResourceManager::CreateVertexBuffer(std::vector<uint8_t>&
 	vertexBufferView.StrideInBytes = vertexStride;
 
 	if (vertexBufferAllocation.bufferResource == nullptr)
-		throw std::exception("GraphicsResourceManager::CreateVertexBuffer: Vertex Buffer Resource is null!");
+		throw std::exception("ResourceManager::CreateVertexBuffer: Vertex Buffer Resource is null!");
 
 	if (uploadBufferAllocation.bufferResource == nullptr)
-		throw std::exception("GraphicsResourceManager::CreateVertexBuffer: Upload Buffer Resource is null!");
+		throw std::exception("ResourceManager::CreateVertexBuffer: Upload Buffer Resource is null!");
 
 	commandList->CopyBufferRegion(vertexBufferAllocation.bufferResource, vertexBufferAllocation.gpuPageOffset, uploadBufferAllocation.bufferResource,
 		0, uploadBufferAllocation.bufferResource->GetDesc().Width);
@@ -42,7 +42,7 @@ VertexBufferId GraphicsResourceManager::CreateVertexBuffer(std::vector<uint8_t>&
 	SetResourceBarrier(commandList, vertexBufferAllocation.bufferResource, D3D12_RESOURCE_STATE_COPY_DEST,
 		D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
-	GraphicsVertexBuffer graphicsVertexBuffer{};
+	VertexBuffer graphicsVertexBuffer{};
 	graphicsVertexBuffer.vertexBufferAllocation = vertexBufferAllocation;
 	graphicsVertexBuffer.vertexBufferView = vertexBufferView;
 
@@ -51,13 +51,13 @@ VertexBufferId GraphicsResourceManager::CreateVertexBuffer(std::vector<uint8_t>&
 	return VertexBufferId(vertexBufferPool.size() - 1);
 }
 
-ConstantBufferId GraphicsResourceManager::CreateConstantBuffer(std::vector<uint8_t>& data)
+Graphics::ConstantBufferId Graphics::ResourceManager::CreateConstantBuffer(std::vector<uint8_t>& data)
 {
-	GraphicsBufferAllocation constantBufferAllocation{};
+	BufferAllocation constantBufferAllocation{};
 
 	bufferAllocator.Allocate(device, data.size(), 64 * _KB, D3D12_HEAP_TYPE_UPLOAD, constantBufferAllocation);
 
-	GraphicsDescriptorAllocation constantBufferDescriptorAllocation{};
+	DescriptorAllocation constantBufferDescriptorAllocation{};
 
 	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, constantBufferDescriptorAllocation);
 
@@ -69,7 +69,7 @@ ConstantBufferId GraphicsResourceManager::CreateConstantBuffer(std::vector<uint8
 
 	std::copy(data.begin(), data.end(), constantBufferAllocation.cpuAddress);
 
-	GraphicsConstantBuffer graphicsConstantBuffer{};
+	ConstantBuffer graphicsConstantBuffer{};
 	graphicsConstantBuffer.uploadBufferAllocation = constantBufferAllocation;
 	graphicsConstantBuffer.descriptorAllocation = constantBufferDescriptorAllocation;
 	graphicsConstantBuffer.constantBufferViewDesc = constantBufferViewDesc;
@@ -79,26 +79,26 @@ ConstantBufferId GraphicsResourceManager::CreateConstantBuffer(std::vector<uint8
 	return ConstantBufferId(constantBufferPool.size() - 1);
 }
 
-TextureId GraphicsResourceManager::CreateTexture(const std::filesystem::path& fileName)
+Graphics::TextureId Graphics::ResourceManager::CreateTexture(const std::filesystem::path& fileName)
 {
 	std::vector<uint8_t> textureData;
 	TextureInfo textureInfo;
 
 	if (fileName.extension() == ".dds")
-		GraphicsDDSLoader::Load(fileName, textureData, textureInfo);
+		DDSLoader::Load(fileName, textureData, textureInfo);
 	else
-		throw std::exception("GraphicsResourceManager::CreateTexture: Unsupported file format!");
+		throw std::exception("ResourceManager::CreateTexture: Unsupported file format!");
 
 	return CreateTexture(textureData, textureInfo, D3D12_RESOURCE_FLAG_NONE);
 }
 
-TextureId GraphicsResourceManager::CreateTexture(const std::vector<uint8_t>& data, const TextureInfo& textureInfo, D3D12_RESOURCE_FLAGS resourceFlags)
+Graphics::TextureId Graphics::ResourceManager::CreateTexture(const std::vector<uint8_t>& data, const TextureInfo& textureInfo, D3D12_RESOURCE_FLAGS resourceFlags)
 {
-	GraphicsTextureAllocation textureAllocation{};
+	TextureAllocation textureAllocation{};
 
 	textureAllocator.Allocate(device, resourceFlags, textureInfo, textureAllocation);
 
-	GraphicsTextureAllocation uploadTextureAllocation{};
+	TextureAllocation uploadTextureAllocation{};
 
 	textureAllocator.AllocateTemporaryUpload(device, resourceFlags, textureInfo, uploadTextureAllocation);
 
@@ -140,10 +140,10 @@ TextureId GraphicsResourceManager::CreateTexture(const std::vector<uint8_t>& dat
 	}
 
 	if (textureAllocation.textureResource == nullptr)
-		throw std::exception("GraphicsResourceManager::CreateTexture: Texture Resource is null!");
+		throw std::exception("ResourceManager::CreateTexture: Texture Resource is null!");
 
 	if (uploadTextureAllocation.textureResource == nullptr)
-		throw std::exception("GraphicsResourceManager::CreateTexture: Upload Texture Resource is null!");
+		throw std::exception("ResourceManager::CreateTexture: Upload Texture Resource is null!");
 
 	SetResourceBarrier(commandList, textureAllocation.textureResource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
 
@@ -151,13 +151,13 @@ TextureId GraphicsResourceManager::CreateTexture(const std::vector<uint8_t>& dat
 
 	SetResourceBarrier(commandList, textureAllocation.textureResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COMMON);
 
-	GraphicsDescriptorAllocation shaderResourceDescriptorAllocation{};
+	DescriptorAllocation shaderResourceDescriptorAllocation{};
 
 	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, shaderResourceDescriptorAllocation);
 
 	device->CreateShaderResourceView(textureAllocation.textureResource, &shaderResourceViewDesc, shaderResourceDescriptorAllocation.descriptorBase);
 
-	GraphicsTexture graphicsTexture{};
+	Texture graphicsTexture{};
 	graphicsTexture.shaderResourceViewDesc = shaderResourceViewDesc;
 	graphicsTexture.info = textureInfo;
 	graphicsTexture.textureAllocation = textureAllocation;
@@ -168,15 +168,15 @@ TextureId GraphicsResourceManager::CreateTexture(const std::vector<uint8_t>& dat
 	return TextureId(texturePool.size() - 1);
 }
 
-SamplerId GraphicsResourceManager::CreateSampler(const D3D12_SAMPLER_DESC& samplerDesc)
+Graphics::SamplerId Graphics::ResourceManager::CreateSampler(const D3D12_SAMPLER_DESC& samplerDesc)
 {
-	GraphicsDescriptorAllocation samplerDescriptorAllocation{};
+	DescriptorAllocation samplerDescriptorAllocation{};
 
 	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, samplerDescriptorAllocation);
 
 	device->CreateSampler(&samplerDesc, samplerDescriptorAllocation.descriptorBase);
 
-	GraphicsSampler graphicsSampler{};
+	Sampler graphicsSampler{};
 	graphicsSampler.samplerDesc = samplerDesc;
 	graphicsSampler.descriptorAllocation = samplerDescriptorAllocation;
 
@@ -185,33 +185,33 @@ SamplerId GraphicsResourceManager::CreateSampler(const D3D12_SAMPLER_DESC& sampl
 	return SamplerId(samplerPool.size() - 1);
 }
 
-const GraphicsVertexBuffer& GraphicsResourceManager::GetVertexBuffer(const VertexBufferId& resourceId)
+const Graphics::VertexBuffer& Graphics::ResourceManager::GetVertexBuffer(const VertexBufferId& resourceId)
 {
 	return vertexBufferPool[resourceId.value];
 }
 
-const GraphicsConstantBuffer& GraphicsResourceManager::GetConstantBuffer(const ConstantBufferId& resourceId)
+const Graphics::ConstantBuffer& Graphics::ResourceManager::GetConstantBuffer(const ConstantBufferId& resourceId)
 {
 	return constantBufferPool[resourceId.value];
 }
 
-const GraphicsTexture& GraphicsResourceManager::GetTexture(const TextureId& resourceId)
+const Graphics::Texture& Graphics::ResourceManager::GetTexture(const TextureId& resourceId)
 {
 	return texturePool[resourceId.value];
 }
 
-const GraphicsSampler& GraphicsResourceManager::GetSampler(const SamplerId& resourceId)
+const Graphics::Sampler& Graphics::ResourceManager::GetSampler(const SamplerId& resourceId)
 {
 	return samplerPool[resourceId.value];
 }
 
-void GraphicsResourceManager::ReleaseTemporaryUploadBuffers()
+void Graphics::ResourceManager::ReleaseTemporaryUploadBuffers()
 {
 	bufferAllocator.ReleaseTemporaryBuffers();
 	textureAllocator.ReleaseTemporaryBuffers();
 }
 
-void GraphicsResourceManager::UploadTexture(ID3D12Resource* uploadBuffer, ID3D12Resource* targetTexture, const TextureInfo& textureInfo, const std::vector<uint8_t>& data,
+void Graphics::ResourceManager::UploadTexture(ID3D12Resource* uploadBuffer, ID3D12Resource* targetTexture, const TextureInfo& textureInfo, const std::vector<uint8_t>& data,
 	uint8_t* uploadBufferCPUAddress)
 {
 	uint32_t numSubresources = textureInfo.depth * textureInfo.mipLevels;
@@ -250,7 +250,7 @@ void GraphicsResourceManager::UploadTexture(ID3D12Resource* uploadBuffer, ID3D12
 	}
 }
 
-void GraphicsResourceManager::CopyRawDataToSubresource(const TextureInfo& srcTextureInfo, uint32_t numRows, uint16_t numSlices, uint64_t destRowPitch,
+void Graphics::ResourceManager::CopyRawDataToSubresource(const TextureInfo& srcTextureInfo, uint32_t numRows, uint16_t numSlices, uint64_t destRowPitch,
 	uint64_t destSlicePitch, uint64_t rowSizeInBytes, const uint8_t* srcAddress, uint8_t* destAddress)
 {
 	for (uint16_t sliceIndex = 0; sliceIndex < numSlices; sliceIndex++)

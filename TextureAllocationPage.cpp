@@ -1,6 +1,6 @@
-#include "GraphicsTextureAllocationPage.h"
+#include "TextureAllocationPage.h"
 
-GraphicsTextureAllocationPage::GraphicsTextureAllocationPage(ID3D12Device* device, D3D12_HEAP_TYPE _heapType, D3D12_RESOURCE_FLAGS resourceFlags,
+Graphics::TextureAllocationPage::TextureAllocationPage(ID3D12Device* device, D3D12_HEAP_TYPE _heapType, D3D12_RESOURCE_FLAGS resourceFlags,
 	const TextureInfo& textureInfo)
 	: cpuAddress(nullptr), heapType(_heapType)
 {
@@ -32,16 +32,16 @@ GraphicsTextureAllocationPage::GraphicsTextureAllocationPage(ID3D12Device* devic
 	}
 
 	ThrowIfFailed(device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &resourceDesc, resourceState, nullptr,
-		IID_PPV_ARGS(&pageResource)), "GraphicsTextureAllocationPage::GraphicsTextureAllocationPage: Resource creating error");
+		IID_PPV_ARGS(&pageResource)), "TextureAllocationPage::TextureAllocationPage: Resource creating error");
 
 	D3D12_RANGE range = { 0, 0 };
 
 	if (heapType == D3D12_HEAP_TYPE_UPLOAD)
 		ThrowIfFailed(pageResource->Map(0, &range, reinterpret_cast<void**>(&cpuAddress)),
-			"GraphicsTextureAllocationPage::GraphicsTextureAllocationPage: Resource mapping error");
+			"TextureAllocationPage::TextureAllocationPage: Resource mapping error");
 }
 
-GraphicsTextureAllocationPage::~GraphicsTextureAllocationPage()
+Graphics::TextureAllocationPage::~TextureAllocationPage()
 {
 	if (heapType == D3D12_HEAP_TYPE_UPLOAD)
 		pageResource->Unmap(0, nullptr);
@@ -49,7 +49,7 @@ GraphicsTextureAllocationPage::~GraphicsTextureAllocationPage()
 	cpuAddress = nullptr;
 }
 
-void GraphicsTextureAllocationPage::GetAllocation(GraphicsTextureAllocation& allocation)
+void Graphics::TextureAllocationPage::GetAllocation(TextureAllocation& allocation)
 {
 	allocation.cpuAddress = cpuAddress;
 	allocation.textureResource = pageResource.Get();

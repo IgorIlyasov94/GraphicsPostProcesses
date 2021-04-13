@@ -1,6 +1,6 @@
-#include "GraphicsDDSLoader.h"
+#include "DDSLoader.h"
 
-void GraphicsDDSLoader::Load(const std::filesystem::path& filePath, std::vector<uint8_t>& data, TextureInfo& textureInfo)
+void Graphics::DDSLoader::Load(const std::filesystem::path& filePath, std::vector<uint8_t>& data, TextureInfo& textureInfo)
 {
 	std::ifstream ddsFile(filePath, std::ios::binary | std::ios::in);
 
@@ -71,7 +71,7 @@ void GraphicsDDSLoader::Load(const std::filesystem::path& filePath, std::vector<
 	data = textureData;
 }
 
-constexpr uint32_t GraphicsDDSLoader::MakeFourCC(const char&& ch0, const char&& ch1, const char&& ch2, const char&& ch3)
+constexpr uint32_t Graphics::DDSLoader::MakeFourCC(const char&& ch0, const char&& ch1, const char&& ch2, const char&& ch3)
 {
 	return static_cast<uint32_t>(ch0) | static_cast<uint32_t>(ch1) << 8 | static_cast<uint32_t>(ch2) << 16 | static_cast<uint32_t>(ch3) << 24;
 }

@@ -2,24 +2,24 @@
 
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdLine, int cmdShow)
 {
-	GraphicsWinApplication& winApp = GraphicsWinApplication::GetInstance();
+	auto& winApp = Graphics::GraphicsWinApplication::GetInstance();
 
 	return winApp.Run(instance, cmdLine, cmdShow);
 }
 
-GraphicsWinApplication::GraphicsWinApplication()
+Graphics::GraphicsWinApplication::GraphicsWinApplication()
 {
 	
 }
 
-GraphicsWinApplication& GraphicsWinApplication::GetInstance()
+Graphics::GraphicsWinApplication& Graphics::GraphicsWinApplication::GetInstance()
 {
 	static GraphicsWinApplication instance;
 
 	return instance;
 }
 
-int GraphicsWinApplication::Run(const HINSTANCE& instance, const LPSTR& cmdLine, const int& cmdShow)
+int Graphics::GraphicsWinApplication::Run(const HINSTANCE& instance, const LPSTR& cmdLine, const int& cmdShow)
 {
 	try
 	{
@@ -76,9 +76,9 @@ int GraphicsWinApplication::Run(const HINSTANCE& instance, const LPSTR& cmdLine,
 	}
 }
 
-LRESULT GraphicsWinApplication::WindowProc(HWND windowHandler, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT Graphics::GraphicsWinApplication::WindowProc(HWND windowHandler, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	GraphicsCommonHandler* transmittedCommonHandler = reinterpret_cast<GraphicsCommonHandler*>(GetWindowLongPtr(windowHandler, GWLP_USERDATA));
+	CommonHandler* transmittedCommonHandler = reinterpret_cast<CommonHandler*>(GetWindowLongPtr(windowHandler, GWLP_USERDATA));
 
 	try
 	{

@@ -1,6 +1,6 @@
 #include "GraphicsHelper.h"
 
-void CreateFactory(IDXGIFactory4** _factory)
+void Graphics::CreateFactory(IDXGIFactory4** _factory)
 {
 	UINT dxgiFactoryFlags = 0;
 
@@ -8,13 +8,13 @@ void CreateFactory(IDXGIFactory4** _factory)
 		"CreateFactory: Factory creating failed!");
 }
 
-void CreateDevice(IDXGIAdapter1* adapter, ID3D12Device** _device)
+void Graphics::CreateDevice(IDXGIAdapter1* adapter, ID3D12Device** _device)
 {
 	ThrowIfFailed(D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(_device)),
 		"CreateCommandQueue: Device creating failed!");
 }
 
-void CreateCommandQueue(ID3D12Device* _device, ID3D12CommandQueue** _commandQueue)
+void Graphics::CreateCommandQueue(ID3D12Device* _device, ID3D12CommandQueue** _commandQueue)
 {
 	D3D12_COMMAND_QUEUE_DESC commandQueueDesc{};
 	commandQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
@@ -24,7 +24,7 @@ void CreateCommandQueue(ID3D12Device* _device, ID3D12CommandQueue** _commandQueu
 		"CreateCommandQueue: Command Queue creating failed!");
 }
 
-void CreateSwapChain(IDXGIFactory4* _factory, ID3D12CommandQueue* _commandQueue, HWND& _windowHandler, const uint32_t buffersCount,
+void Graphics::CreateSwapChain(IDXGIFactory4* _factory, ID3D12CommandQueue* _commandQueue, HWND& _windowHandler, const uint32_t buffersCount,
 	const int32_t& _resolutionX, const int32_t& _resolutionY, IDXGISwapChain1** _swapChain)
 {
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
@@ -40,7 +40,7 @@ void CreateSwapChain(IDXGIFactory4* _factory, ID3D12CommandQueue* _commandQueue,
 		"CreateSwapChain: Swap Chain creating failed!");
 }
 
-void CreateRootSignature(ID3D12Device* device, const std::vector<D3D12_ROOT_PARAMETER>& rootParameters, const std::vector<D3D12_STATIC_SAMPLER_DESC>& samplerDescs,
+void Graphics::CreateRootSignature(ID3D12Device* device, const std::vector<D3D12_ROOT_PARAMETER>& rootParameters, const std::vector<D3D12_STATIC_SAMPLER_DESC>& samplerDescs,
 	D3D12_ROOT_SIGNATURE_FLAGS flags, ID3D12RootSignature** rootSignature)
 {
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc{};
@@ -65,7 +65,7 @@ void CreateRootSignature(ID3D12Device* device, const std::vector<D3D12_ROOT_PARA
 		"CreateRootSignature: Root Signature creating failed!");
 }
 
-void CreateDescriptorHeap(ID3D12Device* device, uint32_t numDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS flags, D3D12_DESCRIPTOR_HEAP_TYPE type,
+void Graphics::CreateDescriptorHeap(ID3D12Device* device, uint32_t numDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS flags, D3D12_DESCRIPTOR_HEAP_TYPE type,
 	ID3D12DescriptorHeap** descriptorHeap)
 {
 	D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc{};
@@ -77,7 +77,7 @@ void CreateDescriptorHeap(ID3D12Device* device, uint32_t numDescriptors, D3D12_D
 		"CreateDescriptorHeap: Descriptor Heap creating failed!");
 }
 
-void CreateGraphicsPipelineState(ID3D12Device* device, const D3D12_INPUT_LAYOUT_DESC& inputLayoutDesc, ID3D12RootSignature* rootSignature,
+void Graphics::CreateGraphicsPipelineState(ID3D12Device* device, const D3D12_INPUT_LAYOUT_DESC& inputLayoutDesc, ID3D12RootSignature* rootSignature,
 	const D3D12_RASTERIZER_DESC& rasterizerDesc, const D3D12_BLEND_DESC& blendDesc, const D3D12_DEPTH_STENCIL_DESC& depthStencilDesc,
 	DXGI_FORMAT rtvFormat, const ShaderList& shaderList, ID3D12PipelineState** pipelineState)
 {
@@ -102,7 +102,7 @@ void CreateGraphicsPipelineState(ID3D12Device* device, const D3D12_INPUT_LAYOUT_
 		"CreateGraphicsPipelineState: Graphics Pipeline State creating failed!");
 }
 
-void ReadShaderConstantBuffers(const D3D12_SHADER_BYTECODE& shaderBytecode, std::set<size_t>& constantBufferIndices)
+void Graphics::ReadShaderConstantBuffers(const D3D12_SHADER_BYTECODE& shaderBytecode, std::set<size_t>& constantBufferIndices)
 {
 	auto shaderText = reinterpret_cast<const char*>(shaderBytecode.pShaderBytecode);
 
@@ -131,7 +131,7 @@ void ReadShaderConstantBuffers(const D3D12_SHADER_BYTECODE& shaderBytecode, std:
 	throw std::exception(str.str().c_str());
 }
 
-void CreateRootParameters(const ShaderList& shaderList, const std::set<size_t>& constantBufferRegisterIndices, const D3D12_ROOT_DESCRIPTOR_TABLE& rootDescriptorTable,
+void Graphics::CreateRootParameters(const ShaderList& shaderList, const std::set<size_t>& constantBufferRegisterIndices, const D3D12_ROOT_DESCRIPTOR_TABLE& rootDescriptorTable,
 	D3D12_ROOT_SIGNATURE_FLAGS& rootSignatureFlags, std::vector<D3D12_ROOT_PARAMETER>& rootParameters)
 {
 	if (shaderList.vertexShader.pShaderBytecode == nullptr)
@@ -169,7 +169,7 @@ void CreateRootParameters(const ShaderList& shaderList, const std::set<size_t>& 
 	rootParameters.push_back(rootParameter);
 }
 
-void CreateTextureRootDescriptorTable(const std::vector<size_t>& textureRegisterIndices, const std::vector<size_t>& descriptorIndices,
+void Graphics::CreateTextureRootDescriptorTable(const std::vector<size_t>& textureRegisterIndices, const std::vector<size_t>& descriptorIndices,
 	std::vector<D3D12_DESCRIPTOR_RANGE>& descriptorRange, D3D12_ROOT_DESCRIPTOR_TABLE& rootDescriptorTable)
 {
 	for (uint32_t textureRegisterId = 0; textureRegisterId < textureRegisterIndices.size(); textureRegisterId++)
@@ -188,7 +188,7 @@ void CreateTextureRootDescriptorTable(const std::vector<size_t>& textureRegister
 	rootDescriptorTable.pDescriptorRanges = descriptorRange.data();
 }
 
-void CreateStandardSamplerDescs(std::vector<D3D12_STATIC_SAMPLER_DESC>& samplerDescs)
+void Graphics::CreateStandardSamplerDescs(std::vector<D3D12_STATIC_SAMPLER_DESC>& samplerDescs)
 {
 	D3D12_STATIC_SAMPLER_DESC samplerDesc{};
 	samplerDesc.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
@@ -237,7 +237,7 @@ void CreateStandardSamplerDescs(std::vector<D3D12_STATIC_SAMPLER_DESC>& samplerD
 	samplerDescs.push_back(samplerDesc);
 }
 
-void CreatePipelineStateAndRootSignature(ID3D12Device* device, const D3D12_INPUT_LAYOUT_DESC& inputLayoutDesc, const D3D12_RASTERIZER_DESC& rasterizerDesc,
+void Graphics::CreatePipelineStateAndRootSignature(ID3D12Device* device, const D3D12_INPUT_LAYOUT_DESC& inputLayoutDesc, const D3D12_RASTERIZER_DESC& rasterizerDesc,
 	const D3D12_BLEND_DESC& blendDesc, const D3D12_DEPTH_STENCIL_DESC& depthStencilDesc, DXGI_FORMAT rtvFormat, const ShaderList& shaderList,
 	const std::set<size_t>& constantBufferIndices, const D3D12_ROOT_DESCRIPTOR_TABLE& texturesRootDescriptorTable, const std::vector<D3D12_STATIC_SAMPLER_DESC>& samplerDescs,
 	ID3D12RootSignature** rootSignature, ID3D12PipelineState** pipelineState)
@@ -252,7 +252,7 @@ void CreatePipelineStateAndRootSignature(ID3D12Device* device, const D3D12_INPUT
 	CreateGraphicsPipelineState(device, inputLayoutDesc, *rootSignature, rasterizerDesc, blendDesc, depthStencilDesc, rtvFormat, shaderList, pipelineState);
 }
 
-void GetHardwareAdapter(IDXGIFactory4* factory4, IDXGIAdapter1** adapter)
+void Graphics::GetHardwareAdapter(IDXGIFactory4* factory4, IDXGIAdapter1** adapter)
 {
 	*adapter = nullptr;
 
@@ -281,7 +281,7 @@ void GetHardwareAdapter(IDXGIFactory4* factory4, IDXGIAdapter1** adapter)
 	*adapter = adapter1.Detach();
 }
 
-void SetupRasterizerDesc(D3D12_RASTERIZER_DESC& rasterizerDesc, D3D12_CULL_MODE cullMode) noexcept
+void Graphics::SetupRasterizerDesc(D3D12_RASTERIZER_DESC& rasterizerDesc, D3D12_CULL_MODE cullMode) noexcept
 {
 	rasterizerDesc.AntialiasedLineEnable = false;
 	rasterizerDesc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
@@ -296,7 +296,7 @@ void SetupRasterizerDesc(D3D12_RASTERIZER_DESC& rasterizerDesc, D3D12_CULL_MODE 
 	rasterizerDesc.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
 }
 
-void SetupBlendDesc(D3D12_BLEND_DESC& blendDesc, bool blendOn,
+void Graphics::SetupBlendDesc(D3D12_BLEND_DESC& blendDesc, bool blendOn,
 	D3D12_BLEND srcBlend, D3D12_BLEND destBlend, D3D12_BLEND_OP blendOp,
 	D3D12_BLEND srcBlendAlpha, D3D12_BLEND destBlendAlpha, D3D12_BLEND_OP blendOpAlpha) noexcept
 {
@@ -325,7 +325,7 @@ void SetupBlendDesc(D3D12_BLEND_DESC& blendDesc, bool blendOn,
 	blendDesc.RenderTarget[0].BlendOpAlpha = blendOpAlpha;
 }
 
-void SetupDepthStencilDesc(D3D12_DEPTH_STENCIL_DESC& depthStencilDesc, bool depthEnable) noexcept
+void Graphics::SetupDepthStencilDesc(D3D12_DEPTH_STENCIL_DESC& depthStencilDesc, bool depthEnable) noexcept
 {
 	depthStencilDesc.DepthEnable = depthEnable;
 	depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
@@ -343,7 +343,7 @@ void SetupDepthStencilDesc(D3D12_DEPTH_STENCIL_DESC& depthStencilDesc, bool dept
 	depthStencilDesc.FrontFace = depthStencilOpDesc;
 }
 
-void SetupResourceBufferDesc(D3D12_RESOURCE_DESC& resourceDesc, uint64_t bufferSize, D3D12_RESOURCE_FLAGS resourceFlag, uint64_t alignment) noexcept
+void Graphics::SetupResourceBufferDesc(D3D12_RESOURCE_DESC& resourceDesc, uint64_t bufferSize, D3D12_RESOURCE_FLAGS resourceFlag, uint64_t alignment) noexcept
 {
 	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 	resourceDesc.DepthOrArraySize = 1;
@@ -358,7 +358,7 @@ void SetupResourceBufferDesc(D3D12_RESOURCE_DESC& resourceDesc, uint64_t bufferS
 	resourceDesc.Width = (bufferSize + 255Ui64) & ~255Ui64;
 }
 
-void SetupResourceTextureDesc(D3D12_RESOURCE_DESC& resourceDesc, const TextureInfo& textureInfo, D3D12_RESOURCE_FLAGS resourceFlag, uint64_t alignment) noexcept
+void Graphics::SetupResourceTextureDesc(D3D12_RESOURCE_DESC& resourceDesc, const TextureInfo& textureInfo, D3D12_RESOURCE_FLAGS resourceFlag, uint64_t alignment) noexcept
 {
 	resourceDesc.Dimension = textureInfo.dimension;
 	resourceDesc.DepthOrArraySize = textureInfo.depth;
@@ -373,7 +373,7 @@ void SetupResourceTextureDesc(D3D12_RESOURCE_DESC& resourceDesc, const TextureIn
 	resourceDesc.Width = textureInfo.width;
 }
 
-void SetupHeapProperties(D3D12_HEAP_PROPERTIES& heapProperties, D3D12_HEAP_TYPE heapType) noexcept
+void Graphics::SetupHeapProperties(D3D12_HEAP_PROPERTIES& heapProperties, D3D12_HEAP_TYPE heapType) noexcept
 {
 	heapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
 	heapProperties.CreationNodeMask = 1;
@@ -382,7 +382,7 @@ void SetupHeapProperties(D3D12_HEAP_PROPERTIES& heapProperties, D3D12_HEAP_TYPE 
 	heapProperties.Type = heapType;
 }
 
-void SetResourceBarrier(ID3D12GraphicsCommandList* commandList, ID3D12Resource* const resource, D3D12_RESOURCE_STATES resourceBarrierStateBefore,
+void Graphics::SetResourceBarrier(ID3D12GraphicsCommandList* commandList, ID3D12Resource* const resource, D3D12_RESOURCE_STATES resourceBarrierStateBefore,
 	D3D12_RESOURCE_STATES resourceBarrierStateAfter, D3D12_RESOURCE_BARRIER_TYPE resourceBarrierType)
 {
 	D3D12_RESOURCE_BARRIER resourceBarrier{};

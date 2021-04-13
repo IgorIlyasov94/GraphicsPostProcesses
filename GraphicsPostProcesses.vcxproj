@@ -145,37 +145,39 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="GraphicsBufferAllocationPage.cpp" />
-    <ClCompile Include="GraphicsCommonHandler.cpp" />
-    <ClCompile Include="GraphicsBufferAllocator.cpp" />
-    <ClCompile Include="GraphicsDDSLoader.cpp" />
-    <ClCompile Include="GraphicsDescriptorAllocationPage.cpp" />
-    <ClCompile Include="GraphicsDescriptorAllocator.cpp" />
-    <ClCompile Include="GraphicsOBJLoader.cpp" />
+    <ClCompile Include="BufferAllocationPage.cpp" />
+    <ClCompile Include="CommonHandler.cpp" />
+    <ClCompile Include="BufferAllocator.cpp" />
+    <ClCompile Include="DDSLoader.cpp" />
+    <ClCompile Include="DescriptorAllocationPage.cpp" />
+    <ClCompile Include="DescriptorAllocator.cpp" />
+    <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="OBJLoader.cpp" />
     <ClCompile Include="GraphicsHelper.cpp" />
-    <ClCompile Include="GraphicsPostProcesses.cpp" />
-    <ClCompile Include="GraphicsResourceManager.cpp" />
-    <ClCompile Include="GraphicsTextureAllocationPage.cpp" />
-    <ClCompile Include="GraphicsTextureAllocator.cpp" />
+    <ClCompile Include="PostProcesses.cpp" />
+    <ClCompile Include="ResourceManager.cpp" />
+    <ClCompile Include="TextureAllocationPage.cpp" />
+    <ClCompile Include="TextureAllocator.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="GraphicsRendererDirecX12.cpp" />
+    <ClCompile Include="RendererDirecX12.cpp" />
     <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="GraphicsBufferAllocationPage.h" />
-    <ClInclude Include="GraphicsCommonHandler.h" />
-    <ClInclude Include="GraphicsBufferAllocator.h" />
-    <ClInclude Include="GraphicsDDSLoader.h" />
-    <ClInclude Include="GraphicsDescriptorAllocationPage.h" />
-    <ClInclude Include="GraphicsDescriptorAllocator.h" />
-    <ClInclude Include="GraphicsOBJLoader.h" />
+    <ClInclude Include="BufferAllocationPage.h" />
+    <ClInclude Include="CommonHandler.h" />
+    <ClInclude Include="BufferAllocator.h" />
+    <ClInclude Include="DDSLoader.h" />
+    <ClInclude Include="DescriptorAllocationPage.h" />
+    <ClInclude Include="DescriptorAllocator.h" />
+    <ClInclude Include="Mesh.h" />
+    <ClInclude Include="OBJLoader.h" />
     <ClInclude Include="GraphicsHelper.h" />
-    <ClInclude Include="GraphicsPostProcesses.h" />
-    <ClInclude Include="GraphicsResourceManager.h" />
-    <ClInclude Include="GraphicsTextureAllocationPage.h" />
-    <ClInclude Include="GraphicsTextureAllocator.h" />
+    <ClInclude Include="PostProcesses.h" />
+    <ClInclude Include="ResourceManager.h" />
+    <ClInclude Include="TextureAllocationPage.h" />
+    <ClInclude Include="TextureAllocator.h" />
     <ClInclude Include="Main.h" />
-    <ClInclude Include="GraphicsRendererDirectX12.h" />
+    <ClInclude Include="RendererDirectX12.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

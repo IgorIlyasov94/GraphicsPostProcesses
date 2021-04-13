@@ -1,6 +1,6 @@
-#include "GraphicsDescriptorAllocationPage.h"
+#include "DescriptorAllocationPage.h"
 
-GraphicsDescriptorAllocationPage::GraphicsDescriptorAllocationPage(ID3D12Device* device, const D3D12_DESCRIPTOR_HEAP_TYPE _descriptorHeapType,
+Graphics::DescriptorAllocationPage::DescriptorAllocationPage(ID3D12Device* device, const D3D12_DESCRIPTOR_HEAP_TYPE _descriptorHeapType,
 	uint32_t _numDescriptors)
 	: numDescriptors(_numDescriptors), descriptorHeapType(_descriptorHeapType), descriptorBaseOffset(0u), gpuDescriptorBaseOffset(0u)
 {
@@ -10,7 +10,7 @@ GraphicsDescriptorAllocationPage::GraphicsDescriptorAllocationPage(ID3D12Device*
 	descriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	
 	ThrowIfFailed(device->CreateDescriptorHeap(&descriptorHeapDesc, IID_PPV_ARGS(&descriptorHeap)),
-		"GraphicsDescriptorAllocationPage::GraphicsDescriptorAllocationPage: Descriptor Heap creating error");
+		"DescriptorAllocationPage::DescriptorAllocationPage: Descriptor Heap creating error");
 
 	numFreeHandles = numDescriptors;
 	descriptorIncrementSize =  device->GetDescriptorHandleIncrementSize(descriptorHeapType);
@@ -19,10 +19,10 @@ GraphicsDescriptorAllocationPage::GraphicsDescriptorAllocationPage(ID3D12Device*
 	gpuDescriptorBaseOffset = descriptorHeap->GetGPUDescriptorHandleForHeapStart().ptr;
 }
 
-void GraphicsDescriptorAllocationPage::Allocate(uint32_t _numDescriptors, GraphicsDescriptorAllocation& allocation)
+void Graphics::DescriptorAllocationPage::Allocate(uint32_t _numDescriptors, DescriptorAllocation& allocation)
 {
 	if (numFreeHandles < _numDescriptors)
-		throw std::exception("GraphicsDescriptorAllocationPage::Allocate: Bad allocation");
+		throw std::exception("DescriptorAllocationPage::Allocate: Bad allocation");
 
 	allocation.descriptorBase.ptr = descriptorBaseOffset;
 	allocation.gpuDescriptorBase.ptr = gpuDescriptorBaseOffset;
@@ -35,7 +35,7 @@ void GraphicsDescriptorAllocationPage::Allocate(uint32_t _numDescriptors, Graphi
 	numFreeHandles -= _numDescriptors;
 }
 
-bool GraphicsDescriptorAllocationPage::HasSpace(uint32_t _numDescriptors) const noexcept
+bool Graphics::DescriptorAllocationPage::HasSpace(uint32_t _numDescriptors) const noexcept
 {
 	return numFreeHandles > _numDescriptors;
 }
