@@ -42,13 +42,52 @@ Graphics::VertexBufferId Graphics::ResourceManager::CreateVertexBuffer(std::vect
 	SetResourceBarrier(commandList, vertexBufferAllocation.bufferResource, D3D12_RESOURCE_STATE_COPY_DEST,
 		D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
-	VertexBuffer graphicsVertexBuffer{};
-	graphicsVertexBuffer.vertexBufferAllocation = vertexBufferAllocation;
-	graphicsVertexBuffer.vertexBufferView = vertexBufferView;
+	VertexBuffer vertexBuffer{};
+	vertexBuffer.vertexBufferAllocation = vertexBufferAllocation;
+	vertexBuffer.vertexBufferView = vertexBufferView;
 
-	vertexBufferPool.push_back(graphicsVertexBuffer);
+	vertexBufferPool.push_back(vertexBuffer);
 
 	return VertexBufferId(vertexBufferPool.size() - 1);
+}
+
+Graphics::IndexBufferId Graphics::ResourceManager::CreateIndexBuffer(std::vector<uint8_t>& data, uint32_t indexStride)
+{
+	BufferAllocation indexBufferAllocation{};
+
+	bufferAllocator.Allocate(device, data.size(), 64 * _KB, D3D12_HEAP_TYPE_DEFAULT, indexBufferAllocation);
+
+	BufferAllocation uploadBufferAllocation{};
+
+	bufferAllocator.AllocateTemporaryUpload(device, data.size(), uploadBufferAllocation);
+
+	std::copy(data.begin(), data.end(), uploadBufferAllocation.cpuAddress);
+
+	D3D12_INDEX_BUFFER_VIEW indexBufferView{};
+	indexBufferView.BufferLocation = indexBufferAllocation.gpuAddress;
+	indexBufferView.SizeInBytes = data.size();
+	indexBufferView.Format = (indexStride == 4) ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
+
+	if (indexBufferAllocation.bufferResource == nullptr)
+		throw std::exception("ResourceManager::CreateIndexBuffer: Index Buffer Resource is null!");
+
+	if (uploadBufferAllocation.bufferResource == nullptr)
+		throw std::exception("ResourceManager::CreateIndexBuffer: Upload Buffer Resource is null!");
+
+	commandList->CopyBufferRegion(indexBufferAllocation.bufferResource, indexBufferAllocation.gpuPageOffset, uploadBufferAllocation.bufferResource,
+		0, uploadBufferAllocation.bufferResource->GetDesc().Width);
+
+	SetResourceBarrier(commandList, indexBufferAllocation.bufferResource, D3D12_RESOURCE_STATE_COPY_DEST,
+		D3D12_RESOURCE_STATE_INDEX_BUFFER);
+
+	IndexBuffer indexBuffer{};
+	indexBuffer.indicesCount = data.size() / indexStride;
+	indexBuffer.indexBufferView = indexBufferView;
+	indexBuffer.indexBufferAllocation = indexBufferAllocation;
+	
+	indexBufferPool.push_back(indexBuffer);
+
+	return IndexBufferId(indexBufferPool.size() - 1);
 }
 
 Graphics::ConstantBufferId Graphics::ResourceManager::CreateConstantBuffer(std::vector<uint8_t>& data)
@@ -69,12 +108,12 @@ Graphics::ConstantBufferId Graphics::ResourceManager::CreateConstantBuffer(std::
 
 	std::copy(data.begin(), data.end(), constantBufferAllocation.cpuAddress);
 
-	ConstantBuffer graphicsConstantBuffer{};
-	graphicsConstantBuffer.uploadBufferAllocation = constantBufferAllocation;
-	graphicsConstantBuffer.descriptorAllocation = constantBufferDescriptorAllocation;
-	graphicsConstantBuffer.constantBufferViewDesc = constantBufferViewDesc;
+	ConstantBuffer constantBuffer{};
+	constantBuffer.uploadBufferAllocation = constantBufferAllocation;
+	constantBuffer.descriptorAllocation = constantBufferDescriptorAllocation;
+	constantBuffer.constantBufferViewDesc = constantBufferViewDesc;
 
-	constantBufferPool.push_back(graphicsConstantBuffer);
+	constantBufferPool.push_back(constantBuffer);
 
 	return ConstantBufferId(constantBufferPool.size() - 1);
 }
@@ -157,13 +196,13 @@ Graphics::TextureId Graphics::ResourceManager::CreateTexture(const std::vector<u
 
 	device->CreateShaderResourceView(textureAllocation.textureResource, &shaderResourceViewDesc, shaderResourceDescriptorAllocation.descriptorBase);
 
-	Texture graphicsTexture{};
-	graphicsTexture.shaderResourceViewDesc = shaderResourceViewDesc;
-	graphicsTexture.info = textureInfo;
-	graphicsTexture.textureAllocation = textureAllocation;
-	graphicsTexture.descriptorAllocation = shaderResourceDescriptorAllocation;
+	Texture texture{};
+	texture.shaderResourceViewDesc = shaderResourceViewDesc;
+	texture.info = textureInfo;
+	texture.textureAllocation = textureAllocation;
+	texture.descriptorAllocation = shaderResourceDescriptorAllocation;
 
-	texturePool.push_back(graphicsTexture);
+	texturePool.push_back(texture);
 
 	return TextureId(texturePool.size() - 1);
 }
@@ -176,11 +215,11 @@ Graphics::SamplerId Graphics::ResourceManager::CreateSampler(const D3D12_SAMPLER
 
 	device->CreateSampler(&samplerDesc, samplerDescriptorAllocation.descriptorBase);
 
-	Sampler graphicsSampler{};
-	graphicsSampler.samplerDesc = samplerDesc;
-	graphicsSampler.descriptorAllocation = samplerDescriptorAllocation;
+	Sampler sampler{};
+	sampler.samplerDesc = samplerDesc;
+	sampler.descriptorAllocation = samplerDescriptorAllocation;
 
-	samplerPool.push_back(graphicsSampler);
+	samplerPool.push_back(sampler);
 
 	return SamplerId(samplerPool.size() - 1);
 }
@@ -188,6 +227,11 @@ Graphics::SamplerId Graphics::ResourceManager::CreateSampler(const D3D12_SAMPLER
 const Graphics::VertexBuffer& Graphics::ResourceManager::GetVertexBuffer(const VertexBufferId& resourceId)
 {
 	return vertexBufferPool[resourceId.value];
+}
+
+const Graphics::IndexBuffer& Graphics::ResourceManager::GetIndexBuffer(const IndexBufferId& resourceId)
+{
+	return indexBufferPool[resourceId.value];
 }
 
 const Graphics::ConstantBuffer& Graphics::ResourceManager::GetConstantBuffer(const ConstantBufferId& resourceId)

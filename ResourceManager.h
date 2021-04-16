@@ -44,6 +44,13 @@ namespace Graphics
 		BufferAllocation vertexBufferAllocation;
 	};
 
+	struct IndexBuffer
+	{
+		uint32_t indicesCount;
+		D3D12_INDEX_BUFFER_VIEW indexBufferView;
+		BufferAllocation indexBufferAllocation;
+	};
+
 	struct ConstantBuffer
 	{
 		D3D12_CONSTANT_BUFFER_VIEW_DESC constantBufferViewDesc;
@@ -73,12 +80,14 @@ namespace Graphics
 		void Initialize(ID3D12Device* _device, ID3D12GraphicsCommandList* _commandList);
 
 		VertexBufferId CreateVertexBuffer(std::vector<uint8_t>& data, uint32_t vertexStride);
+		IndexBufferId CreateIndexBuffer(std::vector<uint8_t>& data, uint32_t indexStride);
 		ConstantBufferId CreateConstantBuffer(std::vector<uint8_t>& data);
 		TextureId CreateTexture(const std::filesystem::path& fileName);
 		TextureId CreateTexture(const std::vector<uint8_t>& data, const TextureInfo& textureInfo, D3D12_RESOURCE_FLAGS resourceFlags);
 		SamplerId CreateSampler(const D3D12_SAMPLER_DESC& samplerDesc);
 
 		const VertexBuffer& GetVertexBuffer(const VertexBufferId& resourceId);
+		const IndexBuffer& GetIndexBuffer(const IndexBufferId& resourceId);
 		const ConstantBuffer& GetConstantBuffer(const ConstantBufferId& resourceId);
 		const Texture& GetTexture(const TextureId& resourceId);
 		const Sampler& GetSampler(const SamplerId& resourceId);
@@ -103,6 +112,7 @@ namespace Graphics
 		ID3D12GraphicsCommandList* commandList;
 
 		std::vector<VertexBuffer> vertexBufferPool;
+		std::vector<IndexBuffer> indexBufferPool;
 		std::vector<ConstantBuffer> constantBufferPool;
 		std::vector<Texture> texturePool;
 		std::vector<Sampler> samplerPool;
