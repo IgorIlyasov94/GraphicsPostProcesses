@@ -24,11 +24,8 @@ namespace Graphics
 		PostProcesses& operator=(const PostProcesses&) = delete;
 		PostProcesses& operator=(PostProcesses&&) = delete;
 
-		ComPtr<ID3D12RootSignature> hdrRootSignature;
-		ComPtr<ID3D12PipelineState> hdrPipelineState;
 		ComPtr<ID3D12DescriptorHeap> renderTargetDescHeap;
 
-		VertexBufferId screenQuadVertexBufferId;
 		ConstantBufferId hdrConstantBufferId;
 
 		TextureId noiseTextureId;

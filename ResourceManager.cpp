@@ -249,9 +249,10 @@ const Graphics::Sampler& Graphics::ResourceManager::GetSampler(const SamplerId& 
 	return samplerPool[resourceId.value];
 }
 
-void Graphics::ResourceManager::UpdateConstantBuffer()
+void Graphics::ResourceManager::UpdateConstantBuffer(const ConstantBufferId& resourceId, const void* data, size_t dataSize)
 {
-
+	std::copy(reinterpret_cast<const uint8_t*>(data), reinterpret_cast<const uint8_t*>(data) + dataSize,
+		constantBufferPool[resourceId.value].uploadBufferAllocation.cpuAddress);
 }
 
 void Graphics::ResourceManager::ReleaseTemporaryUploadBuffers()

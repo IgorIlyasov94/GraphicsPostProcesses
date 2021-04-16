@@ -12,12 +12,14 @@ Graphics::Material::~Material()
 
 }
 
-void Graphics::Material::SetConstantBuffer(size_t registerIndex, void* bufferData, size_t bufferSize)
+Graphics::ConstantBufferId Graphics::Material::SetConstantBuffer(size_t registerIndex, void* bufferData, size_t bufferSize)
 {
 	constantBufferRegisterIndices.push_back(registerIndex);
 	constantBufferIndices.push_back(resourceManager.CreateConstantBuffer(bufferData, bufferSize));
 
 	constantBufferAddresses.push_back(resourceManager.GetConstantBuffer(constantBufferIndices.back()).constantBufferViewDesc.BufferLocation);
+
+	return constantBufferIndices.back();
 }
 
 void Graphics::Material::SetSampler(size_t registerIndex, D3D12_FILTER filter, D3D12_TEXTURE_ADDRESS_MODE addressU, D3D12_TEXTURE_ADDRESS_MODE addressV,
@@ -97,9 +99,9 @@ void Graphics::Material::SetBlendMode(bool blendOn, D3D12_BLEND srcBlend, D3D12_
 	SetupBlendDesc(blendDesc, blendOn, srcBlend, destBlend, blendOp, srcBlendAlpha, destBlendAlpha, blendOpAlpha);
 }
 
-void Graphics::Material::UpdateConstantBuffer(size_t registerIndex, void* bufferData, size_t bufferSize)
+void Graphics::Material::UpdateConstantBuffer(ConstantBufferId constantBufferId, void* bufferData, size_t bufferSize)
 {
-
+	resourceManager.UpdateConstantBuffer(constantBufferId, bufferData, bufferSize);
 }
 
 void Graphics::Material::Compose(ID3D12Device* device)

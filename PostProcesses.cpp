@@ -27,12 +27,6 @@ void Graphics::PostProcesses::Initialize(const int32_t& resolutionX, const int32
 	noiseTextureId = resourceManager.CreateTexture("Resources\\Textures\\Noise.dds");
 	diffuseTextureId = resourceManager.CreateTexture("Resources\\Textures\\Diffuse0.dds");
 	
-	hdrConstantBuffer.shiftVector = { 0.8f, 0.6f, 0.7f };
-	hdrConstantBuffer.middleGray = 0.6f;
-	hdrConstantBuffer.whiteCutoff = 0.8f;
-	hdrConstantBuffer.brightPassOffset = 5.0f;
-	hdrConstantBuffer.brightPassThreshold = 10.0f;
-
 	ScreenQuadVertex vertices[] =
 	{
 		{ float3(-1.0f, 1.0f, 0.5f), float2(0.0f, 0.0f) },
@@ -54,10 +48,18 @@ void Graphics::PostProcesses::Initialize(const int32_t& resolutionX, const int32
 	hdrPostProcessMaterial->SetVertexFormat(VertexFormat::POSITION_TEXCOORD);
 	hdrPostProcessMaterial->AssignTexture(commandList, 0, noiseTextureId, true);
 	hdrPostProcessMaterial->AssignTexture(commandList, 1, diffuseTextureId, true);
-	hdrPostProcessMaterial->SetConstantBuffer(0, &hdrConstantBuffer, sizeof(HDRConstantBuffer));
 	hdrPostProcessMaterial->SetVertexShader({ quadVertexShader, sizeof(quadVertexShader) });
 	hdrPostProcessMaterial->SetPixelShader({ toneMappingPixelShader, sizeof(toneMappingPixelShader) });
 	hdrPostProcessMaterial->SetRenderTargetFormat(0, DXGI_FORMAT_R8G8B8A8_UNORM);
+	
+	hdrConstantBuffer.shiftVector = { 0.08f, 0.06f, 0.07f };
+	hdrConstantBuffer.middleGray = 0.6f;
+	hdrConstantBuffer.whiteCutoff = 0.8f;
+	hdrConstantBuffer.brightPassOffset = 5.0f;
+	hdrConstantBuffer.brightPassThreshold = 10.0f;
+
+	hdrConstantBufferId = hdrPostProcessMaterial->SetConstantBuffer(0, &hdrConstantBuffer, sizeof(HDRConstantBuffer));
+
 	hdrPostProcessMaterial->Compose(device);
 
 	hdrPostProcess = std::make_shared<GraphicObject>();
@@ -82,5 +84,10 @@ void Graphics::PostProcesses::EnableHDR(ID3D12GraphicsCommandList* commandList, 
 
 	commandList->OMSetRenderTargets(1, &renderTargetHandle, false, nullptr);
 
+	hdrConstantBuffer.shiftVector.x *= 1.01f;
+	hdrConstantBuffer.shiftVector.y *= 1.01f;
+	hdrConstantBuffer.shiftVector.z *= 1.01f;
+
+	hdrPostProcessMaterial->UpdateConstantBuffer(hdrConstantBufferId, &hdrConstantBuffer, sizeof(hdrConstantBuffer));
 	hdrPostProcess->Draw(commandList);
 }

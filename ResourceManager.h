@@ -92,7 +92,7 @@ namespace Graphics
 		const Texture& GetTexture(const TextureId& resourceId);
 		const Sampler& GetSampler(const SamplerId& resourceId);
 
-		void UpdateConstantBuffer();
+		void UpdateConstantBuffer(const ConstantBufferId& resourceId, const void* data, size_t dataSize);
 
 		void ReleaseTemporaryUploadBuffers();
 
