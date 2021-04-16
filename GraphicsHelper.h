@@ -68,22 +68,23 @@ namespace Graphics
 
 	void CreateGraphicsPipelineState(ID3D12Device* device, const D3D12_INPUT_LAYOUT_DESC& inputLayoutDesc, ID3D12RootSignature* rootSignature,
 		const D3D12_RASTERIZER_DESC& rasterizerDesc, const D3D12_BLEND_DESC& blendDesc, const D3D12_DEPTH_STENCIL_DESC& depthStencilDesc,
-		DXGI_FORMAT rtvFormat, const ShaderList& shaderList, ID3D12PipelineState** pipelineState);
+		const std::array<DXGI_FORMAT, 8>& rtvFormat, const ShaderList& shaderList, ID3D12PipelineState** pipelineState);
 
 	void ReadShaderConstantBuffers(const D3D12_SHADER_BYTECODE& shaderBytecode, std::set<size_t>& constantBufferIndices);
 
-	void CreateRootParameters(const ShaderList& shaderList, const std::set<size_t>& constantBufferRegisterIndices, const D3D12_ROOT_DESCRIPTOR_TABLE& rootDescriptorTable,
+	void CreateRootParameters(const ShaderList& shaderList, const std::vector<size_t>& constantBufferRegisterIndices, const D3D12_ROOT_DESCRIPTOR_TABLE& rootDescriptorTable,
 		D3D12_ROOT_SIGNATURE_FLAGS& rootSignatureFlags, std::vector<D3D12_ROOT_PARAMETER>& rootParameters);
 	void CreateTextureRootDescriptorTable(const std::vector<size_t>& textureRegisterIndices, const std::vector<size_t>& descriptorIndices,
 		std::vector<D3D12_DESCRIPTOR_RANGE>& descriptorRange, D3D12_ROOT_DESCRIPTOR_TABLE& rootDescriptorTable);
 	void CreateStandardSamplerDescs(std::vector<D3D12_STATIC_SAMPLER_DESC>& samplerDescs);
 
 	void CreatePipelineStateAndRootSignature(ID3D12Device* device, const D3D12_INPUT_LAYOUT_DESC& inputLayoutDesc, const D3D12_RASTERIZER_DESC& rasterizerDesc,
-		const D3D12_BLEND_DESC& blendDesc, const D3D12_DEPTH_STENCIL_DESC& depthStencilDesc, DXGI_FORMAT rtvFormat, const ShaderList& shaderList,
-		const std::set<size_t>& constantBufferIndices, const D3D12_ROOT_DESCRIPTOR_TABLE& texturesRootDescriptorTable, const std::vector<D3D12_STATIC_SAMPLER_DESC>& samplerDescs,
-		ID3D12RootSignature** rootSignature, ID3D12PipelineState** pipelineState);
+		const D3D12_BLEND_DESC& blendDesc, const D3D12_DEPTH_STENCIL_DESC& depthStencilDesc, const std::array<DXGI_FORMAT, 8>& rtvFormat, const ShaderList& shaderList,
+		const std::vector<size_t>& constantBufferIndices, const D3D12_ROOT_DESCRIPTOR_TABLE& texturesRootDescriptorTable,
+		const std::vector<D3D12_STATIC_SAMPLER_DESC>& samplerDescs, ID3D12RootSignature** rootSignature, ID3D12PipelineState** pipelineState);
 
 	void GetHardwareAdapter(IDXGIFactory4* factory4, IDXGIAdapter1** adapter);
+	uint32_t GetVertexStrideFromFormat(VertexFormat vertexFormat);
 
 	void SetupRasterizerDesc(D3D12_RASTERIZER_DESC& rasterizerDesc, D3D12_CULL_MODE cullMode = D3D12_CULL_MODE_NONE) noexcept;
 

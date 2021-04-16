@@ -39,6 +39,9 @@ void Graphics::PostProcesses::Initialize(const int32_t& resolutionX, const int32
 	D3D12_DEPTH_STENCIL_DESC depthStencilDesc;
 	SetupDepthStencilDesc(depthStencilDesc, false);
 
+	std::array<DXGI_FORMAT, 8> rtvFormat{};
+	rtvFormat[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+
 	ShaderList hdrShaderList{};
 	hdrShaderList.vertexShader = { quadVertexShader, sizeof(quadVertexShader) };
 	hdrShaderList.pixelShader = { toneMappingPixelShader, sizeof(toneMappingPixelShader) };
@@ -46,7 +49,7 @@ void Graphics::PostProcesses::Initialize(const int32_t& resolutionX, const int32
 	noiseTextureId = resourceManager.CreateTexture("Resources\\Textures\\Noise.dds");
 	diffuseTextureId = resourceManager.CreateTexture("Resources\\Textures\\Diffuse0.dds");
 	
-	const std::set<size_t> hdrConstantBufferIndices = { 0 };
+	const std::vector<size_t> hdrConstantBufferIndices = { 0 };
 	const std::vector<size_t> hdrTextureIndices = { 0, 1 };
 	const std::vector<size_t> hdrTextureDescriptorIndices = { resourceManager.GetTexture(noiseTextureId).descriptorAllocation.descriptorStartIndex, 
 		resourceManager.GetTexture(diffuseTextureId).descriptorAllocation.descriptorStartIndex };
@@ -58,7 +61,7 @@ void Graphics::PostProcesses::Initialize(const int32_t& resolutionX, const int32
 
 	CreateTextureRootDescriptorTable(hdrTextureIndices, hdrTextureDescriptorIndices, hdrTextureDescRange, hdrTextureRootDescTable);
 	CreatePipelineStateAndRootSignature(device, { inputElementDescs , _countof(inputElementDescs) }, rasterizerDesc, blendDesc, depthStencilDesc,
-		DXGI_FORMAT_R8G8B8A8_UNORM, hdrShaderList, hdrConstantBufferIndices, hdrTextureRootDescTable, postProcessSamplerDescs, &hdrRootSignature, &hdrPipelineState);
+		rtvFormat, hdrShaderList, hdrConstantBufferIndices, hdrTextureRootDescTable, postProcessSamplerDescs, &hdrRootSignature, &hdrPipelineState);
 
 	hdrConstantBuffer.shiftVector = { 0.8f, 0.6f, 0.7f };
 	hdrConstantBuffer.middleGray = 0.6f;
@@ -82,14 +85,17 @@ void Graphics::PostProcesses::Initialize(const int32_t& resolutionX, const int32
 
 	std::vector<uint8_t> hdrConstantBufferRawData;
 
-	std::copy(reinterpret_cast<uint8_t*>(&hdrConstantBuffer), reinterpret_cast<uint8_t*>(&hdrConstantBuffer) + sizeof(HdrConstantBuffer), std::back_inserter(hdrConstantBufferRawData));
+	std::copy(reinterpret_cast<uint8_t*>(&hdrConstantBuffer), reinterpret_cast<uint8_t*>(&hdrConstantBuffer) + sizeof(HdrConstantBuffer),
+		std::back_inserter(hdrConstantBufferRawData));
 
 	hdrConstantBufferId = resourceManager.CreateConstantBuffer(hdrConstantBufferRawData);
 
 	renderTargetViewDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	
-	SetResourceBarrier(commandList, resourceManager.GetTexture(noiseTextureId).textureAllocation.textureResource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	SetResourceBarrier(commandList, resourceManager.GetTexture(diffuseTextureId).textureAllocation.textureResource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	SetResourceBarrier(commandList, resourceManager.GetTexture(noiseTextureId).textureAllocation.textureResource, D3D12_RESOURCE_STATE_COMMON,
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	SetResourceBarrier(commandList, resourceManager.GetTexture(diffuseTextureId).textureAllocation.textureResource, D3D12_RESOURCE_STATE_COMMON,
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 }
 
 void Graphics::PostProcesses::EnableHDR(ID3D12GraphicsCommandList* commandList, ID3D12DescriptorHeap* outputRenderTargetDescHeap, size_t bufferIndex)

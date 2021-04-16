@@ -79,7 +79,7 @@ void Graphics::CreateDescriptorHeap(ID3D12Device* device, uint32_t numDescriptor
 
 void Graphics::CreateGraphicsPipelineState(ID3D12Device* device, const D3D12_INPUT_LAYOUT_DESC& inputLayoutDesc, ID3D12RootSignature* rootSignature,
 	const D3D12_RASTERIZER_DESC& rasterizerDesc, const D3D12_BLEND_DESC& blendDesc, const D3D12_DEPTH_STENCIL_DESC& depthStencilDesc,
-	DXGI_FORMAT rtvFormat, const ShaderList& shaderList, ID3D12PipelineState** pipelineState)
+	const std::array<DXGI_FORMAT, 8>& rtvFormat, const ShaderList& shaderList, ID3D12PipelineState** pipelineState)
 {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineStateDesc{};
 	pipelineStateDesc.InputLayout = inputLayoutDesc;
@@ -95,7 +95,10 @@ void Graphics::CreateGraphicsPipelineState(ID3D12Device* device, const D3D12_INP
 	pipelineStateDesc.SampleMask = UINT_MAX;
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	pipelineStateDesc.NumRenderTargets = 1;
-	pipelineStateDesc.RTVFormats[0] = rtvFormat;
+
+	for (uint32_t formatId = 0; formatId < rtvFormat.size(); formatId++)
+		pipelineStateDesc.RTVFormats[formatId] = rtvFormat[formatId];
+
 	pipelineStateDesc.SampleDesc.Count = 1;
 
 	ThrowIfFailed(device->CreateGraphicsPipelineState(&pipelineStateDesc, IID_PPV_ARGS(pipelineState)),
@@ -131,7 +134,7 @@ void Graphics::ReadShaderConstantBuffers(const D3D12_SHADER_BYTECODE& shaderByte
 	throw std::exception(str.str().c_str());
 }
 
-void Graphics::CreateRootParameters(const ShaderList& shaderList, const std::set<size_t>& constantBufferRegisterIndices, const D3D12_ROOT_DESCRIPTOR_TABLE& rootDescriptorTable,
+void Graphics::CreateRootParameters(const ShaderList& shaderList, const std::vector<size_t>& constantBufferRegisterIndices, const D3D12_ROOT_DESCRIPTOR_TABLE& rootDescriptorTable,
 	D3D12_ROOT_SIGNATURE_FLAGS& rootSignatureFlags, std::vector<D3D12_ROOT_PARAMETER>& rootParameters)
 {
 	if (shaderList.vertexShader.pShaderBytecode == nullptr)
@@ -238,8 +241,8 @@ void Graphics::CreateStandardSamplerDescs(std::vector<D3D12_STATIC_SAMPLER_DESC>
 }
 
 void Graphics::CreatePipelineStateAndRootSignature(ID3D12Device* device, const D3D12_INPUT_LAYOUT_DESC& inputLayoutDesc, const D3D12_RASTERIZER_DESC& rasterizerDesc,
-	const D3D12_BLEND_DESC& blendDesc, const D3D12_DEPTH_STENCIL_DESC& depthStencilDesc, DXGI_FORMAT rtvFormat, const ShaderList& shaderList,
-	const std::set<size_t>& constantBufferIndices, const D3D12_ROOT_DESCRIPTOR_TABLE& texturesRootDescriptorTable, const std::vector<D3D12_STATIC_SAMPLER_DESC>& samplerDescs,
+	const D3D12_BLEND_DESC& blendDesc, const D3D12_DEPTH_STENCIL_DESC& depthStencilDesc, const std::array<DXGI_FORMAT, 8>& rtvFormat, const ShaderList& shaderList,
+	const std::vector<size_t>& constantBufferIndices, const D3D12_ROOT_DESCRIPTOR_TABLE& texturesRootDescriptorTable, const std::vector<D3D12_STATIC_SAMPLER_DESC>& samplerDescs,
 	ID3D12RootSignature** rootSignature, ID3D12PipelineState** pipelineState)
 {
 	D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
@@ -279,6 +282,18 @@ void Graphics::GetHardwareAdapter(IDXGIFactory4* factory4, IDXGIAdapter1** adapt
 	}
 
 	*adapter = adapter1.Detach();
+}
+
+uint32_t Graphics::GetVertexStrideFromFormat(VertexFormat vertexFormat)
+{
+	if (vertexFormat == VertexFormat::POSITION_NORMAL)
+		return 24;
+	else if (vertexFormat == VertexFormat::POSITION_TEXCOORD)
+		return 20;
+	else if (vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD)
+		return 32;
+
+	return 12;
 }
 
 void Graphics::SetupRasterizerDesc(D3D12_RASTERIZER_DESC& rasterizerDesc, D3D12_CULL_MODE cullMode) noexcept

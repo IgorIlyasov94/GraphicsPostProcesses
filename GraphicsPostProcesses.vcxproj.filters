@@ -99,6 +99,9 @@
     <ClCompile Include="PostProcesses.cpp">
       <Filter>Исходные файлы\GraphicsPostProcesses</Filter>
     </ClCompile>
+    <ClCompile Include="Material.cpp">
+      <Filter>Исходные файлы\GraphicsCore\GraphicsObjects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -148,6 +151,9 @@
     </ClInclude>
     <ClInclude Include="PostProcesses.h">
       <Filter>Файлы заголовков\GraphicsPostProcesses</Filter>
+    </ClInclude>
+    <ClInclude Include="Material.h">
+      <Filter>Файлы заголовков\GraphicsCore\GraphicsObjects</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
