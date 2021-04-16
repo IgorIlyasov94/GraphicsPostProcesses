@@ -79,9 +79,9 @@ namespace Graphics
 
 		void Initialize(ID3D12Device* _device, ID3D12GraphicsCommandList* _commandList);
 
-		VertexBufferId CreateVertexBuffer(std::vector<uint8_t>& data, uint32_t vertexStride);
-		IndexBufferId CreateIndexBuffer(std::vector<uint8_t>& data, uint32_t indexStride);
-		ConstantBufferId CreateConstantBuffer(std::vector<uint8_t>& data);
+		VertexBufferId CreateVertexBuffer(const void* data, size_t dataSize, uint32_t vertexStride);
+		IndexBufferId CreateIndexBuffer(const void* data, size_t dataSize, uint32_t indexStride);
+		ConstantBufferId CreateConstantBuffer(const void* data, size_t dataSize);
 		TextureId CreateTexture(const std::filesystem::path& fileName);
 		TextureId CreateTexture(const std::vector<uint8_t>& data, const TextureInfo& textureInfo, D3D12_RESOURCE_FLAGS resourceFlags);
 		SamplerId CreateSampler(const D3D12_SAMPLER_DESC& samplerDesc);
@@ -91,6 +91,8 @@ namespace Graphics
 		const ConstantBuffer& GetConstantBuffer(const ConstantBufferId& resourceId);
 		const Texture& GetTexture(const TextureId& resourceId);
 		const Sampler& GetSampler(const SamplerId& resourceId);
+
+		void UpdateConstantBuffer();
 
 		void ReleaseTemporaryUploadBuffers();
 

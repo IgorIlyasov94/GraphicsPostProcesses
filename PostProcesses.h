@@ -2,6 +2,7 @@
 
 #include "GraphicsHelper.h"
 #include "ResourceManager.h"
+#include "GraphicObject.h"
 
 namespace Graphics
 {
@@ -33,15 +34,18 @@ namespace Graphics
 		TextureId noiseTextureId;
 		TextureId diffuseTextureId;
 
+		std::shared_ptr<Mesh> screenQuadMesh;
+		std::shared_ptr<Material> hdrPostProcessMaterial;
+		std::shared_ptr<GraphicObject> hdrPostProcess;
+
 		D3D12_VIEWPORT sceneViewport;
 		D3D12_RECT sceneScissorRect;
 
 		const uint32_t RENDER_TARGETS_NUMBER = 1;
-		const uint32_t CONST_BUFFERS_NUMBER = 1;
-
+		
 		uint32_t renderTargetViewDescriptorSize;
 
-		using HdrConstantBuffer = struct
+		using HDRConstantBuffer = struct
 		{
 			float3 shiftVector;
 			float elapsedTime;
@@ -51,7 +55,7 @@ namespace Graphics
 			float brightPassOffset;
 		};
 
-		HdrConstantBuffer hdrConstantBuffer;
+		HDRConstantBuffer hdrConstantBuffer;
 
 		ResourceManager& resourceManager = ResourceManager::GetInstance();
 	};

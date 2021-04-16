@@ -13,21 +13,21 @@ void Graphics::ResourceManager::Initialize(ID3D12Device* _device, ID3D12Graphics
 	commandList = _commandList;
 }
 
-Graphics::VertexBufferId Graphics::ResourceManager::CreateVertexBuffer(std::vector<uint8_t>& data, uint32_t vertexStride)
+Graphics::VertexBufferId Graphics::ResourceManager::CreateVertexBuffer(const void* data, size_t dataSize, uint32_t vertexStride)
 {
 	BufferAllocation vertexBufferAllocation{};
 
-	bufferAllocator.Allocate(device, data.size(), 64 * _KB, D3D12_HEAP_TYPE_DEFAULT, vertexBufferAllocation);
+	bufferAllocator.Allocate(device, dataSize, 64 * _KB, D3D12_HEAP_TYPE_DEFAULT, vertexBufferAllocation);
 
 	BufferAllocation uploadBufferAllocation{};
 
-	bufferAllocator.AllocateTemporaryUpload(device, data.size(), uploadBufferAllocation);
+	bufferAllocator.AllocateTemporaryUpload(device, dataSize, uploadBufferAllocation);
 
-	std::copy(data.begin(), data.end(), uploadBufferAllocation.cpuAddress);
+	std::copy(reinterpret_cast<const uint8_t*>(data), reinterpret_cast<const uint8_t*>(data) + dataSize, uploadBufferAllocation.cpuAddress);
 
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
 	vertexBufferView.BufferLocation = vertexBufferAllocation.gpuAddress;
-	vertexBufferView.SizeInBytes = data.size();
+	vertexBufferView.SizeInBytes = dataSize;
 	vertexBufferView.StrideInBytes = vertexStride;
 
 	if (vertexBufferAllocation.bufferResource == nullptr)
@@ -51,21 +51,21 @@ Graphics::VertexBufferId Graphics::ResourceManager::CreateVertexBuffer(std::vect
 	return VertexBufferId(vertexBufferPool.size() - 1);
 }
 
-Graphics::IndexBufferId Graphics::ResourceManager::CreateIndexBuffer(std::vector<uint8_t>& data, uint32_t indexStride)
+Graphics::IndexBufferId Graphics::ResourceManager::CreateIndexBuffer(const void* data, size_t dataSize, uint32_t indexStride)
 {
 	BufferAllocation indexBufferAllocation{};
 
-	bufferAllocator.Allocate(device, data.size(), 64 * _KB, D3D12_HEAP_TYPE_DEFAULT, indexBufferAllocation);
+	bufferAllocator.Allocate(device, dataSize, 64 * _KB, D3D12_HEAP_TYPE_DEFAULT, indexBufferAllocation);
 
 	BufferAllocation uploadBufferAllocation{};
 
-	bufferAllocator.AllocateTemporaryUpload(device, data.size(), uploadBufferAllocation);
+	bufferAllocator.AllocateTemporaryUpload(device, dataSize, uploadBufferAllocation);
 
-	std::copy(data.begin(), data.end(), uploadBufferAllocation.cpuAddress);
+	std::copy(reinterpret_cast<const uint8_t*>(data), reinterpret_cast<const uint8_t*>(data) + dataSize, uploadBufferAllocation.cpuAddress);
 
 	D3D12_INDEX_BUFFER_VIEW indexBufferView{};
 	indexBufferView.BufferLocation = indexBufferAllocation.gpuAddress;
-	indexBufferView.SizeInBytes = data.size();
+	indexBufferView.SizeInBytes = dataSize;
 	indexBufferView.Format = (indexStride == 4) ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
 
 	if (indexBufferAllocation.bufferResource == nullptr)
@@ -81,7 +81,7 @@ Graphics::IndexBufferId Graphics::ResourceManager::CreateIndexBuffer(std::vector
 		D3D12_RESOURCE_STATE_INDEX_BUFFER);
 
 	IndexBuffer indexBuffer{};
-	indexBuffer.indicesCount = data.size() / indexStride;
+	indexBuffer.indicesCount = dataSize / indexStride;
 	indexBuffer.indexBufferView = indexBufferView;
 	indexBuffer.indexBufferAllocation = indexBufferAllocation;
 	
@@ -90,11 +90,11 @@ Graphics::IndexBufferId Graphics::ResourceManager::CreateIndexBuffer(std::vector
 	return IndexBufferId(indexBufferPool.size() - 1);
 }
 
-Graphics::ConstantBufferId Graphics::ResourceManager::CreateConstantBuffer(std::vector<uint8_t>& data)
+Graphics::ConstantBufferId Graphics::ResourceManager::CreateConstantBuffer(const void* data, size_t dataSize)
 {
 	BufferAllocation constantBufferAllocation{};
 
-	bufferAllocator.Allocate(device, data.size(), 64 * _KB, D3D12_HEAP_TYPE_UPLOAD, constantBufferAllocation);
+	bufferAllocator.Allocate(device, dataSize, 64 * _KB, D3D12_HEAP_TYPE_UPLOAD, constantBufferAllocation);
 
 	DescriptorAllocation constantBufferDescriptorAllocation{};
 
@@ -102,11 +102,11 @@ Graphics::ConstantBufferId Graphics::ResourceManager::CreateConstantBuffer(std::
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC constantBufferViewDesc{};
 	constantBufferViewDesc.BufferLocation = constantBufferAllocation.gpuAddress;
-	constantBufferViewDesc.SizeInBytes = AlignSize(data.size(), static_cast<size_t>(D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT));
+	constantBufferViewDesc.SizeInBytes = AlignSize(dataSize, static_cast<size_t>(D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT));
 
 	device->CreateConstantBufferView(&constantBufferViewDesc, constantBufferDescriptorAllocation.descriptorBase);
 
-	std::copy(data.begin(), data.end(), constantBufferAllocation.cpuAddress);
+	std::copy(reinterpret_cast<const uint8_t*>(data), reinterpret_cast<const uint8_t*>(data) + dataSize, constantBufferAllocation.cpuAddress);
 
 	ConstantBuffer constantBuffer{};
 	constantBuffer.uploadBufferAllocation = constantBufferAllocation;
@@ -247,6 +247,11 @@ const Graphics::Texture& Graphics::ResourceManager::GetTexture(const TextureId& 
 const Graphics::Sampler& Graphics::ResourceManager::GetSampler(const SamplerId& resourceId)
 {
 	return samplerPool[resourceId.value];
+}
+
+void Graphics::ResourceManager::UpdateConstantBuffer()
+{
+
 }
 
 void Graphics::ResourceManager::ReleaseTemporaryUploadBuffers()

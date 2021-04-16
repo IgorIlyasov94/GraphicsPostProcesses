@@ -9,12 +9,12 @@ namespace Graphics
 	{
 	public:
 		Mesh(std::filesystem::path filePath);
-		Mesh(VertexFormat vertexFormat, std::vector<uint8_t> verticesData, std::vector<uint8_t> indicesData);
+		Mesh(VertexFormat vertexFormat, const void* verticesData, size_t verticesDataSize, const void* indicesData, size_t indicesDataSize);
 		~Mesh();
 
-		uint32_t GetIndicesCount();
+		uint32_t GetIndicesCount() const noexcept;
 
-		void Present(ID3D12GraphicsCommandList* commandList);
+		void Present(ID3D12GraphicsCommandList* commandList) const;
 
 	private:
 		Mesh() = delete;

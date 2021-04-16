@@ -2,7 +2,7 @@
 
 Graphics::Material::Material()
 	: shaderList{}, firstTextureDescriptorBase{}, vertexFormat{}, renderTargetFormat{}, cullMode(D3D12_CULL_MODE_BACK), blendDesc{},
-	useDepthBuffer{ false }
+	useDepthBuffer(false), isComposed(false)
 {
 	SetupBlendDesc(blendDesc);
 }
@@ -14,12 +14,8 @@ Graphics::Material::~Material()
 
 void Graphics::Material::SetConstantBuffer(size_t registerIndex, void* bufferData, size_t bufferSize)
 {
-	std::vector<uint8_t> constantBufferRawData(bufferSize);
-
-	std::copy(reinterpret_cast<uint8_t*>(bufferData), reinterpret_cast<uint8_t*>(bufferData) + bufferSize, constantBufferRawData.data());
-
 	constantBufferRegisterIndices.push_back(registerIndex);
-	constantBufferIndices.push_back(resourceManager.CreateConstantBuffer(constantBufferRawData));
+	constantBufferIndices.push_back(resourceManager.CreateConstantBuffer(bufferData, bufferSize));
 
 	constantBufferAddresses.push_back(resourceManager.GetConstantBuffer(constantBufferIndices.back()).constantBufferViewDesc.BufferLocation);
 }
@@ -82,6 +78,11 @@ void Graphics::Material::SetPixelShader(D3D12_SHADER_BYTECODE shaderBytecode)
 	shaderList.pixelShader = shaderBytecode;
 }
 
+void Graphics::Material::SetVertexFormat(VertexFormat format)
+{
+	vertexFormat = format;
+}
+
 void Graphics::Material::SetRenderTargetFormat(size_t renderTargetIndex, DXGI_FORMAT format)
 {
 	if (renderTargetIndex > 7)
@@ -96,8 +97,21 @@ void Graphics::Material::SetBlendMode(bool blendOn, D3D12_BLEND srcBlend, D3D12_
 	SetupBlendDesc(blendDesc, blendOn, srcBlend, destBlend, blendOp, srcBlendAlpha, destBlendAlpha, blendOpAlpha);
 }
 
+void Graphics::Material::UpdateConstantBuffer(size_t registerIndex, void* bufferData, size_t bufferSize)
+{
+
+}
+
 void Graphics::Material::Compose(ID3D12Device* device)
 {
+	if (isComposed)
+	{
+		rootSignature.Reset();
+		pipelineState.Reset();
+
+		isComposed = false;
+	}
+
 	std::vector<D3D12_INPUT_ELEMENT_DESC> inputElementDescs;
 	CreateInputElementDescs(vertexFormat, inputElementDescs);
 
@@ -121,9 +135,16 @@ void Graphics::Material::Compose(ID3D12Device* device)
 
 	if (textureIndices.size() > 0)
 		firstTextureDescriptorBase = resourceManager.GetTexture(textureIndices.front()).descriptorAllocation.gpuDescriptorBase;
+
+	isComposed = true;
 }
 
-void Graphics::Material::Present(ID3D12GraphicsCommandList* commandList)
+bool Graphics::Material::IsComposed() const noexcept
+{
+	return isComposed;
+}
+
+void Graphics::Material::Present(ID3D12GraphicsCommandList* commandList) const
 {
 	commandList->SetPipelineState(pipelineState.Get());
 	commandList->SetGraphicsRootSignature(rootSignature.Get());
@@ -137,7 +158,7 @@ void Graphics::Material::Present(ID3D12GraphicsCommandList* commandList)
 		commandList->SetGraphicsRootDescriptorTable(rootParameterIndex++, firstTextureDescriptorBase);
 }
 
-void Graphics::Material::CreateInputElementDescs(VertexFormat format, std::vector<D3D12_INPUT_ELEMENT_DESC>& inputElementDescs)
+void Graphics::Material::CreateInputElementDescs(VertexFormat format, std::vector<D3D12_INPUT_ELEMENT_DESC>& inputElementDescs) const noexcept
 {
 	inputElementDescs.push_back({ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
 

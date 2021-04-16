@@ -151,6 +151,7 @@
     <ClCompile Include="DDSLoader.cpp" />
     <ClCompile Include="DescriptorAllocationPage.cpp" />
     <ClCompile Include="DescriptorAllocator.cpp" />
+    <ClCompile Include="GraphicObject.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="OBJLoader.cpp" />
@@ -170,6 +171,7 @@
     <ClInclude Include="DDSLoader.h" />
     <ClInclude Include="DescriptorAllocationPage.h" />
     <ClInclude Include="DescriptorAllocator.h" />
+    <ClInclude Include="GraphicObject.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="OBJLoader.h" />

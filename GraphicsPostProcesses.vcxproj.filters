@@ -102,6 +102,9 @@
     <ClCompile Include="Material.cpp">
       <Filter>Исходные файлы\GraphicsCore\GraphicsObjects</Filter>
     </ClCompile>
+    <ClCompile Include="GraphicObject.cpp">
+      <Filter>Исходные файлы\GraphicsCore\GraphicsObjects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -153,6 +156,9 @@
       <Filter>Файлы заголовков\GraphicsPostProcesses</Filter>
     </ClInclude>
     <ClInclude Include="Material.h">
+      <Filter>Файлы заголовков\GraphicsCore\GraphicsObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicObject.h">
       <Filter>Файлы заголовков\GraphicsCore\GraphicsObjects</Filter>
     </ClInclude>
   </ItemGroup>

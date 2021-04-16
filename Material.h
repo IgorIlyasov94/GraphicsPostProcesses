@@ -23,17 +23,22 @@ namespace Graphics
 		void SetGeometryShader(D3D12_SHADER_BYTECODE shaderBytecode);
 		void SetPixelShader(D3D12_SHADER_BYTECODE shaderBytecode);
 
+		void SetVertexFormat(VertexFormat format);
 		void SetRenderTargetFormat(size_t renderTargetIndex, DXGI_FORMAT format);
 
 		void SetBlendMode(bool blendOn, D3D12_BLEND srcBlend = D3D12_BLEND_ONE, D3D12_BLEND destBlend = D3D12_BLEND_ZERO, D3D12_BLEND_OP blendOp = D3D12_BLEND_OP_ADD,
 			D3D12_BLEND srcBlendAlpha = D3D12_BLEND_ONE, D3D12_BLEND destBlendAlpha = D3D12_BLEND_ZERO, D3D12_BLEND_OP blendOpAlpha = D3D12_BLEND_OP_ADD);
 
+		void UpdateConstantBuffer(size_t registerIndex, void* bufferData, size_t bufferSize);
+
 		void Compose(ID3D12Device* device);
 
-		void Present(ID3D12GraphicsCommandList* commandList);
+		bool IsComposed() const noexcept;
+
+		void Present(ID3D12GraphicsCommandList* commandList) const;
 
 	private:
-		void CreateInputElementDescs(VertexFormat format, std::vector<D3D12_INPUT_ELEMENT_DESC>& inputElementDescs);
+		void CreateInputElementDescs(VertexFormat format, std::vector<D3D12_INPUT_ELEMENT_DESC>& inputElementDescs) const noexcept;
 
 		ShaderList shaderList;
 
@@ -59,6 +64,8 @@ namespace Graphics
 
 		ComPtr<ID3D12RootSignature> rootSignature;
 		ComPtr<ID3D12PipelineState> pipelineState;
+
+		bool isComposed;
 
 		ResourceManager& resourceManager = ResourceManager::GetInstance();
 	};
