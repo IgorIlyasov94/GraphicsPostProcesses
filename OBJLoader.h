@@ -7,8 +7,8 @@ namespace Graphics
 	class OBJLoader
 	{
 	public:
-		static void Load(const std::filesystem::path& filePath, bool calculateNormals, VertexFormat& vertexFormat, std::vector<uint8_t>& verticesData,
-			std::vector<uint8_t>& indicesData);
+		static void Load(const std::filesystem::path& filePath, bool calculateNormals, bool smoothNormals, VertexFormat& vertexFormat,
+			std::vector<uint8_t>& verticesData, std::vector<uint8_t>& indicesData);
 
 	private:
 		OBJLoader() {};

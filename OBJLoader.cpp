@@ -1,7 +1,7 @@
 #include "OBJLoader.h"
 
-void Graphics::OBJLoader::Load(const std::filesystem::path& filePath, bool calculateNormals, VertexFormat& vertexFormat, std::vector<uint8_t>& verticesData,
-	std::vector<uint8_t>& indicesData)
+void Graphics::OBJLoader::Load(const std::filesystem::path& filePath, bool calculateNormals, bool smoothNormals, VertexFormat& vertexFormat,
+	std::vector<uint8_t>& verticesData, std::vector<uint8_t>& indicesData)
 {
 	std::ifstream objFile(filePath, std::ios::in);
 
@@ -44,13 +44,16 @@ void Graphics::OBJLoader::Load(const std::filesystem::path& filePath, bool calcu
 	if (calculateNormals)
 	{
 		CalculateNormals(vertexFormat, positions, faces, normals);
-		SmoothNormals(vertexFormat, positions, faces, normals);
 
 		if (vertexFormat == VertexFormat::POSITION)
 			vertexFormat = VertexFormat::POSITION_NORMAL;
 		else if (vertexFormat == VertexFormat::POSITION_TEXCOORD)
 			vertexFormat = VertexFormat::POSITION_NORMAL_TEXCOORD;
 	}
+
+	if (smoothNormals)
+		if (vertexFormat == VertexFormat::POSITION_NORMAL || vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD)
+			SmoothNormals(vertexFormat, positions, faces, normals);
 
 	std::vector<float> vertices;
 	std::vector<uint32_t> indices;
