@@ -70,7 +70,7 @@ void Graphics::PostProcesses::Initialize(const int32_t& resolutionX, const int32
 	renderTargetViewDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 }
 
-void Graphics::PostProcesses::EnableHDR(ID3D12GraphicsCommandList* commandList, ID3D12DescriptorHeap* outputRenderTargetDescHeap, size_t bufferIndex)
+void Graphics::PostProcesses::EnableHDR(ID3D12GraphicsCommandList* commandList, size_t bufferIndex)
 {
 	ID3D12DescriptorHeap* descHeaps[] = { resourceManager.GetTexture(noiseTextureId).descriptorAllocation.descriptorHeap };
 
@@ -79,10 +79,7 @@ void Graphics::PostProcesses::EnableHDR(ID3D12GraphicsCommandList* commandList, 
 	commandList->RSSetViewports(1, &sceneViewport);
 	commandList->RSSetScissorRects(1, &sceneScissorRect);
 	
-	D3D12_CPU_DESCRIPTOR_HANDLE renderTargetHandle(outputRenderTargetDescHeap->GetCPUDescriptorHandleForHeapStart());
-	renderTargetHandle.ptr += bufferIndex * renderTargetViewDescriptorSize;
-
-	commandList->OMSetRenderTargets(1, &renderTargetHandle, false, nullptr);
+	commandList->OMSetRenderTargets(1, &resourceManager.GetSwapChainDescriptorBase(bufferIndex), false, nullptr);
 
 	hdrConstantBuffer.shiftVector.x *= 1.01f;
 	hdrConstantBuffer.shiftVector.y *= 1.01f;

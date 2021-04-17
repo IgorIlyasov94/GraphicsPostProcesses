@@ -13,7 +13,7 @@ namespace Graphics
 
 		void Initialize(const int32_t& resolutionX, const int32_t& resolutionY, ID3D12Device* device, D3D12_VIEWPORT& _sceneViewport,
 			ID3D12GraphicsCommandList* commandList);
-		void EnableHDR(ID3D12GraphicsCommandList* commandList, ID3D12DescriptorHeap* outputRenderTargetDescHeap, size_t bufferIndex);
+		void EnableHDR(ID3D12GraphicsCommandList* commandList, size_t bufferIndex);
 
 	private:
 		PostProcesses();
@@ -23,8 +23,6 @@ namespace Graphics
 		PostProcesses(PostProcesses&&) = delete;
 		PostProcesses& operator=(const PostProcesses&) = delete;
 		PostProcesses& operator=(PostProcesses&&) = delete;
-
-		ComPtr<ID3D12DescriptorHeap> renderTargetDescHeap;
 
 		ConstantBufferId hdrConstantBufferId;
 

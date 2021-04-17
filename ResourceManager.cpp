@@ -16,11 +16,9 @@ void Graphics::ResourceManager::Initialize(ID3D12Device* _device, ID3D12Graphics
 Graphics::VertexBufferId Graphics::ResourceManager::CreateVertexBuffer(const void* data, size_t dataSize, uint32_t vertexStride)
 {
 	BufferAllocation vertexBufferAllocation{};
-
 	bufferAllocator.Allocate(device, dataSize, 64 * _KB, D3D12_HEAP_TYPE_DEFAULT, vertexBufferAllocation);
 
 	BufferAllocation uploadBufferAllocation{};
-
 	bufferAllocator.AllocateTemporaryUpload(device, dataSize, uploadBufferAllocation);
 
 	std::copy(reinterpret_cast<const uint8_t*>(data), reinterpret_cast<const uint8_t*>(data) + dataSize, uploadBufferAllocation.cpuAddress);
@@ -54,9 +52,7 @@ Graphics::VertexBufferId Graphics::ResourceManager::CreateVertexBuffer(const voi
 Graphics::IndexBufferId Graphics::ResourceManager::CreateIndexBuffer(const void* data, size_t dataSize, uint32_t indexStride)
 {
 	BufferAllocation indexBufferAllocation{};
-
 	bufferAllocator.Allocate(device, dataSize, 64 * _KB, D3D12_HEAP_TYPE_DEFAULT, indexBufferAllocation);
-
 	BufferAllocation uploadBufferAllocation{};
 
 	bufferAllocator.AllocateTemporaryUpload(device, dataSize, uploadBufferAllocation);
@@ -93,12 +89,10 @@ Graphics::IndexBufferId Graphics::ResourceManager::CreateIndexBuffer(const void*
 Graphics::ConstantBufferId Graphics::ResourceManager::CreateConstantBuffer(const void* data, size_t dataSize)
 {
 	BufferAllocation constantBufferAllocation{};
-
 	bufferAllocator.Allocate(device, dataSize, 64 * _KB, D3D12_HEAP_TYPE_UPLOAD, constantBufferAllocation);
 
 	DescriptorAllocation constantBufferDescriptorAllocation{};
-
-	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, constantBufferDescriptorAllocation);
+	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, true, constantBufferDescriptorAllocation);
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC constantBufferViewDesc{};
 	constantBufferViewDesc.BufferLocation = constantBufferAllocation.gpuAddress;
@@ -134,11 +128,9 @@ Graphics::TextureId Graphics::ResourceManager::CreateTexture(const std::filesyst
 Graphics::TextureId Graphics::ResourceManager::CreateTexture(const std::vector<uint8_t>& data, const TextureInfo& textureInfo, D3D12_RESOURCE_FLAGS resourceFlags)
 {
 	TextureAllocation textureAllocation{};
-
 	textureAllocator.Allocate(device, resourceFlags, textureInfo, textureAllocation);
 
 	TextureAllocation uploadTextureAllocation{};
-
 	textureAllocator.AllocateTemporaryUpload(device, resourceFlags, textureInfo, uploadTextureAllocation);
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc{};
@@ -191,8 +183,7 @@ Graphics::TextureId Graphics::ResourceManager::CreateTexture(const std::vector<u
 	SetResourceBarrier(commandList, textureAllocation.textureResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COMMON);
 
 	DescriptorAllocation shaderResourceDescriptorAllocation{};
-
-	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, shaderResourceDescriptorAllocation);
+	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, true, shaderResourceDescriptorAllocation);
 
 	device->CreateShaderResourceView(textureAllocation.textureResource, &shaderResourceViewDesc, shaderResourceDescriptorAllocation.descriptorBase);
 
@@ -210,8 +201,7 @@ Graphics::TextureId Graphics::ResourceManager::CreateTexture(const std::vector<u
 Graphics::SamplerId Graphics::ResourceManager::CreateSampler(const D3D12_SAMPLER_DESC& samplerDesc)
 {
 	DescriptorAllocation samplerDescriptorAllocation{};
-
-	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, samplerDescriptorAllocation);
+	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, true, samplerDescriptorAllocation);
 
 	device->CreateSampler(&samplerDesc, samplerDescriptorAllocation.descriptorBase);
 
@@ -222,6 +212,22 @@ Graphics::SamplerId Graphics::ResourceManager::CreateSampler(const D3D12_SAMPLER
 	samplerPool.push_back(sampler);
 
 	return SamplerId(samplerPool.size() - 1);
+}
+
+void Graphics::ResourceManager::CreateSwapChainBuffers(IDXGISwapChain4* swapChain, uint32_t buffersCount)
+{
+	for (uint32_t bufferId = 0; bufferId < buffersCount; bufferId++)
+	{
+		DescriptorAllocation renderTargetDescriptorAllocation{};
+
+		descriptorAllocator.Allocate(device, buffersCount, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, false, renderTargetDescriptorAllocation);
+		swapChainDescriptorBases.push_back(renderTargetDescriptorAllocation.descriptorBase);
+
+		swapChainBuffers.push_back(nullptr);
+		swapChain->GetBuffer(bufferId, IID_PPV_ARGS(&swapChainBuffers.back()));
+
+		device->CreateRenderTargetView(swapChainBuffers.back().Get(), nullptr, swapChainDescriptorBases.back());
+	}
 }
 
 const Graphics::VertexBuffer& Graphics::ResourceManager::GetVertexBuffer(const VertexBufferId& resourceId)
@@ -247,6 +253,21 @@ const Graphics::Texture& Graphics::ResourceManager::GetTexture(const TextureId& 
 const Graphics::Sampler& Graphics::ResourceManager::GetSampler(const SamplerId& resourceId)
 {
 	return samplerPool[resourceId.value];
+}
+
+const Graphics::RenderTarget& Graphics::ResourceManager::GetRenderTarget(const RenderTargetId& resourceId)
+{
+	return renderTargetPool[resourceId.value];
+}
+
+const D3D12_CPU_DESCRIPTOR_HANDLE& Graphics::ResourceManager::GetSwapChainDescriptorBase(uint32_t bufferId)
+{
+	return swapChainDescriptorBases[bufferId];
+}
+
+ID3D12Resource* Graphics::ResourceManager::GetSwapChainBuffer(uint32_t bufferId)
+{
+	return swapChainBuffers[bufferId].Get();
 }
 
 void Graphics::ResourceManager::UpdateConstantBuffer(const ConstantBufferId& resourceId, const void* data, size_t dataSize)

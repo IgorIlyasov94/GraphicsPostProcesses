@@ -37,6 +37,7 @@ namespace Graphics
 	using ConstantBufferId = typename ResourceId<2>;
 	using TextureId = typename ResourceId<3>;
 	using SamplerId = typename ResourceId<4>;
+	using RenderTargetId = typename ResourceId<5>;
 
 	struct VertexBuffer
 	{
@@ -72,6 +73,13 @@ namespace Graphics
 		DescriptorAllocation descriptorAllocation;
 	};
 
+	struct RenderTarget
+	{
+		D3D12_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
+		TextureAllocation textureAllocation;
+		DescriptorAllocation descriptorAllocation;
+	};
+
 	class ResourceManager
 	{
 	public:
@@ -86,11 +94,17 @@ namespace Graphics
 		TextureId CreateTexture(const std::vector<uint8_t>& data, const TextureInfo& textureInfo, D3D12_RESOURCE_FLAGS resourceFlags);
 		SamplerId CreateSampler(const D3D12_SAMPLER_DESC& samplerDesc);
 
+		void CreateSwapChainBuffers(IDXGISwapChain4* swapChain, uint32_t buffersCount);
+
 		const VertexBuffer& GetVertexBuffer(const VertexBufferId& resourceId);
 		const IndexBuffer& GetIndexBuffer(const IndexBufferId& resourceId);
 		const ConstantBuffer& GetConstantBuffer(const ConstantBufferId& resourceId);
 		const Texture& GetTexture(const TextureId& resourceId);
 		const Sampler& GetSampler(const SamplerId& resourceId);
+		const RenderTarget& GetRenderTarget(const RenderTargetId& resourceId);
+
+		const D3D12_CPU_DESCRIPTOR_HANDLE& GetSwapChainDescriptorBase(uint32_t bufferId);
+		ID3D12Resource* GetSwapChainBuffer(uint32_t bufferId);
 
 		void UpdateConstantBuffer(const ConstantBufferId& resourceId, const void* data, size_t dataSize);
 
@@ -118,6 +132,10 @@ namespace Graphics
 		std::vector<ConstantBuffer> constantBufferPool;
 		std::vector<Texture> texturePool;
 		std::vector<Sampler> samplerPool;
+		std::vector<RenderTarget> renderTargetPool;
+
+		std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> swapChainDescriptorBases;
+		std::vector<ComPtr<ID3D12Resource>> swapChainBuffers;
 
 		BufferAllocator& bufferAllocator = BufferAllocator::GetInstance();
 		DescriptorAllocator& descriptorAllocator = DescriptorAllocator::GetInstance();
