@@ -90,7 +90,7 @@ Graphics::ConstantBufferId Graphics::ResourceManager::CreateConstantBuffer(const
 	bufferAllocator.Allocate(device, dataSize, 64 * _KB, D3D12_HEAP_TYPE_UPLOAD, constantBufferAllocation);
 
 	DescriptorAllocation constantBufferDescriptorAllocation{};
-	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, true, constantBufferDescriptorAllocation);
+	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, constantBufferDescriptorAllocation);
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC constantBufferViewDesc{};
 	constantBufferViewDesc.BufferLocation = constantBufferAllocation.gpuAddress;
@@ -181,7 +181,7 @@ Graphics::TextureId Graphics::ResourceManager::CreateTexture(const std::vector<u
 	SetResourceBarrier(commandList, textureAllocation.textureResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COMMON);
 
 	DescriptorAllocation shaderResourceDescriptorAllocation{};
-	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, true, shaderResourceDescriptorAllocation);
+	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, shaderResourceDescriptorAllocation);
 
 	device->CreateShaderResourceView(textureAllocation.textureResource, &shaderResourceViewDesc, shaderResourceDescriptorAllocation.descriptorBase);
 
@@ -199,7 +199,7 @@ Graphics::TextureId Graphics::ResourceManager::CreateTexture(const std::vector<u
 Graphics::SamplerId Graphics::ResourceManager::CreateSampler(const D3D12_SAMPLER_DESC& samplerDesc)
 {
 	DescriptorAllocation samplerDescriptorAllocation{};
-	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, true, samplerDescriptorAllocation);
+	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, samplerDescriptorAllocation);
 
 	device->CreateSampler(&samplerDesc, samplerDescriptorAllocation.descriptorBase);
 
@@ -227,7 +227,7 @@ Graphics::RenderTargetId Graphics::ResourceManager::CreateRenderTarget(uint64_t 
 	textureAllocator.Allocate(device, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, textureInfo, textureAllocation);
 
 	DescriptorAllocation renderTargetDescriptorAllocation{};
-	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, true, renderTargetDescriptorAllocation);
+	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, renderTargetDescriptorAllocation);
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc{};
 	shaderResourceViewDesc.Format = format;
@@ -257,7 +257,7 @@ void Graphics::ResourceManager::CreateSwapChainBuffers(IDXGISwapChain4* swapChai
 	{
 		DescriptorAllocation renderTargetDescriptorAllocation{};
 
-		descriptorAllocator.Allocate(device, buffersCount, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, false, renderTargetDescriptorAllocation);
+		descriptorAllocator.Allocate(device, buffersCount, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, renderTargetDescriptorAllocation);
 		swapChainDescriptorBases.push_back(renderTargetDescriptorAllocation.descriptorBase);
 
 		swapChainBuffers.push_back(nullptr);

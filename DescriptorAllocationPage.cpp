@@ -1,13 +1,17 @@
 #include "DescriptorAllocationPage.h"
 
 Graphics::DescriptorAllocationPage::DescriptorAllocationPage(ID3D12Device* device, D3D12_DESCRIPTOR_HEAP_TYPE _descriptorHeapType,
-	uint32_t _numDescriptors, bool isShaderVisible)
+	uint32_t _numDescriptors)
 	: numDescriptors(_numDescriptors), descriptorHeapType(_descriptorHeapType), descriptorBaseOffset(0u), gpuDescriptorBaseOffset(0u)
 {
 	D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc{};
 	descriptorHeapDesc.NumDescriptors = numDescriptors;
 	descriptorHeapDesc.Type = descriptorHeapType;
-	descriptorHeapDesc.Flags = (isShaderVisible) ? D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE : D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+
+	if (_descriptorHeapType == D3D12_DESCRIPTOR_HEAP_TYPE_RTV || _descriptorHeapType == D3D12_DESCRIPTOR_HEAP_TYPE_DSV)
+		descriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	else
+		descriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	
 	ThrowIfFailed(device->CreateDescriptorHeap(&descriptorHeapDesc, IID_PPV_ARGS(&descriptorHeap)),
 		"DescriptorAllocationPage::DescriptorAllocationPage: Descriptor Heap creating error");

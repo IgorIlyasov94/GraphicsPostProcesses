@@ -10,8 +10,7 @@ namespace Graphics
 	public:
 		static DescriptorAllocator& GetInstance();
 
-		void Allocate(ID3D12Device* device, uint32_t numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE descriptorType, bool isShaderVisible,
-			DescriptorAllocation& allocation);
+		void Allocate(ID3D12Device* device, uint32_t numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE descriptorType, DescriptorAllocation& allocation);
 
 	private:
 		DescriptorAllocator() {};
@@ -24,33 +23,26 @@ namespace Graphics
 
 		using DescriptorHeapPool = std::deque<std::shared_ptr<DescriptorAllocationPage>>;
 
-		void Allocate(ID3D12Device* device, uint32_t numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE descriptorType, bool isShaderVisible,
-			DescriptorHeapPool& usedHeapPool, DescriptorHeapPool& emptyHeapPool, std::shared_ptr<DescriptorAllocationPage>& currentPage,
-			DescriptorAllocation& allocation);
+		void Allocate(ID3D12Device* device, uint32_t numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE descriptorType, DescriptorHeapPool& usedHeapPool,
+			DescriptorHeapPool& emptyHeapPool, std::shared_ptr<DescriptorAllocationPage>& currentPage, DescriptorAllocation& allocation);
 
-		void SetNewPageAsCurrent(ID3D12Device* device, uint32_t numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE descriptorType, bool isShaderVisible,
-			DescriptorHeapPool& usedHeapPool, DescriptorHeapPool& emptyHeapPool, std::shared_ptr<DescriptorAllocationPage>& currentPage);
+		void SetNewPageAsCurrent(ID3D12Device* device, uint32_t numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE descriptorType, DescriptorHeapPool& usedHeapPool,
+			DescriptorHeapPool& emptyHeapPool, std::shared_ptr<DescriptorAllocationPage>& currentPage);
 
 		DescriptorHeapPool usedCbvSrvUavDescriptorHeapPages;
 		DescriptorHeapPool usedSamplerDescriptorHeapPages;
 		DescriptorHeapPool usedRtvDescriptorHeapPages;
 		DescriptorHeapPool usedDsvDescriptorHeapPages;
-		DescriptorHeapPool usedShaderInvisibleRtvDescriptorHeapPages;
-		DescriptorHeapPool usedShaderInvisibleDsvDescriptorHeapPages;
 
 		DescriptorHeapPool emptyCbvSrvUavDescriptorHeapPages;
 		DescriptorHeapPool emptySamplerDescriptorHeapPages;
 		DescriptorHeapPool emptyRtvDescriptorHeapPages;
 		DescriptorHeapPool emptyDsvDescriptorHeapPages;
-		DescriptorHeapPool emptyShaderInvisibleRtvDescriptorHeapPages;
-		DescriptorHeapPool emptyShaderInvisibleDsvDescriptorHeapPages;
 
 		std::shared_ptr<DescriptorAllocationPage> currentCbvSrvUavDescriptorHeapPage;
 		std::shared_ptr<DescriptorAllocationPage> currentSamplerDescriptorHeapPage;
 		std::shared_ptr<DescriptorAllocationPage> currentRtvDescriptorHeapPage;
 		std::shared_ptr<DescriptorAllocationPage> currentDsvDescriptorHeapPage;
-		std::shared_ptr<DescriptorAllocationPage> currentShaderInvisibleRtvDescriptorHeapPage;
-		std::shared_ptr<DescriptorAllocationPage> currentShaderInvisibleDsvDescriptorHeapPage;
 
 		uint32_t numDescriptorsPerHeap = 256;
 	};
