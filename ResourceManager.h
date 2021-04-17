@@ -75,7 +75,9 @@ namespace Graphics
 
 	struct RenderTarget
 	{
+		D3D12_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
 		D3D12_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
+		TextureInfo info;
 		TextureAllocation textureAllocation;
 		DescriptorAllocation descriptorAllocation;
 	};
@@ -93,6 +95,7 @@ namespace Graphics
 		TextureId CreateTexture(const std::filesystem::path& fileName);
 		TextureId CreateTexture(const std::vector<uint8_t>& data, const TextureInfo& textureInfo, D3D12_RESOURCE_FLAGS resourceFlags);
 		SamplerId CreateSampler(const D3D12_SAMPLER_DESC& samplerDesc);
+		RenderTargetId CreateRenderTarget(uint64_t width, uint32_t height, DXGI_FORMAT format);
 
 		void CreateSwapChainBuffers(IDXGISwapChain4* swapChain, uint32_t buffersCount);
 

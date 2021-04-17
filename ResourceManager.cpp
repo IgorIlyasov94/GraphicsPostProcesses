@@ -37,8 +37,7 @@ Graphics::VertexBufferId Graphics::ResourceManager::CreateVertexBuffer(const voi
 	commandList->CopyBufferRegion(vertexBufferAllocation.bufferResource, vertexBufferAllocation.gpuPageOffset, uploadBufferAllocation.bufferResource,
 		0, uploadBufferAllocation.bufferResource->GetDesc().Width);
 
-	SetResourceBarrier(commandList, vertexBufferAllocation.bufferResource, D3D12_RESOURCE_STATE_COPY_DEST,
-		D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	SetResourceBarrier(commandList, vertexBufferAllocation.bufferResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
 	VertexBuffer vertexBuffer{};
 	vertexBuffer.vertexBufferAllocation = vertexBufferAllocation;
@@ -73,8 +72,7 @@ Graphics::IndexBufferId Graphics::ResourceManager::CreateIndexBuffer(const void*
 	commandList->CopyBufferRegion(indexBufferAllocation.bufferResource, indexBufferAllocation.gpuPageOffset, uploadBufferAllocation.bufferResource,
 		0, uploadBufferAllocation.bufferResource->GetDesc().Width);
 
-	SetResourceBarrier(commandList, indexBufferAllocation.bufferResource, D3D12_RESOURCE_STATE_COPY_DEST,
-		D3D12_RESOURCE_STATE_INDEX_BUFFER);
+	SetResourceBarrier(commandList, indexBufferAllocation.bufferResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
 
 	IndexBuffer indexBuffer{};
 	indexBuffer.indicesCount = dataSize / indexStride;
@@ -212,6 +210,45 @@ Graphics::SamplerId Graphics::ResourceManager::CreateSampler(const D3D12_SAMPLER
 	samplerPool.push_back(sampler);
 
 	return SamplerId(samplerPool.size() - 1);
+}
+
+Graphics::RenderTargetId Graphics::ResourceManager::CreateRenderTarget(uint64_t width, uint32_t height, DXGI_FORMAT format)
+{
+	TextureInfo textureInfo{};
+	textureInfo.width = width;
+	textureInfo.height = height;
+	textureInfo.depth = 1;
+	textureInfo.mipLevels = 1;
+	textureInfo.format = format;
+	textureInfo.dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	textureInfo.srvDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+
+	TextureAllocation textureAllocation{};
+	textureAllocator.Allocate(device, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, textureInfo, textureAllocation);
+
+	DescriptorAllocation renderTargetDescriptorAllocation{};
+	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, true, renderTargetDescriptorAllocation);
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc{};
+	shaderResourceViewDesc.Format = format;
+	shaderResourceViewDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	shaderResourceViewDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	shaderResourceViewDesc.Texture2D.MipLevels = 1;
+
+	D3D12_RENDER_TARGET_VIEW_DESC renderTargetViewDesc{};
+	renderTargetViewDesc.Format = format;
+	renderTargetViewDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+	
+	RenderTarget renderTarget{};
+	renderTarget.shaderResourceViewDesc = shaderResourceViewDesc;
+	renderTarget.renderTargetViewDesc = renderTargetViewDesc;
+	renderTarget.info = textureInfo;
+	renderTarget.textureAllocation = textureAllocation;
+	renderTarget.descriptorAllocation = renderTargetDescriptorAllocation;
+
+	renderTargetPool.push_back(renderTarget);
+
+	return RenderTargetId(renderTargetPool.size() - 1);
 }
 
 void Graphics::ResourceManager::CreateSwapChainBuffers(IDXGISwapChain4* swapChain, uint32_t buffersCount)
