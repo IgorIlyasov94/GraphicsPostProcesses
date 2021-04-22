@@ -1,7 +1,7 @@
 #include "GraphicObject.h"
 
 Graphics::GraphicObject::GraphicObject()
-	: drawFunction(nullptr), mesh(nullptr), material(nullptr)
+	: drawFunction(nullptr), boundingBox{}, mesh(nullptr), material(nullptr)
 {
 
 }
@@ -26,6 +26,11 @@ void Graphics::GraphicObject::AssignMaterial(const Material* newMaterial)
 			throw std::exception("Graphics::GraphicObject::AssignMaterial: Material is not composed");
 
 	material = newMaterial;
+}
+
+const Graphics::BoundingBox& Graphics::GraphicObject::GetBoundingBox() const
+{
+	return boundingBox;
 }
 
 void Graphics::GraphicObject::Draw(ID3D12GraphicsCommandList* commandList) const

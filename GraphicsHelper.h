@@ -6,8 +6,10 @@ using namespace Microsoft::WRL;
 using namespace DirectX;
 
 using floatN = XMVECTOR;
+using float4 = XMFLOAT4;
 using float3 = XMFLOAT3;
 using float2 = XMFLOAT2;
+using float4x4 = XMMATRIX;
 
 namespace Graphics
 {
@@ -38,6 +40,18 @@ namespace Graphics
 		DXGI_FORMAT format;
 		D3D12_RESOURCE_DIMENSION dimension;
 		D3D12_SRV_DIMENSION srvDimension;
+	};
+
+	using BoundingBox = struct
+	{
+		float3 minCornerPoint;
+		float3 maxCornerPoint;
+	};
+
+	using BoundingSphere = struct
+	{
+		float3 center;
+		float radius;
 	};
 
 	enum class VertexFormat
@@ -104,6 +118,14 @@ namespace Graphics
 	void SetResourceBarrier(ID3D12GraphicsCommandList* commandList, ID3D12Resource* const resource, D3D12_RESOURCE_STATES resourceBarrierStateBefore,
 		D3D12_RESOURCE_STATES resourceBarrierStateAfter, D3D12_RESOURCE_BARRIER_TYPE resourceBarrierType = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION);
 
+	bool CheckBoxInBox(const BoundingBox& sourceBox, const BoundingBox& destinationBox) noexcept;
+	bool CheckBoxInBox(const float3& sourceBoxSize, const float3& destinationBoxSize) noexcept;
+	BoundingBox ExpandBoundingBox(const BoundingBox& targetBox, const BoundingBox& appendableBox) noexcept;
+
+	float3 BoundingBoxSize(const BoundingBox& boundingBox);
+	float BoundingBoxVolume(const BoundingBox& boundingBox);
+	void BoundingBoxVertices(const BoundingBox& boundingBox, std::array<floatN, 8>& vertices);
+	
 	template<typename T>
 	constexpr T AlignSize(const T size, const T alignment) noexcept
 	{

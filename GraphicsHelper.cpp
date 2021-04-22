@@ -410,3 +410,80 @@ void Graphics::SetResourceBarrier(ID3D12GraphicsCommandList* commandList, ID3D12
 
 	commandList->ResourceBarrier(1, &resourceBarrier);
 }
+
+bool Graphics::CheckBoxInBox(const BoundingBox& sourceBox, const BoundingBox& destinationBox) noexcept
+{
+	if (sourceBox.maxCornerPoint.x <= destinationBox.maxCornerPoint.x &&
+		sourceBox.minCornerPoint.x >= destinationBox.minCornerPoint.x &&
+		sourceBox.maxCornerPoint.y <= destinationBox.maxCornerPoint.y &&
+		sourceBox.minCornerPoint.y >= destinationBox.minCornerPoint.y &&
+		sourceBox.maxCornerPoint.z <= destinationBox.maxCornerPoint.z &&
+		sourceBox.minCornerPoint.z >= destinationBox.minCornerPoint.z)
+		return true;
+
+	return false;
+}
+
+bool Graphics::CheckBoxInBox(const float3& sourceBoxSize, const float3& destinationBoxSize) noexcept
+{
+	if (sourceBoxSize.x <= destinationBoxSize.x && sourceBoxSize.y <= destinationBoxSize.y && sourceBoxSize.z <= destinationBoxSize.z)
+		return true;
+
+	return false;
+}
+
+Graphics::BoundingBox Graphics::ExpandBoundingBox(const BoundingBox& targetBox, const BoundingBox& appendableBox) noexcept
+{
+	BoundingBox expandedBoundingBox = { {std::min(targetBox.minCornerPoint.x, appendableBox.minCornerPoint.x),
+			std::min(targetBox.minCornerPoint.y, appendableBox.minCornerPoint.y),
+			std::min(targetBox.minCornerPoint.z, appendableBox.minCornerPoint.z)},
+			{std::max(targetBox.maxCornerPoint.x, appendableBox.maxCornerPoint.x),
+			std::max(targetBox.maxCornerPoint.y, appendableBox.maxCornerPoint.y),
+			std::max(targetBox.maxCornerPoint.z, appendableBox.maxCornerPoint.z)} };
+
+	return expandedBoundingBox;
+}
+
+float3 Graphics::BoundingBoxSize(const BoundingBox& boundingBox)
+{
+	float3 size;
+	XMStoreFloat3(&size, XMLoadFloat3(&boundingBox.maxCornerPoint) - XMLoadFloat3(&boundingBox.minCornerPoint));
+
+	return size;
+}
+
+float Graphics::BoundingBoxVolume(const BoundingBox& boundingBox)
+{
+	float3 size = BoundingBoxSize(boundingBox);
+
+	float volume = size.x * size.y * size.z;
+
+	return volume;
+}
+
+void Graphics::BoundingBoxVertices(const BoundingBox& boundingBox, std::array<floatN, 8>& vertices)
+{
+	float3 vertex = boundingBox.maxCornerPoint;
+	vertices[0] = XMLoadFloat3(&vertex);
+
+	vertex = { boundingBox.minCornerPoint.x, boundingBox.maxCornerPoint.y, boundingBox.maxCornerPoint.z };
+	vertices[1] = XMLoadFloat3(&vertex);
+
+	vertex = { boundingBox.minCornerPoint.x, boundingBox.maxCornerPoint.y, boundingBox.minCornerPoint.z };
+	vertices[2] = XMLoadFloat3(&vertex);
+
+	vertex = { boundingBox.maxCornerPoint.x, boundingBox.maxCornerPoint.y, boundingBox.minCornerPoint.z };
+	vertices[3] = XMLoadFloat3(&vertex);
+
+	vertex = { boundingBox.maxCornerPoint.x, boundingBox.minCornerPoint.y, boundingBox.maxCornerPoint.z };
+	vertices[4] = XMLoadFloat3(&vertex);
+
+	vertex = { boundingBox.minCornerPoint.x, boundingBox.minCornerPoint.y, boundingBox.maxCornerPoint.z };
+	vertices[5] = XMLoadFloat3(&vertex);
+
+	vertex = boundingBox.minCornerPoint;
+	vertices[6] = XMLoadFloat3(&vertex);
+
+	vertex = { boundingBox.maxCornerPoint.x, boundingBox.minCornerPoint.y, boundingBox.minCornerPoint.z };
+	vertices[7] = XMLoadFloat3(&vertex);
+}

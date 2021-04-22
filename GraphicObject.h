@@ -14,6 +14,8 @@ namespace Graphics
 		void AssignMesh(const Mesh* newMesh);
 		void AssignMaterial(const Material* newMaterial);
 
+		const BoundingBox& GetBoundingBox() const;
+
 		void Draw(ID3D12GraphicsCommandList* commandList) const;
 
 	private:
@@ -22,6 +24,8 @@ namespace Graphics
 		using DrawFunction = void (Graphics::GraphicObject::*)(ID3D12GraphicsCommandList*) const;
 
 		DrawFunction drawFunction;
+
+		BoundingBox boundingBox;
 
 		const Mesh* mesh;
 		const Material* material;
