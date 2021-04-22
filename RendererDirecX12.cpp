@@ -1,15 +1,14 @@
 #include "RendererDirectX12.h"
 
 Graphics::RendererDirectX12::RendererDirectX12()
-	: fenceEvent(nullptr), gpuMemory(0), bufferIndex(0), swapChainRtvDescriptorSize(0), fenceValues{}
+	: fenceEvent(nullptr), bufferIndex(0), swapChainRtvDescriptorSize(0), fenceValues{}
 {
-	resolutionX = 1024;
-	resolutionY = 768;
+	GraphicsSettings::SetStandard();
 
 	sceneViewport.TopLeftX = 0.0f;
 	sceneViewport.TopLeftY = 0.0f;
-	sceneViewport.Width = static_cast<float>(resolutionX);
-	sceneViewport.Height = static_cast<float>(resolutionY);
+	sceneViewport.Width = static_cast<float>(GraphicsSettings::GetResolutionX());
+	sceneViewport.Height = static_cast<float>(GraphicsSettings::GetResolutionY());
 	sceneViewport.MinDepth = D3D12_MIN_DEPTH;
 	sceneViewport.MaxDepth = D3D12_MAX_DEPTH;
 }
@@ -19,16 +18,6 @@ Graphics::RendererDirectX12& Graphics::RendererDirectX12::GetInstance()
 	static RendererDirectX12 instance;
 
 	return instance;
-}
-
-int32_t const& Graphics::RendererDirectX12::getResolutionX() const
-{
-	return resolutionX;
-}
-
-int32_t const& Graphics::RendererDirectX12::getResolutionY() const
-{
-	return resolutionY;
 }
 
 void Graphics::RendererDirectX12::Initialize(HWND& windowHandler)
@@ -47,7 +36,8 @@ void Graphics::RendererDirectX12::Initialize(HWND& windowHandler)
 	CreateCommandQueue(device.Get(), &commandQueue);
 	
 	ComPtr<IDXGISwapChain1> swapChain1;
-	CreateSwapChain(factory.Get(), commandQueue.Get(), windowHandler, SWAP_CHAIN_BUFFER_COUNT, resolutionX, resolutionY, &swapChain1);
+	CreateSwapChain(factory.Get(), commandQueue.Get(), windowHandler, SWAP_CHAIN_BUFFER_COUNT, GraphicsSettings::GetResolutionX(), GraphicsSettings::GetResolutionY(),
+		&swapChain1);
 	
 	ThrowIfFailed(swapChain1.As(&swapChain), "RendererDirectX12::Initialize: Swap Chain conversion error!");
 
@@ -73,7 +63,7 @@ void Graphics::RendererDirectX12::Initialize(HWND& windowHandler)
 	resourceManager.Initialize(device.Get(), commandList.Get());
 	resourceManager.CreateSwapChainBuffers(swapChain.Get(), SWAP_CHAIN_BUFFER_COUNT);
 
-	postProcesses.Initialize(resolutionX, resolutionY, device.Get(), sceneViewport, commandList.Get());
+	postProcesses.Initialize(GraphicsSettings::GetResolutionX(), GraphicsSettings::GetResolutionY(), device.Get(), sceneViewport, commandList.Get());
 
 	ThrowIfFailed(commandList->Close(), "RendererDirectX12::Initialize: Command List closing error!");
 

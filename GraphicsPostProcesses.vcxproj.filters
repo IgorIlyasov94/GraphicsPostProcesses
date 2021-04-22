@@ -25,12 +25,6 @@
     <Filter Include="Файлы заголовков\GraphicsPostProcesses">
       <UniqueIdentifier>{63978b76-e279-4533-8cb4-382a96973fae}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Файлы заголовков\GraphicsCore\GraphicsObjects">
-      <UniqueIdentifier>{a257ad8f-287e-4fc3-a1fb-31d517d269d3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Исходные файлы\GraphicsCore\GraphicsObjects">
-      <UniqueIdentifier>{ec5f4340-975d-4991-9c09-9c54ded11e7b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Исходные файлы\GraphicsCore\GraphicsResourceManagement">
       <UniqueIdentifier>{0ef524a1-2427-45c1-b840-f5d5db009314}</UniqueIdentifier>
     </Filter>
@@ -49,6 +43,18 @@
     <Filter Include="Файлы заголовков\GraphicsCore\GraphicsResourceManagement\MeshLoaders">
       <UniqueIdentifier>{6de81a9e-e18f-48b6-af68-b4342ae4bbe5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Файлы заголовков\GraphicsSceneManagement">
+      <UniqueIdentifier>{37f2dc1f-2312-4f65-baac-eacc2401c950}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Файлы заголовков\GraphicsSceneManagement\GraphicsObjects">
+      <UniqueIdentifier>{a257ad8f-287e-4fc3-a1fb-31d517d269d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\GraphicsSceneManagement">
+      <UniqueIdentifier>{b3585121-7da3-4e72-a43e-065a64e43ae5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\GraphicsSceneManagement\GraphicsObjects">
+      <UniqueIdentifier>{ec5f4340-975d-4991-9c09-9c54ded11e7b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -61,7 +67,7 @@
       <Filter>Исходные файлы\GraphicsCore</Filter>
     </ClCompile>
     <ClCompile Include="Mesh.cpp">
-      <Filter>Исходные файлы\GraphicsCore\GraphicsObjects</Filter>
+      <Filter>Исходные файлы\GraphicsSceneManagement\GraphicsObjects</Filter>
     </ClCompile>
     <ClCompile Include="OBJLoader.cpp">
       <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement\MeshLoaders</Filter>
@@ -100,10 +106,22 @@
       <Filter>Исходные файлы\GraphicsPostProcesses</Filter>
     </ClCompile>
     <ClCompile Include="Material.cpp">
-      <Filter>Исходные файлы\GraphicsCore\GraphicsObjects</Filter>
+      <Filter>Исходные файлы\GraphicsSceneManagement\GraphicsObjects</Filter>
     </ClCompile>
     <ClCompile Include="GraphicObject.cpp">
-      <Filter>Исходные файлы\GraphicsCore\GraphicsObjects</Filter>
+      <Filter>Исходные файлы\GraphicsSceneManagement\GraphicsObjects</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene.cpp">
+      <Filter>Исходные файлы\GraphicsSceneManagement</Filter>
+    </ClCompile>
+    <ClCompile Include="Octree.cpp">
+      <Filter>Исходные файлы\GraphicsSceneManagement</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Исходные файлы\GraphicsSceneManagement</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsSettings.cpp">
+      <Filter>Исходные файлы\GraphicsCore</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -117,7 +135,7 @@
       <Filter>Файлы заголовков\GraphicsCore</Filter>
     </ClInclude>
     <ClInclude Include="Mesh.h">
-      <Filter>Файлы заголовков\GraphicsCore\GraphicsObjects</Filter>
+      <Filter>Файлы заголовков\GraphicsSceneManagement\GraphicsObjects</Filter>
     </ClInclude>
     <ClInclude Include="OBJLoader.h">
       <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement\MeshLoaders</Filter>
@@ -156,10 +174,22 @@
       <Filter>Файлы заголовков\GraphicsPostProcesses</Filter>
     </ClInclude>
     <ClInclude Include="Material.h">
-      <Filter>Файлы заголовков\GraphicsCore\GraphicsObjects</Filter>
+      <Filter>Файлы заголовков\GraphicsSceneManagement\GraphicsObjects</Filter>
     </ClInclude>
     <ClInclude Include="GraphicObject.h">
-      <Filter>Файлы заголовков\GraphicsCore\GraphicsObjects</Filter>
+      <Filter>Файлы заголовков\GraphicsSceneManagement\GraphicsObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene.h">
+      <Filter>Файлы заголовков\GraphicsSceneManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="Octree.h">
+      <Filter>Файлы заголовков\GraphicsSceneManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Файлы заголовков\GraphicsSceneManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsSettings.h">
+      <Filter>Файлы заголовков\GraphicsCore</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

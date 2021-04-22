@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Scene.h"
 #include "PostProcesses.h"
 
 namespace Graphics
@@ -8,9 +9,6 @@ namespace Graphics
 	{
 	public:
 		static RendererDirectX12& GetInstance();
-
-		int32_t const& getResolutionX() const;
-		int32_t const& getResolutionY() const;
 
 		void Initialize(HWND& windowHandler);
 		void GpuRelease();
@@ -53,12 +51,8 @@ namespace Graphics
 
 		int32_t swapChainRtvDescriptorSize;
 
-		int32_t gpuMemory;
 		uint32_t bufferIndex;
 		uint64_t fenceValues[SWAP_CHAIN_BUFFER_COUNT];
-
-		int32_t resolutionX;
-		int32_t resolutionY;
 
 		ResourceManager& resourceManager = ResourceManager::GetInstance();
 		PostProcesses& postProcesses = PostProcesses::GetInstance();
