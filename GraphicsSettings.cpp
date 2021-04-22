@@ -25,3 +25,6 @@ Graphics::GraphicsSettings::~GraphicsSettings()
 {
 
 }
+
+uint32_t Graphics::GraphicsSettings::resolutionX = 1024;
+uint32_t Graphics::GraphicsSettings::resolutionY = 768;

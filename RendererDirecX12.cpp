@@ -3,8 +3,6 @@
 Graphics::RendererDirectX12::RendererDirectX12()
 	: fenceEvent(nullptr), bufferIndex(0), swapChainRtvDescriptorSize(0), fenceValues{}
 {
-	GraphicsSettings::SetStandard();
-
 	sceneViewport.TopLeftX = 0.0f;
 	sceneViewport.TopLeftY = 0.0f;
 	sceneViewport.Width = static_cast<float>(GraphicsSettings::GetResolutionX());

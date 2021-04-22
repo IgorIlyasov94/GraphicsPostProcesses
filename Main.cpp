@@ -40,8 +40,10 @@ int Graphics::GraphicsWinApplication::Run(const HINSTANCE& instance, const LPSTR
 
 		RegisterClassExW(&windowClass);
 
+		GraphicsSettings::SetStandard();
+
 		auto windowHandler = CreateWindowExW(WS_EX_APPWINDOW, windowClassName, windowTitleName, WS_OVERLAPPEDWINDOW,
-			0, 0, commonHandler.getRenderer().getResolutionX(), commonHandler.getRenderer().getResolutionY(), nullptr, nullptr, instance, &commonHandler);
+			0, 0, GraphicsSettings::GetResolutionX(), GraphicsSettings::GetResolutionY(), nullptr, nullptr, instance, &commonHandler);
 
 		ShowWindow(windowHandler, cmdShow);
 
