@@ -93,6 +93,8 @@ void Graphics::RendererDirectX12::FrameRender()
 	const float clearColor[] = { 0.3f, 0.6f, 0.4f, 1.0f };
 	commandList->ClearRenderTargetView(resourceManager.GetSwapChainDescriptorBase(bufferIndex), clearColor, 0, nullptr);
 
+	sceneManager.DrawCurrentScene(commandList.Get());
+
 	postProcesses.EnableHDR(commandList.Get(), bufferIndex);
 	
 	SetResourceBarrier(commandList.Get(), resourceManager.GetSwapChainBuffer(bufferIndex), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);

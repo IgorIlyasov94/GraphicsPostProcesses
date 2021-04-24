@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Scene.h"
+#include "SceneManager.h"
 #include "PostProcesses.h"
 
 namespace Graphics
@@ -56,5 +56,6 @@ namespace Graphics
 
 		ResourceManager& resourceManager = ResourceManager::GetInstance();
 		PostProcesses& postProcesses = PostProcesses::GetInstance();
+		SceneManager& sceneManager = SceneManager::GetInstance();
 	};
 }

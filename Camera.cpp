@@ -6,7 +6,6 @@ Graphics::Camera::Camera(float fovAngleY, float aspectRatio, float zNear, float 
 	frustum{}
 {
 	projection = XMMatrixPerspectiveFovLH(fovAngleY, aspectRatio, zNear, zFar);
-
 	invProjection = XMMatrixInverse(nullptr, XMMatrixTranspose(projection));
 
 	UpdateMatrices();

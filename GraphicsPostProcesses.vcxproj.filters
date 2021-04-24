@@ -123,6 +123,9 @@
     <ClCompile Include="GraphicsSettings.cpp">
       <Filter>Исходные файлы\GraphicsCore</Filter>
     </ClCompile>
+    <ClCompile Include="SceneManager.cpp">
+      <Filter>Исходные файлы\GraphicsSceneManagement</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -190,6 +193,9 @@
     </ClInclude>
     <ClInclude Include="GraphicsSettings.h">
       <Filter>Файлы заголовков\GraphicsCore</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneManager.h">
+      <Filter>Файлы заголовков\GraphicsSceneManagement</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

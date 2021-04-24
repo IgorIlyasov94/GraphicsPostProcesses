@@ -7,19 +7,22 @@ Graphics::Scene::Scene()
 	const float nearZ = 0.01f;
 	const float farZ = 1024.0f;
 
-	camera = std::make_unique<Camera>(fovAngleY, aspectRatio, nearZ, farZ);
+	camera = std::make_shared<Camera>(fovAngleY, aspectRatio, nearZ, farZ);
 
 	const uint32_t octreeDepth = 5;
 	const BoundingBox octreeBoundingBox = { {-1024.0f, -1024.0f, -1024.0f}, {1024.0f, 1024.0f, 1024.0f} };
 
-	octree = std::make_unique<Octree>(octreeDepth, octreeBoundingBox);
-
-	//TODO: temporary objects is here
+	octree = std::make_shared<Octree>(octreeDepth, octreeBoundingBox);
 }
 
 Graphics::Scene::~Scene()
 {
 
+}
+
+void Graphics::Scene::EmplaceGraphicObject(const GraphicObject* object, bool isDynamic)
+{
+	octree->AddObject(object, isDynamic);
 }
 
 void Graphics::Scene::Draw(ID3D12GraphicsCommandList* commandList) const
