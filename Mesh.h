@@ -9,10 +9,11 @@ namespace Graphics
 	{
 	public:
 		Mesh(std::filesystem::path filePath);
-		Mesh(VertexFormat vertexFormat, const void* verticesData, size_t verticesDataSize, const void* indicesData, size_t indicesDataSize);
+		Mesh(VertexFormat _vertexFormat, const void* verticesData, size_t verticesDataSize, const void* indicesData, size_t indicesDataSize);
 		~Mesh();
 
 		uint32_t GetIndicesCount() const noexcept;
+		VertexFormat GetVertexFormat() const noexcept;
 
 		void Present(ID3D12GraphicsCommandList* commandList) const;
 
@@ -23,6 +24,8 @@ namespace Graphics
 		IndexBufferId indexBufferId;
 
 		uint32_t indicesCount;
+
+		VertexFormat vertexFormat;
 
 		const D3D12_VERTEX_BUFFER_VIEW* vertexBufferView;
 		const D3D12_INDEX_BUFFER_VIEW* indexBufferView;

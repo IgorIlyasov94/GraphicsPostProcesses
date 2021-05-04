@@ -61,6 +61,7 @@ void Graphics::CreateRootSignature(ID3D12Device* device, const std::vector<D3D12
 
 	ThrowIfFailed(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, &signature, &error),
 		"CreateRootSignature: Root Signature serialization failed!");
+
 	ThrowIfFailed(device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(rootSignature)),
 		"CreateRootSignature: Root Signature creating failed!");
 }
@@ -164,12 +165,15 @@ void Graphics::CreateRootParameters(const ShaderList& shaderList, const std::vec
 		rootParameters.push_back(rootParameter);
 	}
 
-	D3D12_ROOT_PARAMETER rootParameter{};
-	rootParameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParameter.DescriptorTable = rootDescriptorTable;
-	rootParameter.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-	
-	rootParameters.push_back(rootParameter);
+	if (rootDescriptorTable.NumDescriptorRanges > 0)
+	{
+		D3D12_ROOT_PARAMETER rootParameter{};
+		rootParameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		rootParameter.DescriptorTable = rootDescriptorTable;
+		rootParameter.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+		rootParameters.push_back(rootParameter);
+	}
 }
 
 void Graphics::CreateTextureRootDescriptorTable(const std::vector<size_t>& textureRegisterIndices, const std::vector<size_t>& descriptorIndices,

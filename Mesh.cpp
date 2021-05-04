@@ -1,13 +1,12 @@
 #include "Mesh.h"
 
 Graphics::Mesh::Mesh(std::filesystem::path filePath)
-	: indicesCount(0), vertexBufferView(nullptr), indexBufferView(nullptr)
+	: indicesCount(0), vertexFormat(VertexFormat::UNDEFINED), vertexBufferView(nullptr), indexBufferView(nullptr)
 {
 	std::vector<uint8_t> verticesData;
 	std::vector<uint8_t> indicesData;
-	VertexFormat vertexFormat;
-
-	Graphics::OBJLoader::Load(filePath, true, false, vertexFormat, verticesData, indicesData);
+	
+	Graphics::OBJLoader::Load(filePath, true, false, false, vertexFormat, verticesData, indicesData);
 
 	auto vertexStride = GetVertexStrideFromFormat(vertexFormat);
 	vertexBufferId = resourceManager.CreateVertexBuffer(verticesData.data(), verticesData.size(), vertexStride);
@@ -19,8 +18,8 @@ Graphics::Mesh::Mesh(std::filesystem::path filePath)
 	indexBufferView = &resourceManager.GetIndexBuffer(indexBufferId).indexBufferView;
 }
 
-Graphics::Mesh::Mesh(VertexFormat vertexFormat, const void* verticesData, size_t verticesDataSize, const void* indicesData, size_t indicesDataSize)
-	: indicesCount(0), vertexBufferView(nullptr), indexBufferView(nullptr)
+Graphics::Mesh::Mesh(VertexFormat _vertexFormat, const void* verticesData, size_t verticesDataSize, const void* indicesData, size_t indicesDataSize)
+	: indicesCount(0), vertexFormat(_vertexFormat), vertexBufferView(nullptr), indexBufferView(nullptr)
 {
 	auto vertexStride = GetVertexStrideFromFormat(vertexFormat);
 	vertexBufferId = resourceManager.CreateVertexBuffer(verticesData, verticesDataSize, vertexStride);
@@ -40,6 +39,11 @@ Graphics::Mesh::~Mesh()
 uint32_t Graphics::Mesh::GetIndicesCount() const noexcept
 {
 	return indicesCount;
+}
+
+Graphics::VertexFormat Graphics::Mesh::GetVertexFormat() const noexcept
+{
+	return vertexFormat;
 }
 
 void Graphics::Mesh::Present(ID3D12GraphicsCommandList* commandList) const

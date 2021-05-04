@@ -1,12 +1,14 @@
 #include "OBJLoader.h"
 
-void Graphics::OBJLoader::Load(const std::filesystem::path& filePath, bool calculateNormals, bool smoothNormals, VertexFormat& vertexFormat,
-	std::vector<uint8_t>& verticesData, std::vector<uint8_t>& indicesData)
+void Graphics::OBJLoader::Load(const std::filesystem::path& filePath, bool calculateNormals, bool calculateTangents, bool smoothNormals,
+	VertexFormat& vertexFormat, std::vector<uint8_t>& verticesData, std::vector<uint8_t>& indicesData)
 {
 	std::ifstream objFile(filePath, std::ios::in);
 
 	std::vector<float3> positions;
 	std::vector<float3> normals;
+	std::vector<float3> tangents;
+	std::vector<float3> binormals;
 	std::vector<float2> texCoords;
 
 	std::vector<uint32_t> faces;
@@ -55,15 +57,25 @@ void Graphics::OBJLoader::Load(const std::filesystem::path& filePath, bool calcu
 		if (vertexFormat == VertexFormat::POSITION_NORMAL || vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD)
 			SmoothNormals(vertexFormat, positions, faces, normals);
 
+	if (calculateTangents && vertexFormat != VertexFormat::POSITION && vertexFormat != VertexFormat::POSITION_TEXCOORD)
+	{
+		CalculateTangents(normals, tangents, binormals);
+
+		if (vertexFormat == VertexFormat::POSITION_NORMAL)
+			vertexFormat = VertexFormat::POSITION_NORMAL_TANGENT_BINORMAL;
+		else if (vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD)
+			vertexFormat = VertexFormat::POSITION_NORMAL_TANGENT_BINORMAL_TEXCOORD;
+	}
+
 	std::vector<float> vertices;
 	std::vector<uint32_t> indices;
 
-	ComposeVertices(vertexFormat, positions, normals, texCoords, faces, vertices, indices);
+	ComposeVertices(vertexFormat, positions, normals, tangents, binormals, texCoords, faces, vertices, indices);
 
 	verticesData.resize(vertices.size() * sizeof(float));
 	std::copy(reinterpret_cast<uint8_t*>(vertices.data()), reinterpret_cast<uint8_t*>(vertices.data()) + vertices.size() * sizeof(float), verticesData.data());
 
-	indicesData.resize(indices.size() * sizeof(float));
+	indicesData.resize(indices.size() * sizeof(uint32_t));
 	std::copy(reinterpret_cast<uint8_t*>(indices.data()), reinterpret_cast<uint8_t*>(indices.data()) + indices.size() * sizeof(uint32_t), indicesData.data());
 }
 
@@ -385,6 +397,37 @@ void Graphics::OBJLoader::CalculateNormals(VertexFormat vertexFormat, const std:
 	normals = newNormals;
 }
 
+void Graphics::OBJLoader::CalculateTangents(float3 normal, float3& tangent, float3& binormal)
+{
+	float3 v0(0.0f, 0.0f, 1.0f);
+	float3 v1(0.0f, 1.0f, 0.0f);
+
+	floatN t0 = XMVector3Cross(XMLoadFloat3(&normal), XMLoadFloat3(&v0));
+	floatN t1 = XMVector3Cross(XMLoadFloat3(&normal), XMLoadFloat3(&v1));
+
+	if (XMVector3Length(t0).m128_f32[0] > XMVector3Length(t1).m128_f32[0])
+		XMStoreFloat3(&tangent, XMVector3Normalize(t0));
+	else
+		XMStoreFloat3(&tangent, XMVector3Normalize(t1));
+
+	floatN rawBinormal = XMVector3Cross(XMLoadFloat3(&tangent), XMLoadFloat3(&normal));
+	XMStoreFloat3(&binormal, XMVector3Normalize(rawBinormal));
+}
+
+void Graphics::OBJLoader::CalculateTangents(const std::vector<float3>& normals, std::vector<float3>& tangents, std::vector<float3>& binormals)
+{
+	for (auto& normal : normals)
+	{
+		float3 tangent{};
+		float3 binormal{};
+
+		CalculateTangents(normal, tangent, binormal);
+
+		tangents.push_back(tangent);
+		binormals.push_back(binormal);
+	}
+}
+
 void Graphics::OBJLoader::SmoothNormals(VertexFormat vertexFormat, const std::vector<float3>& positions, const std::vector<uint32_t>& faces,
 	std::vector<float3>& normals)
 {
@@ -412,7 +455,8 @@ void Graphics::OBJLoader::SmoothNormals(VertexFormat vertexFormat, const std::ve
 }
 
 void Graphics::OBJLoader::ComposeVertices(VertexFormat vertexFormat, const std::vector<float3>& positions, const std::vector<float3>& normals,
-	const std::vector<float2>& texCoords, const std::vector<uint32_t>& faces, std::vector<float>& vertices, std::vector<uint32_t>& indices)
+	const std::vector<float3>& tangents, const std::vector<float3>& binormals, const std::vector<float2>& texCoords, const std::vector<uint32_t>& faces,
+	std::vector<float>& vertices, std::vector<uint32_t>& indices)
 {
 	auto facesIterator = faces.begin();
 	uint32_t vertex4ByteStride = GetVertex4ByteStride(vertexFormat);
@@ -422,13 +466,28 @@ void Graphics::OBJLoader::ComposeVertices(VertexFormat vertexFormat, const std::
 		float3 position = positions[*facesIterator++];
 
 		float3 normal{};
+		float3 tangent{};
+		float3 binormal{};
 		float2 texCoord{};
 
-		if (vertexFormat == VertexFormat::POSITION_TEXCOORD || vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD)
+		if (vertexFormat == VertexFormat::POSITION_TEXCOORD || vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD ||
+			vertexFormat == VertexFormat::POSITION_NORMAL_TANGENT_BINORMAL_TEXCOORD)
 			texCoord = texCoords[*facesIterator++];
 
-		if (vertexFormat == VertexFormat::POSITION_NORMAL || vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD)
-			normal = normals[*facesIterator++];
+		uint32_t currentNormalId{};
+
+		if (vertexFormat == VertexFormat::POSITION_NORMAL || vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD ||
+			vertexFormat == VertexFormat::POSITION_NORMAL_TANGENT_BINORMAL || vertexFormat == VertexFormat::POSITION_NORMAL_TANGENT_BINORMAL_TEXCOORD)
+		{
+			currentNormalId = *facesIterator++;
+			normal = normals[currentNormalId];
+		}
+
+		if (vertexFormat == VertexFormat::POSITION_NORMAL_TANGENT_BINORMAL || vertexFormat == VertexFormat::POSITION_NORMAL_TANGENT_BINORMAL_TEXCOORD)
+		{
+			tangent = tangents[currentNormalId];
+			binormal = binormals[currentNormalId];
+		}
 
 		int64_t newIndex = GetIndexForSameVertex(vertex4ByteStride, vertices, indices, position, normal, texCoord);
 
@@ -438,14 +497,26 @@ void Graphics::OBJLoader::ComposeVertices(VertexFormat vertexFormat, const std::
 			vertices.push_back(position.y);
 			vertices.push_back(position.z);
 
-			if (vertexFormat == VertexFormat::POSITION_NORMAL || vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD)
+			if (vertexFormat == VertexFormat::POSITION_NORMAL || vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD ||
+				vertexFormat == VertexFormat::POSITION_NORMAL_TANGENT_BINORMAL || vertexFormat == VertexFormat::POSITION_NORMAL_TANGENT_BINORMAL_TEXCOORD)
 			{
 				vertices.push_back(normal.x);
 				vertices.push_back(normal.y);
 				vertices.push_back(normal.z);
 			}
 
-			if (vertexFormat == VertexFormat::POSITION_TEXCOORD || vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD)
+			if (vertexFormat == VertexFormat::POSITION_NORMAL_TANGENT_BINORMAL || vertexFormat == VertexFormat::POSITION_NORMAL_TANGENT_BINORMAL_TEXCOORD)
+			{
+				vertices.push_back(tangent.x);
+				vertices.push_back(tangent.y);
+				vertices.push_back(tangent.z);
+				vertices.push_back(binormal.x);
+				vertices.push_back(binormal.y);
+				vertices.push_back(binormal.z);
+			}
+
+			if (vertexFormat == VertexFormat::POSITION_TEXCOORD || vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD ||
+				vertexFormat == VertexFormat::POSITION_NORMAL_TANGENT_BINORMAL_TEXCOORD)
 			{
 				vertices.push_back(texCoord.x);
 				vertices.push_back(texCoord.y);
@@ -531,6 +602,14 @@ int64_t Graphics::OBJLoader::GetIndexForSameVertex(uint32_t vertex4ByteStride, c
 				if (std::abs(vertices[stridedVertexIndex + 7] - texCoord.y) > epsilon)
 					continue;
 			}
+			else if (vertex4ByteStride == 14)
+			{
+				if (std::abs(vertices[stridedVertexIndex + 12] - texCoord.x) > epsilon)
+					continue;
+
+				if (std::abs(vertices[stridedVertexIndex + 13] - texCoord.y) > epsilon)
+					continue;
+			}
 		}
 
 		return vertexIndex;
@@ -541,12 +620,5 @@ int64_t Graphics::OBJLoader::GetIndexForSameVertex(uint32_t vertex4ByteStride, c
 
 uint32_t Graphics::OBJLoader::GetVertex4ByteStride(VertexFormat vertexFormat)
 {
-	if (vertexFormat == VertexFormat::POSITION_TEXCOORD)
-		return 5;
-	else if (vertexFormat == VertexFormat::POSITION_NORMAL)
-		return 6;
-	else if (vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD)
-		return 8;
-
-	return 3;
+	return GetVertexStride(vertexFormat) / 4;
 }

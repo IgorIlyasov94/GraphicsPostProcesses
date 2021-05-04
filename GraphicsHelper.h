@@ -60,7 +60,9 @@ namespace Graphics
 		POSITION,
 		POSITION_TEXCOORD,
 		POSITION_NORMAL,
-		POSITION_NORMAL_TEXCOORD
+		POSITION_NORMAL_TANGENT_BINORMAL,
+		POSITION_NORMAL_TEXCOORD,
+		POSITION_NORMAL_TANGENT_BINORMAL_TEXCOORD
 	};
 
 	constexpr size_t _KB = 1024;
@@ -126,6 +128,24 @@ namespace Graphics
 	float BoundingBoxVolume(const BoundingBox& boundingBox);
 	void BoundingBoxVertices(const BoundingBox& boundingBox, std::array<floatN, 8>& vertices);
 	
+	constexpr uint32_t GetVertexStride(VertexFormat vertexFormat)
+	{
+		if (vertexFormat == VertexFormat::POSITION)
+			return 12;
+		else if (vertexFormat == VertexFormat::POSITION_TEXCOORD)
+			return 20;
+		else if (vertexFormat == VertexFormat::POSITION_NORMAL)
+			return 24;
+		else if (vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD)
+			return 32;
+		else if (vertexFormat == VertexFormat::POSITION_NORMAL_TANGENT_BINORMAL)
+			return 48;
+		else if (vertexFormat == VertexFormat::POSITION_NORMAL_TANGENT_BINORMAL_TEXCOORD)
+			return 56;
+
+		return 0;
+	}
+
 	template<typename T>
 	constexpr T AlignSize(const T size, const T alignment) noexcept
 	{
