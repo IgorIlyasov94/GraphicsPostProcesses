@@ -13,12 +13,14 @@ namespace Graphics
 		Scene();
 		~Scene();
 
+		void SetMainCamera(const Camera* camera);
 		void EmplaceGraphicObject(const GraphicObject* object, bool isDynamic);
 
 		void Draw(ID3D12GraphicsCommandList* commandList) const;
 
 	private:
-		std::shared_ptr<Camera> camera;
+		const Camera* mainCamera;
+
 		std::shared_ptr<Octree> octree;
 	};
 }

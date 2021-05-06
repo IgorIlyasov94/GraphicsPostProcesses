@@ -16,7 +16,11 @@ void Graphics::GraphicObject::AssignMesh(const Mesh* newMesh)
 	mesh = newMesh;
 
 	if (mesh != nullptr)
+	{
+		boundingBox = mesh->GetBoundingBox();
+
 		drawFunction = &Graphics::GraphicObject::DrawMesh;
+	}
 }
 
 void Graphics::GraphicObject::AssignMaterial(const Material* newMaterial)
@@ -28,7 +32,7 @@ void Graphics::GraphicObject::AssignMaterial(const Material* newMaterial)
 	material = newMaterial;
 }
 
-const Graphics::BoundingBox& Graphics::GraphicObject::GetBoundingBox() const
+const Graphics::BoundingBox& Graphics::GraphicObject::GetBoundingBox() const noexcept
 {
 	return boundingBox;
 }

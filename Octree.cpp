@@ -85,6 +85,9 @@ void Graphics::Octree::SplitBoundingBox(const BoundingBox& boundingBox, std::arr
 
 void Graphics::Octree::AddObject(Node* currentNode, const GraphicObject* newObject, bool isDynamic)
 {
+	if (currentNode->nextNodes[0] == nullptr)
+		return;
+
 	for (auto& nextNode : currentNode->nextNodes)
 		if (CheckBoxInBox(newObject->GetBoundingBox(), nextNode->boundingBox))
 		{

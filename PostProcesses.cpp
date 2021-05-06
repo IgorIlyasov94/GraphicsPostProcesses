@@ -15,14 +15,11 @@ Graphics::PostProcesses& Graphics::PostProcesses::GetInstance()
 	return instance;
 }
 
-void Graphics::PostProcesses::Initialize(const int32_t& resolutionX, const int32_t& resolutionY, ID3D12Device* device, D3D12_VIEWPORT& _sceneViewport,
-	ID3D12GraphicsCommandList* commandList)
+void Graphics::PostProcesses::Initialize(const int32_t& resolutionX, const int32_t& resolutionY, ID3D12Device* device, const D3D12_VIEWPORT& _sceneViewport,
+	const D3D12_RECT& _sceneScissorRect, ID3D12GraphicsCommandList* commandList)
 {
 	sceneViewport = _sceneViewport;
-	sceneScissorRect.left = 0;
-	sceneScissorRect.top = 0;
-	sceneScissorRect.right = static_cast<long>(sceneViewport.Width);
-	sceneScissorRect.bottom = static_cast<long>(sceneViewport.Height);
+	sceneScissorRect = _sceneScissorRect;
 
 	noiseTextureId = resourceManager.CreateTexture("Resources\\Textures\\Noise.dds");
 	diffuseTextureId = resourceManager.CreateTexture("Resources\\Textures\\Diffuse0.dds");

@@ -99,15 +99,18 @@ namespace Graphics
 
 		void CreateSwapChainBuffers(IDXGISwapChain4* swapChain, uint32_t buffersCount);
 
-		const VertexBuffer& GetVertexBuffer(const VertexBufferId& resourceId);
-		const IndexBuffer& GetIndexBuffer(const IndexBufferId& resourceId);
-		const ConstantBuffer& GetConstantBuffer(const ConstantBufferId& resourceId);
-		const Texture& GetTexture(const TextureId& resourceId);
-		const Sampler& GetSampler(const SamplerId& resourceId);
-		const RenderTarget& GetRenderTarget(const RenderTargetId& resourceId);
+		const VertexBuffer& GetVertexBuffer(const VertexBufferId& resourceId) const;
+		const IndexBuffer& GetIndexBuffer(const IndexBufferId& resourceId) const;
+		const ConstantBuffer& GetConstantBuffer(const ConstantBufferId& resourceId) const;
+		const Texture& GetTexture(const TextureId& resourceId) const;
+		const Sampler& GetSampler(const SamplerId& resourceId) const;
+		const RenderTarget& GetRenderTarget(const RenderTargetId& resourceId) const;
 
-		const D3D12_CPU_DESCRIPTOR_HANDLE& GetSwapChainDescriptorBase(uint32_t bufferId);
-		ID3D12Resource* GetSwapChainBuffer(uint32_t bufferId);
+		const D3D12_CPU_DESCRIPTOR_HANDLE& GetSwapChainDescriptorBase(uint32_t bufferId) const;
+		ID3D12Resource* GetSwapChainBuffer(uint32_t bufferId) const;
+
+		D3D12_VERTEX_BUFFER_VIEW GetVertexBufferView(const VertexBufferId& resourceId) const;
+		D3D12_INDEX_BUFFER_VIEW GetIndexBufferView(const IndexBufferId& resourceId) const;
 
 		void UpdateConstantBuffer(const ConstantBufferId& resourceId, const void* data, size_t dataSize);
 

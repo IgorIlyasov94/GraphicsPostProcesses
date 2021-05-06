@@ -17,6 +17,8 @@ namespace Graphics
 
 		bool BoundingBoxInScope(const BoundingBox& boundingBox) const;
 
+		const float4x4& GetViewProjection();
+
 		void Update();
 
 	private:

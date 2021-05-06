@@ -50,6 +50,11 @@ bool Graphics::Camera::BoundingBoxInScope(const BoundingBox& boundingBox) const
 	return true;
 }
 
+const float4x4& Graphics::Camera::GetViewProjection()
+{
+	return viewProjection;
+}
+
 void Graphics::Camera::Update()
 {
 	UpdateMatrices();
@@ -59,7 +64,7 @@ void Graphics::Camera::Update()
 void Graphics::Camera::UpdateMatrices()
 {
 	view = XMMatrixLookAtLH(XMLoadFloat3(&position), XMLoadFloat3(&lookAtPoint), XMLoadFloat3(&upVector));
-	viewProjection = XMMatrixMultiplyTranspose(view, projection);
+	viewProjection = XMMatrixMultiply(view, projection);
 	invView = XMMatrixInverse(nullptr, XMMatrixTranspose(view));
 	invViewProjection = XMMatrixInverse(nullptr, viewProjection);
 }

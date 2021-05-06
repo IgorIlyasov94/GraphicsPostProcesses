@@ -267,44 +267,54 @@ void Graphics::ResourceManager::CreateSwapChainBuffers(IDXGISwapChain4* swapChai
 	}
 }
 
-const Graphics::VertexBuffer& Graphics::ResourceManager::GetVertexBuffer(const VertexBufferId& resourceId)
+const Graphics::VertexBuffer& Graphics::ResourceManager::GetVertexBuffer(const VertexBufferId& resourceId) const
 {
 	return vertexBufferPool[resourceId.value];
 }
 
-const Graphics::IndexBuffer& Graphics::ResourceManager::GetIndexBuffer(const IndexBufferId& resourceId)
+const Graphics::IndexBuffer& Graphics::ResourceManager::GetIndexBuffer(const IndexBufferId& resourceId) const
 {
 	return indexBufferPool[resourceId.value];
 }
 
-const Graphics::ConstantBuffer& Graphics::ResourceManager::GetConstantBuffer(const ConstantBufferId& resourceId)
+const Graphics::ConstantBuffer& Graphics::ResourceManager::GetConstantBuffer(const ConstantBufferId& resourceId) const
 {
 	return constantBufferPool[resourceId.value];
 }
 
-const Graphics::Texture& Graphics::ResourceManager::GetTexture(const TextureId& resourceId)
+const Graphics::Texture& Graphics::ResourceManager::GetTexture(const TextureId& resourceId) const
 {
 	return texturePool[resourceId.value];
 }
 
-const Graphics::Sampler& Graphics::ResourceManager::GetSampler(const SamplerId& resourceId)
+const Graphics::Sampler& Graphics::ResourceManager::GetSampler(const SamplerId& resourceId) const
 {
 	return samplerPool[resourceId.value];
 }
 
-const Graphics::RenderTarget& Graphics::ResourceManager::GetRenderTarget(const RenderTargetId& resourceId)
+const Graphics::RenderTarget& Graphics::ResourceManager::GetRenderTarget(const RenderTargetId& resourceId) const
 {
 	return renderTargetPool[resourceId.value];
 }
 
-const D3D12_CPU_DESCRIPTOR_HANDLE& Graphics::ResourceManager::GetSwapChainDescriptorBase(uint32_t bufferId)
+const D3D12_CPU_DESCRIPTOR_HANDLE& Graphics::ResourceManager::GetSwapChainDescriptorBase(uint32_t bufferId) const
 {
 	return swapChainDescriptorBases[bufferId];
 }
 
-ID3D12Resource* Graphics::ResourceManager::GetSwapChainBuffer(uint32_t bufferId)
+ID3D12Resource* Graphics::ResourceManager::GetSwapChainBuffer(uint32_t bufferId) const
 {
 	return swapChainBuffers[bufferId].Get();
+}
+
+D3D12_VERTEX_BUFFER_VIEW Graphics::ResourceManager::GetVertexBufferView(const VertexBufferId& resourceId) const
+{
+	return vertexBufferPool[resourceId.value].vertexBufferView;
+}
+
+D3D12_INDEX_BUFFER_VIEW Graphics::ResourceManager::GetIndexBufferView(const IndexBufferId& resourceId) const
+{
+	return indexBufferPool[resourceId.value].indexBufferView;
 }
 
 void Graphics::ResourceManager::UpdateConstantBuffer(const ConstantBufferId& resourceId, const void* data, size_t dataSize)

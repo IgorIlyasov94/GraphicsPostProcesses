@@ -9,6 +9,11 @@ Graphics::RendererDirectX12::RendererDirectX12()
 	sceneViewport.Height = static_cast<float>(GraphicsSettings::GetResolutionY());
 	sceneViewport.MinDepth = D3D12_MIN_DEPTH;
 	sceneViewport.MaxDepth = D3D12_MAX_DEPTH;
+
+	sceneScissorRect.left = 0;
+	sceneScissorRect.top = 0;
+	sceneScissorRect.right = GraphicsSettings::GetResolutionX();
+	sceneScissorRect.bottom = GraphicsSettings::GetResolutionY();
 }
 
 Graphics::RendererDirectX12& Graphics::RendererDirectX12::GetInstance()
@@ -61,7 +66,10 @@ void Graphics::RendererDirectX12::Initialize(HWND& windowHandler)
 	resourceManager.Initialize(device.Get(), commandList.Get());
 	resourceManager.CreateSwapChainBuffers(swapChain.Get(), SWAP_CHAIN_BUFFER_COUNT);
 
-	postProcesses.Initialize(GraphicsSettings::GetResolutionX(), GraphicsSettings::GetResolutionY(), device.Get(), sceneViewport, commandList.Get());
+	//Test
+	sceneManager.InitializeTestScene(device.Get());
+
+	postProcesses.Initialize(GraphicsSettings::GetResolutionX(), GraphicsSettings::GetResolutionY(), device.Get(), sceneViewport, sceneScissorRect, commandList.Get());
 
 	ThrowIfFailed(commandList->Close(), "RendererDirectX12::Initialize: Command List closing error!");
 
@@ -88,15 +96,18 @@ void Graphics::RendererDirectX12::FrameRender()
 
 	SetResourceBarrier(commandList.Get(), resourceManager.GetSwapChainBuffer(bufferIndex), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-	commandList->OMSetRenderTargets(1, &resourceManager.GetSwapChainDescriptorBase(bufferIndex), false, nullptr);
-
 	const float clearColor[] = { 0.3f, 0.6f, 0.4f, 1.0f };
 	commandList->ClearRenderTargetView(resourceManager.GetSwapChainDescriptorBase(bufferIndex), clearColor, 0, nullptr);
 
-	sceneManager.DrawCurrentScene(commandList.Get());
+	commandList->RSSetViewports(1, &sceneViewport);
+	commandList->RSSetScissorRects(1, &sceneScissorRect);
+
+	commandList->OMSetRenderTargets(1, &resourceManager.GetSwapChainDescriptorBase(bufferIndex), false, nullptr);
 
 	postProcesses.EnableHDR(commandList.Get(), bufferIndex);
-	
+
+	sceneManager.DrawCurrentScene(commandList.Get());
+
 	SetResourceBarrier(commandList.Get(), resourceManager.GetSwapChainBuffer(bufferIndex), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
 	ThrowIfFailed(commandList->Close(), "RendererDirectX12::FrameRender: Command List closing error!");

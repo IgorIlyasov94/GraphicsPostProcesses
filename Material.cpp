@@ -1,7 +1,7 @@
 #include "Material.h"
 
 Graphics::Material::Material()
-	: shaderList{}, firstTextureDescriptorBase{}, vertexFormat{}, renderTargetFormat{}, cullMode(D3D12_CULL_MODE_BACK), blendDesc{},
+	: shaderList{}, firstTextureDescriptorBase{}, vertexFormat{}, renderTargetFormat{}, cullMode(D3D12_CULL_MODE_NONE), blendDesc{},
 	useDepthBuffer(false), isComposed(false)
 {
 	SetupBlendDesc(blendDesc);
@@ -91,6 +91,11 @@ void Graphics::Material::SetRenderTargetFormat(size_t renderTargetIndex, DXGI_FO
 		throw std::exception("Material::SetRenderTargetFormat: Render target index must be from 0 to 7");
 
 	renderTargetFormat[renderTargetIndex] = format;
+}
+
+void Graphics::Material::SetCullMode(D3D12_CULL_MODE _cullMode)
+{
+	cullMode = _cullMode;
 }
 
 void Graphics::Material::SetBlendMode(bool blendOn, D3D12_BLEND srcBlend, D3D12_BLEND destBlend, D3D12_BLEND_OP blendOp, D3D12_BLEND srcBlendAlpha,

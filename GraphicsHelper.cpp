@@ -288,18 +288,6 @@ void Graphics::GetHardwareAdapter(IDXGIFactory4* factory4, IDXGIAdapter1** adapt
 	*adapter = adapter1.Detach();
 }
 
-uint32_t Graphics::GetVertexStrideFromFormat(VertexFormat vertexFormat)
-{
-	if (vertexFormat == VertexFormat::POSITION_NORMAL)
-		return 24;
-	else if (vertexFormat == VertexFormat::POSITION_TEXCOORD)
-		return 20;
-	else if (vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD)
-		return 32;
-
-	return 12;
-}
-
 void Graphics::SetupRasterizerDesc(D3D12_RASTERIZER_DESC& rasterizerDesc, D3D12_CULL_MODE cullMode) noexcept
 {
 	rasterizerDesc.AntialiasedLineEnable = false;

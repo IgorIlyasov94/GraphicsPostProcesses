@@ -11,8 +11,8 @@ namespace Graphics
 	public:
 		static PostProcesses& GetInstance();
 
-		void Initialize(const int32_t& resolutionX, const int32_t& resolutionY, ID3D12Device* device, D3D12_VIEWPORT& _sceneViewport,
-			ID3D12GraphicsCommandList* commandList);
+		void Initialize(const int32_t& resolutionX, const int32_t& resolutionY, ID3D12Device* device, const D3D12_VIEWPORT& _sceneViewport,
+			const D3D12_RECT& _sceneScissorRect, ID3D12GraphicsCommandList* commandList);
 		void EnableHDR(ID3D12GraphicsCommandList* commandList, size_t bufferIndex);
 
 	private:

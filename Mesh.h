@@ -14,11 +14,14 @@ namespace Graphics
 
 		uint32_t GetIndicesCount() const noexcept;
 		VertexFormat GetVertexFormat() const noexcept;
+		const BoundingBox& GetBoundingBox() const noexcept;
 
 		void Present(ID3D12GraphicsCommandList* commandList) const;
 
 	private:
 		Mesh() = delete;
+
+		void FindBoundingBox(const void* verticesData, size_t verticesDataSize, VertexFormat _vertexFormat, BoundingBox& result);
 
 		VertexBufferId vertexBufferId;
 		IndexBufferId indexBufferId;
@@ -26,9 +29,10 @@ namespace Graphics
 		uint32_t indicesCount;
 
 		VertexFormat vertexFormat;
+		BoundingBox boundingBox;
 
-		const D3D12_VERTEX_BUFFER_VIEW* vertexBufferView;
-		const D3D12_INDEX_BUFFER_VIEW* indexBufferView;
+		D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
+		D3D12_INDEX_BUFFER_VIEW indexBufferView;
 
 		ResourceManager& resourceManager = ResourceManager::GetInstance();
 	};

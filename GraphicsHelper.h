@@ -100,8 +100,7 @@ namespace Graphics
 		const std::vector<D3D12_STATIC_SAMPLER_DESC>& samplerDescs, ID3D12RootSignature** rootSignature, ID3D12PipelineState** pipelineState);
 
 	void GetHardwareAdapter(IDXGIFactory4* factory4, IDXGIAdapter1** adapter);
-	uint32_t GetVertexStrideFromFormat(VertexFormat vertexFormat);
-
+	
 	void SetupRasterizerDesc(D3D12_RASTERIZER_DESC& rasterizerDesc, D3D12_CULL_MODE cullMode = D3D12_CULL_MODE_NONE) noexcept;
 
 	void SetupBlendDesc(D3D12_BLEND_DESC& blendDesc, bool blendOn = false,
@@ -128,7 +127,7 @@ namespace Graphics
 	float BoundingBoxVolume(const BoundingBox& boundingBox);
 	void BoundingBoxVertices(const BoundingBox& boundingBox, std::array<floatN, 8>& vertices);
 	
-	constexpr uint32_t GetVertexStride(VertexFormat vertexFormat)
+	constexpr uint32_t GetVertexStride(VertexFormat vertexFormat) noexcept
 	{
 		if (vertexFormat == VertexFormat::POSITION)
 			return 12;

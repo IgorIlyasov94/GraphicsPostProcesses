@@ -14,7 +14,7 @@ namespace Graphics
 		void AssignMesh(const Mesh* newMesh);
 		void AssignMaterial(const Material* newMaterial);
 
-		const BoundingBox& GetBoundingBox() const;
+		const BoundingBox& GetBoundingBox() const noexcept;
 
 		void Draw(ID3D12GraphicsCommandList* commandList) const;
 

@@ -48,6 +48,7 @@ namespace Graphics
 		HANDLE fenceEvent;
 
 		D3D12_VIEWPORT sceneViewport;
+		D3D12_RECT sceneScissorRect;
 
 		int32_t swapChainRtvDescriptorSize;
 
