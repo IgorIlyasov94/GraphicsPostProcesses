@@ -1,7 +1,7 @@
 #include "RendererDirectX12.h"
 
 Graphics::RendererDirectX12::RendererDirectX12()
-	: fenceEvent(nullptr), bufferIndex(0), swapChainRtvDescriptorSize(0), fenceValues{}
+	: fenceEvent(nullptr), bufferIndex(0), sceneDepthStencilId{}, fenceValues{}
 {
 	sceneViewport.TopLeftX = 0.0f;
 	sceneViewport.TopLeftY = 0.0f;
@@ -66,6 +66,8 @@ void Graphics::RendererDirectX12::Initialize(HWND& windowHandler)
 	resourceManager.Initialize(device.Get(), commandList.Get());
 	resourceManager.CreateSwapChainBuffers(swapChain.Get(), SWAP_CHAIN_BUFFER_COUNT);
 
+	sceneDepthStencilId = resourceManager.CreateDepthStencil(GraphicsSettings::GetResolutionX(), GraphicsSettings::GetResolutionY(), 32);
+
 	//Test
 	sceneManager.InitializeTestScene(device.Get());
 
@@ -98,15 +100,16 @@ void Graphics::RendererDirectX12::FrameRender()
 
 	const float clearColor[] = { 0.3f, 0.6f, 0.4f, 1.0f };
 	commandList->ClearRenderTargetView(resourceManager.GetSwapChainDescriptorBase(bufferIndex), clearColor, 0, nullptr);
+	commandList->ClearDepthStencilView(resourceManager.GetDepthStencilDescriptorBase(sceneDepthStencilId), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 	commandList->RSSetViewports(1, &sceneViewport);
 	commandList->RSSetScissorRects(1, &sceneScissorRect);
 
-	commandList->OMSetRenderTargets(1, &resourceManager.GetSwapChainDescriptorBase(bufferIndex), false, nullptr);
-
-	postProcesses.EnableHDR(commandList.Get(), bufferIndex);
+	commandList->OMSetRenderTargets(1, &resourceManager.GetSwapChainDescriptorBase(bufferIndex), false, &resourceManager.GetDepthStencilDescriptorBase(sceneDepthStencilId));
 
 	sceneManager.DrawCurrentScene(commandList.Get());
+
+	//postProcesses.EnableHDR(commandList.Get(), bufferIndex);
 
 	SetResourceBarrier(commandList.Get(), resourceManager.GetSwapChainBuffer(bufferIndex), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 

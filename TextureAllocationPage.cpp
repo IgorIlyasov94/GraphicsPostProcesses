@@ -1,7 +1,7 @@
 #include "TextureAllocationPage.h"
 
 Graphics::TextureAllocationPage::TextureAllocationPage(ID3D12Device* device, D3D12_HEAP_TYPE _heapType, D3D12_RESOURCE_FLAGS resourceFlags,
-	const TextureInfo& textureInfo)
+	const D3D12_CLEAR_VALUE* clearValue, const TextureInfo& textureInfo)
 	: cpuAddress(nullptr), heapType(_heapType)
 {
 	D3D12_HEAP_PROPERTIES heapProperties;
@@ -31,7 +31,7 @@ Graphics::TextureAllocationPage::TextureAllocationPage(ID3D12Device* device, D3D
 		resourceState = D3D12_RESOURCE_STATE_COMMON;
 	}
 
-	ThrowIfFailed(device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &resourceDesc, resourceState, nullptr,
+	ThrowIfFailed(device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &resourceDesc, resourceState, clearValue,
 		IID_PPV_ARGS(&pageResource)), "TextureAllocationPage::TextureAllocationPage: Resource creating error");
 
 	D3D12_RANGE range = { 0, 0 };

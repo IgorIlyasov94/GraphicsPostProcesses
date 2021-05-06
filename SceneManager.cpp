@@ -38,12 +38,14 @@ void Graphics::SceneManager::InitializeTestScene(ID3D12Device* device)
 	cubeMaterial->SetVertexFormat(cubeMesh->GetVertexFormat());
 	cubeMaterial->SetVertexShader({ meshStandardVertexShader, sizeof(meshStandardVertexShader) });
 	cubeMaterial->SetPixelShader({ meshStandardPixelShader, sizeof(meshStandardPixelShader) });
+	cubeMaterial->SetDepthTest(true);
+	cubeMaterial->SetDepthStencilFormat(32);
 	cubeMaterial->SetCullMode(D3D12_CULL_MODE_NONE);
 	cubeMaterial->SetRenderTargetFormat(0, DXGI_FORMAT_R8G8B8A8_UNORM);
 
 	cubeConstBuffer.wvp = camera->GetViewProjection();
 
-	cubeMaterial->SetConstantBuffer(0, &cubeConstBuffer, sizeof(cubeConstBuffer));
+	cubeConstBufferId = cubeMaterial->SetConstantBuffer(0, &cubeConstBuffer, sizeof(cubeConstBuffer));
 
 	cubeMaterial->Compose(device);
 
@@ -55,16 +57,26 @@ void Graphics::SceneManager::InitializeTestScene(ID3D12Device* device)
 	currentScene->EmplaceGraphicObject(cube.get(), false);
 }
 
-void Graphics::SceneManager::DrawCurrentScene(ID3D12GraphicsCommandList* commandList) const
+void Graphics::SceneManager::DrawCurrentScene(ID3D12GraphicsCommandList* commandList)
 {
 	if (currentScene == nullptr)
 		return;
+
+	cameraShift += 0.01f;
+
+	camera->Move(float3(std::cos(cameraShift) * 5.0f, 2.0f, std::sin(cameraShift) * 5.0f));
+
+	camera->Update();
+
+	cubeConstBuffer.wvp = camera->GetViewProjection();
+
+	cubeMaterial->UpdateConstantBuffer(cubeConstBufferId, &cubeConstBuffer, sizeof(cubeConstBuffer));
 
 	currentScene->Draw(commandList);
 }
 
 Graphics::SceneManager::SceneManager()
-	: currentScene(nullptr), cubeConstBuffer{}
+	: currentScene(nullptr), cubeConstBuffer{}, cameraShift{}
 {
 	
 }

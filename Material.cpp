@@ -1,7 +1,7 @@
 #include "Material.h"
 
 Graphics::Material::Material()
-	: shaderList{}, firstTextureDescriptorBase{}, vertexFormat{}, renderTargetFormat{}, cullMode(D3D12_CULL_MODE_NONE), blendDesc{},
+	: shaderList{}, firstTextureDescriptorBase{}, vertexFormat{}, renderTargetFormat{}, depthStencilFormat{}, cullMode(D3D12_CULL_MODE_NONE), blendDesc{},
 	useDepthBuffer(false), isComposed(false)
 {
 	SetupBlendDesc(blendDesc);
@@ -93,6 +93,16 @@ void Graphics::Material::SetRenderTargetFormat(size_t renderTargetIndex, DXGI_FO
 	renderTargetFormat[renderTargetIndex] = format;
 }
 
+void Graphics::Material::SetDepthStencilFormat(uint32_t depthBit)
+{
+	depthStencilFormat = (depthBit == 32) ? DXGI_FORMAT_D32_FLOAT : DXGI_FORMAT_D24_UNORM_S8_UINT;
+}
+
+void Graphics::Material::SetDepthTest(bool _useDepthBuffer)
+{
+	useDepthBuffer = _useDepthBuffer;
+}
+
 void Graphics::Material::SetCullMode(D3D12_CULL_MODE _cullMode)
 {
 	cullMode = _cullMode;
@@ -138,7 +148,7 @@ void Graphics::Material::Compose(ID3D12Device* device)
 
 	CreateTextureRootDescriptorTable(textureRegisterIndices, textureDescriptorIndices, textureDescRange, textureRootDescTable);
 	CreatePipelineStateAndRootSignature(device, { inputElementDescs.data() , inputElementDescs.size() }, rasterizerDesc, blendDesc, depthStencilDesc,
-		renderTargetFormat, shaderList, constantBufferRegisterIndices, textureRootDescTable, samplerDescs, &rootSignature, &pipelineState);
+		renderTargetFormat, depthStencilFormat, shaderList, constantBufferRegisterIndices, textureRootDescTable, samplerDescs, &rootSignature, &pipelineState);
 
 	if (textureIndices.size() > 0)
 		firstTextureDescriptorBase = resourceManager.GetTexture(textureIndices.front()).descriptorAllocation.gpuDescriptorBase;

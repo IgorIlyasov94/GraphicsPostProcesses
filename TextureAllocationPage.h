@@ -13,7 +13,8 @@ namespace Graphics
 	class TextureAllocationPage
 	{
 	public:
-		TextureAllocationPage(ID3D12Device* device, D3D12_HEAP_TYPE _heapType, D3D12_RESOURCE_FLAGS resourceFlags, const TextureInfo& textureInfo);
+		TextureAllocationPage(ID3D12Device* device, D3D12_HEAP_TYPE _heapType, D3D12_RESOURCE_FLAGS resourceFlags, const D3D12_CLEAR_VALUE* clearValue,
+			const TextureInfo& textureInfo);
 		~TextureAllocationPage();
 
 		void GetAllocation(TextureAllocation& allocation);

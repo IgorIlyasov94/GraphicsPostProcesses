@@ -10,7 +10,8 @@ namespace Graphics
 	public:
 		static TextureAllocator& GetInstance();
 
-		void Allocate(ID3D12Device* device, D3D12_RESOURCE_FLAGS resourceFlags, const TextureInfo& textureInfo, TextureAllocation& allocation);
+		void Allocate(ID3D12Device* device, D3D12_RESOURCE_FLAGS resourceFlags, const D3D12_CLEAR_VALUE* clearValue, const TextureInfo& textureInfo,
+			TextureAllocation& allocation);
 		void AllocateTemporaryUpload(ID3D12Device* device, D3D12_RESOURCE_FLAGS resourceFlags, const TextureInfo& textureInfo, TextureAllocation& allocation);
 
 		void ReleaseTemporaryBuffers();

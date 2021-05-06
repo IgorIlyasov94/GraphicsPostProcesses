@@ -25,7 +25,9 @@ namespace Graphics
 
 		void SetVertexFormat(VertexFormat format);
 		void SetRenderTargetFormat(size_t renderTargetIndex, DXGI_FORMAT format);
+		void SetDepthStencilFormat(uint32_t depthBit);
 
+		void SetDepthTest(bool _useDepthBuffer);
 		void SetCullMode(D3D12_CULL_MODE _cullMode);
 		void SetBlendMode(bool blendOn, D3D12_BLEND srcBlend = D3D12_BLEND_ONE, D3D12_BLEND destBlend = D3D12_BLEND_ZERO, D3D12_BLEND_OP blendOp = D3D12_BLEND_OP_ADD,
 			D3D12_BLEND srcBlendAlpha = D3D12_BLEND_ONE, D3D12_BLEND destBlendAlpha = D3D12_BLEND_ZERO, D3D12_BLEND_OP blendOpAlpha = D3D12_BLEND_OP_ADD);
@@ -57,6 +59,7 @@ namespace Graphics
 		VertexFormat vertexFormat;
 
 		std::array<DXGI_FORMAT, 8> renderTargetFormat;
+		DXGI_FORMAT depthStencilFormat;
 
 		D3D12_CULL_MODE cullMode;
 		D3D12_BLEND_DESC blendDesc;

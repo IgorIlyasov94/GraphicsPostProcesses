@@ -80,7 +80,7 @@ void Graphics::CreateDescriptorHeap(ID3D12Device* device, uint32_t numDescriptor
 
 void Graphics::CreateGraphicsPipelineState(ID3D12Device* device, const D3D12_INPUT_LAYOUT_DESC& inputLayoutDesc, ID3D12RootSignature* rootSignature,
 	const D3D12_RASTERIZER_DESC& rasterizerDesc, const D3D12_BLEND_DESC& blendDesc, const D3D12_DEPTH_STENCIL_DESC& depthStencilDesc,
-	const std::array<DXGI_FORMAT, 8>& rtvFormat, const ShaderList& shaderList, ID3D12PipelineState** pipelineState)
+	const std::array<DXGI_FORMAT, 8>& rtvFormat, DXGI_FORMAT dsvFormat, const ShaderList& shaderList, ID3D12PipelineState** pipelineState)
 {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineStateDesc{};
 	pipelineStateDesc.InputLayout = inputLayoutDesc;
@@ -93,6 +93,7 @@ void Graphics::CreateGraphicsPipelineState(ID3D12Device* device, const D3D12_INP
 	pipelineStateDesc.GS = shaderList.geometryShader;
 	pipelineStateDesc.PS = shaderList.pixelShader;
 	pipelineStateDesc.DepthStencilState = depthStencilDesc;
+	pipelineStateDesc.DSVFormat = dsvFormat;
 	pipelineStateDesc.SampleMask = UINT_MAX;
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	pipelineStateDesc.NumRenderTargets = 1;
@@ -245,9 +246,9 @@ void Graphics::CreateStandardSamplerDescs(std::vector<D3D12_STATIC_SAMPLER_DESC>
 }
 
 void Graphics::CreatePipelineStateAndRootSignature(ID3D12Device* device, const D3D12_INPUT_LAYOUT_DESC& inputLayoutDesc, const D3D12_RASTERIZER_DESC& rasterizerDesc,
-	const D3D12_BLEND_DESC& blendDesc, const D3D12_DEPTH_STENCIL_DESC& depthStencilDesc, const std::array<DXGI_FORMAT, 8>& rtvFormat, const ShaderList& shaderList,
-	const std::vector<size_t>& constantBufferIndices, const D3D12_ROOT_DESCRIPTOR_TABLE& texturesRootDescriptorTable, const std::vector<D3D12_STATIC_SAMPLER_DESC>& samplerDescs,
-	ID3D12RootSignature** rootSignature, ID3D12PipelineState** pipelineState)
+	const D3D12_BLEND_DESC& blendDesc, const D3D12_DEPTH_STENCIL_DESC& depthStencilDesc, const std::array<DXGI_FORMAT, 8>& rtvFormat, DXGI_FORMAT dsvFormat,
+	const ShaderList& shaderList, const std::vector<size_t>& constantBufferIndices, const D3D12_ROOT_DESCRIPTOR_TABLE& texturesRootDescriptorTable,
+	const std::vector<D3D12_STATIC_SAMPLER_DESC>& samplerDescs, ID3D12RootSignature** rootSignature, ID3D12PipelineState** pipelineState)
 {
 	D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
@@ -256,7 +257,7 @@ void Graphics::CreatePipelineStateAndRootSignature(ID3D12Device* device, const D
 
 	CreateRootSignature(device, rootParameters, samplerDescs, rootSignatureFlags, rootSignature);
 
-	CreateGraphicsPipelineState(device, inputLayoutDesc, *rootSignature, rasterizerDesc, blendDesc, depthStencilDesc, rtvFormat, shaderList, pipelineState);
+	CreateGraphicsPipelineState(device, inputLayoutDesc, *rootSignature, rasterizerDesc, blendDesc, depthStencilDesc, rtvFormat, dsvFormat, shaderList, pipelineState);
 }
 
 void Graphics::GetHardwareAdapter(IDXGIFactory4* factory4, IDXGIAdapter1** adapter)

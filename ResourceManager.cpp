@@ -126,7 +126,7 @@ Graphics::TextureId Graphics::ResourceManager::CreateTexture(const std::filesyst
 Graphics::TextureId Graphics::ResourceManager::CreateTexture(const std::vector<uint8_t>& data, const TextureInfo& textureInfo, D3D12_RESOURCE_FLAGS resourceFlags)
 {
 	TextureAllocation textureAllocation{};
-	textureAllocator.Allocate(device, resourceFlags, textureInfo, textureAllocation);
+	textureAllocator.Allocate(device, resourceFlags, nullptr, textureInfo, textureAllocation);
 
 	TextureAllocation uploadTextureAllocation{};
 	textureAllocator.AllocateTemporaryUpload(device, resourceFlags, textureInfo, uploadTextureAllocation);
@@ -223,22 +223,34 @@ Graphics::RenderTargetId Graphics::ResourceManager::CreateRenderTarget(uint64_t 
 	textureInfo.dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 	textureInfo.srvDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 
+	D3D12_CLEAR_VALUE clearValue{};
+	clearValue.Format = format;
+	clearValue.Color[3] = 1.0f;
+
 	TextureAllocation textureAllocation{};
-	textureAllocator.Allocate(device, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, textureInfo, textureAllocation);
-
-	DescriptorAllocation renderTargetDescriptorAllocation{};
-	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, renderTargetDescriptorAllocation);
-
+	textureAllocator.Allocate(device, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, &clearValue, textureInfo, textureAllocation);
+	
 	D3D12_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc{};
 	shaderResourceViewDesc.Format = format;
 	shaderResourceViewDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	shaderResourceViewDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	shaderResourceViewDesc.Texture2D.MipLevels = 1;
 
+	DescriptorAllocation shaderResourceDescriptorAllocation{};
+	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, shaderResourceDescriptorAllocation);
+	device->CreateShaderResourceView(textureAllocation.textureResource, &shaderResourceViewDesc, shaderResourceDescriptorAllocation.descriptorBase);
+
 	D3D12_RENDER_TARGET_VIEW_DESC renderTargetViewDesc{};
 	renderTargetViewDesc.Format = format;
 	renderTargetViewDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-	
+
+	DescriptorAllocation renderTargetDescriptorAllocation{};
+	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, renderTargetDescriptorAllocation);
+
+	device->CreateRenderTargetView(textureAllocation.textureResource, &renderTargetViewDesc, renderTargetDescriptorAllocation.descriptorBase);
+
+	SetResourceBarrier(commandList, textureAllocation.textureResource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
 	RenderTarget renderTarget{};
 	renderTarget.shaderResourceViewDesc = shaderResourceViewDesc;
 	renderTarget.renderTargetViewDesc = renderTargetViewDesc;
@@ -249,6 +261,57 @@ Graphics::RenderTargetId Graphics::ResourceManager::CreateRenderTarget(uint64_t 
 	renderTargetPool.push_back(renderTarget);
 
 	return RenderTargetId(renderTargetPool.size() - 1);
+}
+
+Graphics::DepthStencilId Graphics::ResourceManager::CreateDepthStencil(uint64_t width, uint32_t height, uint32_t depthBit)
+{
+	TextureInfo textureInfo{};
+	textureInfo.width = width;
+	textureInfo.height = height;
+	textureInfo.depth = 1;
+	textureInfo.mipLevels = 1;
+	textureInfo.format = (depthBit == 32) ? DXGI_FORMAT_R32_TYPELESS : DXGI_FORMAT_R24G8_TYPELESS;
+	textureInfo.dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	textureInfo.srvDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+
+	D3D12_CLEAR_VALUE clearValue{};
+	clearValue.Format = (depthBit == 32) ? DXGI_FORMAT_D32_FLOAT : DXGI_FORMAT_D24_UNORM_S8_UINT;
+	clearValue.DepthStencil.Depth = 1.0f;
+	clearValue.DepthStencil.Stencil = 0;
+
+	TextureAllocation textureAllocation{};
+	textureAllocator.Allocate(device, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, &clearValue, textureInfo, textureAllocation);
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc{};
+	shaderResourceViewDesc.Format = (depthBit == 32) ? DXGI_FORMAT_R32_FLOAT : DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+	shaderResourceViewDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	shaderResourceViewDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	shaderResourceViewDesc.Texture2D.MipLevels = 1;
+
+	DescriptorAllocation shaderResourceDescriptorAllocation{};
+	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, shaderResourceDescriptorAllocation);
+	device->CreateShaderResourceView(textureAllocation.textureResource, &shaderResourceViewDesc, shaderResourceDescriptorAllocation.descriptorBase);
+
+	D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc{};
+	depthStencilViewDesc.Format = (depthBit == 32) ? DXGI_FORMAT_D32_FLOAT : DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthStencilViewDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+
+	DescriptorAllocation depthStencilDescriptorAllocation{};
+	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, depthStencilDescriptorAllocation);
+	device->CreateDepthStencilView(textureAllocation.textureResource, &depthStencilViewDesc, depthStencilDescriptorAllocation.descriptorBase);
+
+	SetResourceBarrier(commandList, textureAllocation.textureResource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+
+	DepthStencil depthStencil{};
+	depthStencil.shaderResourceViewDesc = shaderResourceViewDesc;
+	depthStencil.depthStencilViewDesc = depthStencilViewDesc;
+	depthStencil.info = textureInfo;
+	depthStencil.textureAllocation = textureAllocation;
+	depthStencil.descriptorAllocation = depthStencilDescriptorAllocation;
+
+	depthStencilPool.push_back(depthStencil);
+
+	return DepthStencilId(depthStencilPool.size() - 1);
 }
 
 void Graphics::ResourceManager::CreateSwapChainBuffers(IDXGISwapChain4* swapChain, uint32_t buffersCount)
@@ -297,6 +360,11 @@ const Graphics::RenderTarget& Graphics::ResourceManager::GetRenderTarget(const R
 	return renderTargetPool[resourceId.value];
 }
 
+const Graphics::DepthStencil& Graphics::ResourceManager::GetDepthStencil(const DepthStencilId& resourceId) const
+{
+	return depthStencilPool[resourceId.value];
+}
+
 const D3D12_CPU_DESCRIPTOR_HANDLE& Graphics::ResourceManager::GetSwapChainDescriptorBase(uint32_t bufferId) const
 {
 	return swapChainDescriptorBases[bufferId];
@@ -315,6 +383,16 @@ D3D12_VERTEX_BUFFER_VIEW Graphics::ResourceManager::GetVertexBufferView(const Ve
 D3D12_INDEX_BUFFER_VIEW Graphics::ResourceManager::GetIndexBufferView(const IndexBufferId& resourceId) const
 {
 	return indexBufferPool[resourceId.value].indexBufferView;
+}
+
+const D3D12_CPU_DESCRIPTOR_HANDLE& Graphics::ResourceManager::GetRenderTargetDescriptorBase(const RenderTargetId& resourceId) const
+{
+	return renderTargetPool[resourceId.value].descriptorAllocation.descriptorBase;
+}
+
+const D3D12_CPU_DESCRIPTOR_HANDLE& Graphics::ResourceManager::GetDepthStencilDescriptorBase(const DepthStencilId& resourceId) const
+{
+	return depthStencilPool[resourceId.value].descriptorAllocation.descriptorBase;
 }
 
 void Graphics::ResourceManager::UpdateConstantBuffer(const ConstantBufferId& resourceId, const void* data, size_t dataSize)

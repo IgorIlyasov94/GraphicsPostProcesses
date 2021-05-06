@@ -40,17 +40,15 @@ namespace Graphics
 		ComPtr<ID3D12PipelineState> pipelineState;
 		ComPtr<ID3D12Fence> fence;
 
-		ComPtr<ID3D12Resource> swapChainBuffersRtv[SWAP_CHAIN_BUFFER_COUNT];
-
 		ComPtr<IDXGIFactory4> factory;
 		ComPtr<IDXGISwapChain4> swapChain;
+		
+		DepthStencilId sceneDepthStencilId;
 
 		HANDLE fenceEvent;
 
 		D3D12_VIEWPORT sceneViewport;
 		D3D12_RECT sceneScissorRect;
-
-		int32_t swapChainRtvDescriptorSize;
 
 		uint32_t bufferIndex;
 		uint64_t fenceValues[SWAP_CHAIN_BUFFER_COUNT];

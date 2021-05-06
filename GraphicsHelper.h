@@ -84,7 +84,7 @@ namespace Graphics
 
 	void CreateGraphicsPipelineState(ID3D12Device* device, const D3D12_INPUT_LAYOUT_DESC& inputLayoutDesc, ID3D12RootSignature* rootSignature,
 		const D3D12_RASTERIZER_DESC& rasterizerDesc, const D3D12_BLEND_DESC& blendDesc, const D3D12_DEPTH_STENCIL_DESC& depthStencilDesc,
-		const std::array<DXGI_FORMAT, 8>& rtvFormat, const ShaderList& shaderList, ID3D12PipelineState** pipelineState);
+		const std::array<DXGI_FORMAT, 8>& rtvFormat, DXGI_FORMAT dsvFormat, const ShaderList& shaderList, ID3D12PipelineState** pipelineState);
 
 	void ReadShaderConstantBuffers(const D3D12_SHADER_BYTECODE& shaderBytecode, std::set<size_t>& constantBufferIndices);
 
@@ -95,8 +95,8 @@ namespace Graphics
 	void CreateStandardSamplerDescs(std::vector<D3D12_STATIC_SAMPLER_DESC>& samplerDescs);
 
 	void CreatePipelineStateAndRootSignature(ID3D12Device* device, const D3D12_INPUT_LAYOUT_DESC& inputLayoutDesc, const D3D12_RASTERIZER_DESC& rasterizerDesc,
-		const D3D12_BLEND_DESC& blendDesc, const D3D12_DEPTH_STENCIL_DESC& depthStencilDesc, const std::array<DXGI_FORMAT, 8>& rtvFormat, const ShaderList& shaderList,
-		const std::vector<size_t>& constantBufferIndices, const D3D12_ROOT_DESCRIPTOR_TABLE& texturesRootDescriptorTable,
+		const D3D12_BLEND_DESC& blendDesc, const D3D12_DEPTH_STENCIL_DESC& depthStencilDesc, const std::array<DXGI_FORMAT, 8>& rtvFormat, DXGI_FORMAT dsvFormat,
+		const ShaderList& shaderList, const std::vector<size_t>& constantBufferIndices, const D3D12_ROOT_DESCRIPTOR_TABLE& texturesRootDescriptorTable,
 		const std::vector<D3D12_STATIC_SAMPLER_DESC>& samplerDescs, ID3D12RootSignature** rootSignature, ID3D12PipelineState** pipelineState);
 
 	void GetHardwareAdapter(IDXGIFactory4* factory4, IDXGIAdapter1** adapter);

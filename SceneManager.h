@@ -13,7 +13,7 @@ namespace Graphics
 
 		void InitializeTestScene(ID3D12Device* device);
 
-		void DrawCurrentScene(ID3D12GraphicsCommandList* commandList) const;
+		void DrawCurrentScene(ID3D12GraphicsCommandList* commandList);
 
 	private:
 		SceneManager();
@@ -33,6 +33,10 @@ namespace Graphics
 		std::shared_ptr<GraphicObject> cube;
 		std::shared_ptr<Material> cubeMaterial;
 		std::shared_ptr<Mesh> cubeMesh;
+
+		ConstantBufferId cubeConstBufferId;
+
+		float cameraShift;
 
 		struct CubeConstBuffer
 		{
