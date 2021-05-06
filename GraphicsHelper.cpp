@@ -177,15 +177,15 @@ void Graphics::CreateRootParameters(const ShaderList& shaderList, const std::vec
 	}
 }
 
-void Graphics::CreateTextureRootDescriptorTable(const std::vector<size_t>& textureRegisterIndices, const std::vector<size_t>& descriptorIndices,
-	std::vector<D3D12_DESCRIPTOR_RANGE>& descriptorRange, D3D12_ROOT_DESCRIPTOR_TABLE& rootDescriptorTable)
+void Graphics::CreateTextureRootDescriptorTable(const std::vector<size_t>& textureRegisterIndices, std::vector<D3D12_DESCRIPTOR_RANGE>& descriptorRange,
+	D3D12_ROOT_DESCRIPTOR_TABLE& rootDescriptorTable)
 {
 	for (uint32_t textureRegisterId = 0; textureRegisterId < textureRegisterIndices.size(); textureRegisterId++)
 	{
 		D3D12_DESCRIPTOR_RANGE descRange{};
 		descRange.NumDescriptors = 1;
 		descRange.BaseShaderRegister = textureRegisterIndices[textureRegisterId];
-		descRange.OffsetInDescriptorsFromTableStart = descriptorIndices[textureRegisterId];// D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+		descRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 		descRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 		descRange.RegisterSpace = 0;
 

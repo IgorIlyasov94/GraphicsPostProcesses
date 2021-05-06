@@ -90,8 +90,8 @@ namespace Graphics
 
 	void CreateRootParameters(const ShaderList& shaderList, const std::vector<size_t>& constantBufferRegisterIndices, const D3D12_ROOT_DESCRIPTOR_TABLE& rootDescriptorTable,
 		D3D12_ROOT_SIGNATURE_FLAGS& rootSignatureFlags, std::vector<D3D12_ROOT_PARAMETER>& rootParameters);
-	void CreateTextureRootDescriptorTable(const std::vector<size_t>& textureRegisterIndices, const std::vector<size_t>& descriptorIndices,
-		std::vector<D3D12_DESCRIPTOR_RANGE>& descriptorRange, D3D12_ROOT_DESCRIPTOR_TABLE& rootDescriptorTable);
+	void CreateTextureRootDescriptorTable(const std::vector<size_t>& textureRegisterIndices, std::vector<D3D12_DESCRIPTOR_RANGE>& descriptorRange,
+		D3D12_ROOT_DESCRIPTOR_TABLE& rootDescriptorTable);
 	void CreateStandardSamplerDescs(std::vector<D3D12_STATIC_SAMPLER_DESC>& samplerDescs);
 
 	void CreatePipelineStateAndRootSignature(ID3D12Device* device, const D3D12_INPUT_LAYOUT_DESC& inputLayoutDesc, const D3D12_RASTERIZER_DESC& rasterizerDesc,

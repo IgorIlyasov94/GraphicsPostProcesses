@@ -6,7 +6,6 @@ namespace Graphics
 {
 	struct DescriptorAllocation
 	{
-		uint32_t descriptorStartIndex;
 		UINT descriptorIncrementSize;
 		D3D12_CPU_DESCRIPTOR_HANDLE descriptorBase;
 		D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptorBase;

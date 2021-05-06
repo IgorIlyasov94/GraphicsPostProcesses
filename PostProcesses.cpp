@@ -3,7 +3,7 @@
 #include "Resources/Shaders/HDRToneMapping.psh.h"
 
 Graphics::PostProcesses::PostProcesses()
-	: sceneViewport{}, renderTargetViewDescriptorSize(0), hdrConstantBuffer{}
+	: sceneViewport{}, hdrConstantBuffer{}
 {
 
 }
@@ -63,8 +63,6 @@ void Graphics::PostProcesses::Initialize(const int32_t& resolutionX, const int32
 
 	hdrPostProcess->AssignMaterial(hdrPostProcessMaterial.get());
 	hdrPostProcess->AssignMesh(screenQuadMesh.get());
-	
-	renderTargetViewDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 }
 
 void Graphics::PostProcesses::EnableHDR(ID3D12GraphicsCommandList* commandList, size_t bufferIndex)

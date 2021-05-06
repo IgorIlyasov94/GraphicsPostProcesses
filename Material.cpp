@@ -140,13 +140,10 @@ void Graphics::Material::Compose(ID3D12Device* device)
 
 	std::vector<size_t> textureDescriptorIndices;
 
-	for (auto& textureId: textureIndices)
-		textureDescriptorIndices.push_back(resourceManager.GetTexture(textureId).descriptorAllocation.descriptorStartIndex);
-
 	std::vector<D3D12_DESCRIPTOR_RANGE> textureDescRange;
 	D3D12_ROOT_DESCRIPTOR_TABLE textureRootDescTable;
 
-	CreateTextureRootDescriptorTable(textureRegisterIndices, textureDescriptorIndices, textureDescRange, textureRootDescTable);
+	CreateTextureRootDescriptorTable(textureRegisterIndices, textureDescRange, textureRootDescTable);
 	CreatePipelineStateAndRootSignature(device, { inputElementDescs.data() , inputElementDescs.size() }, rasterizerDesc, blendDesc, depthStencilDesc,
 		renderTargetFormat, depthStencilFormat, shaderList, constantBufferRegisterIndices, textureRootDescTable, samplerDescs, &rootSignature, &pipelineState);
 

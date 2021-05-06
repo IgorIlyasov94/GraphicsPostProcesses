@@ -36,10 +36,6 @@ namespace Graphics
 		D3D12_VIEWPORT sceneViewport;
 		D3D12_RECT sceneScissorRect;
 
-		const uint32_t RENDER_TARGETS_NUMBER = 1;
-		
-		uint32_t renderTargetViewDescriptorSize;
-
 		using HDRConstantBuffer = struct
 		{
 			float3 shiftVector;

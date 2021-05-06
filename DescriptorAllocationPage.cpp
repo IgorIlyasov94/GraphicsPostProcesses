@@ -31,7 +31,6 @@ void Graphics::DescriptorAllocationPage::Allocate(uint32_t _numDescriptors, Desc
 	allocation.descriptorBase.ptr = descriptorBaseOffset;
 	allocation.gpuDescriptorBase.ptr = gpuDescriptorBaseOffset;
 	allocation.descriptorIncrementSize = descriptorIncrementSize;
-	allocation.descriptorStartIndex = numDescriptors - numFreeHandles;
 	allocation.descriptorHeap = descriptorHeap.Get();
 
 	descriptorBaseOffset += static_cast<SIZE_T>(static_cast<INT64>(_numDescriptors) * static_cast<INT64>(descriptorIncrementSize));
