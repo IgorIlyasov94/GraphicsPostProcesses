@@ -16,6 +16,7 @@ namespace Graphics
 
 		void AssignConstantBuffer(size_t registerIndex, ConstantBufferId constantBufferId);
 		void AssignTexture(ID3D12GraphicsCommandList* commandList, size_t registerIndex, TextureId textureId, bool asPixelShaderResource);
+		void AssignRenderTexture(ID3D12GraphicsCommandList* commandList, size_t registerIndex, RenderTargetId renderTargetId);
 
 		void SetVertexShader(D3D12_SHADER_BYTECODE shaderBytecode);
 		void SetHullShader(D3D12_SHADER_BYTECODE shaderBytecode);
@@ -42,6 +43,18 @@ namespace Graphics
 
 	private:
 		void CreateInputElementDescs(VertexFormat format, std::vector<D3D12_INPUT_ELEMENT_DESC>& inputElementDescs) const noexcept;
+		void CreateTextureRootDescriptorTables(const std::vector<size_t>& textureRegisterIndices, std::vector<D3D12_DESCRIPTOR_RANGE>& descriptorRanges,
+			std::vector<D3D12_ROOT_DESCRIPTOR_TABLE>& rootDescriptorTable);
+
+		void CreateRootParameters(const ShaderList& shaderList, const std::vector<size_t>& constantBufferRegisterIndices,
+			const std::vector<D3D12_ROOT_DESCRIPTOR_TABLE>& rootDescriptorTables, D3D12_ROOT_SIGNATURE_FLAGS& rootSignatureFlags, std::vector<D3D12_ROOT_PARAMETER>& rootParameters);
+
+		void CreateRootSignature(ID3D12Device* device, const std::vector<D3D12_ROOT_PARAMETER>& rootParameters, const std::vector<D3D12_STATIC_SAMPLER_DESC>& samplerDescs,
+			D3D12_ROOT_SIGNATURE_FLAGS flags, ID3D12RootSignature** rootSignature);
+
+		void CreateGraphicsPipelineState(ID3D12Device* device, const D3D12_INPUT_LAYOUT_DESC& inputLayoutDesc, ID3D12RootSignature* rootSignature,
+			const D3D12_RASTERIZER_DESC& rasterizerDesc, const D3D12_BLEND_DESC& blendDesc, const D3D12_DEPTH_STENCIL_DESC& depthStencilDesc,
+			const std::array<DXGI_FORMAT, 8>& rtvFormat, DXGI_FORMAT dsvFormat, const ShaderList& shaderList, ID3D12PipelineState** pipelineState);
 
 		ShaderList shaderList;
 
@@ -50,11 +63,12 @@ namespace Graphics
 
 		std::vector<ConstantBufferId> constantBufferIndices;
 		std::vector<TextureId> textureIndices;
+		std::vector<RenderTargetId> renderTargetIndices;
 
 		std::vector<D3D12_GPU_VIRTUAL_ADDRESS> constantBufferAddresses;
 		std::vector<D3D12_STATIC_SAMPLER_DESC> samplerDescs;
 
-		D3D12_GPU_DESCRIPTOR_HANDLE firstTextureDescriptorBase;
+		std::vector<D3D12_GPU_DESCRIPTOR_HANDLE> firstTextureDescriptorBases;
 
 		VertexFormat vertexFormat;
 

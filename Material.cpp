@@ -1,7 +1,7 @@
 #include "Material.h"
 
 Graphics::Material::Material()
-	: shaderList{}, firstTextureDescriptorBase{}, vertexFormat{}, renderTargetFormat{}, depthStencilFormat{}, cullMode(D3D12_CULL_MODE_NONE), blendDesc{},
+	: shaderList{}, vertexFormat{}, renderTargetFormat{}, depthStencilFormat{}, cullMode(D3D12_CULL_MODE_NONE), blendDesc{},
 	useDepthBuffer(false), isComposed(false)
 {
 	SetupBlendDesc(blendDesc);
@@ -53,6 +53,12 @@ void Graphics::Material::AssignTexture(ID3D12GraphicsCommandList* commandList, s
 
 	SetResourceBarrier(commandList, resourceManager.GetTexture(textureId).textureAllocation.textureResource, D3D12_RESOURCE_STATE_COMMON,
 		(asPixelShaderResource) ? D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+}
+
+void Graphics::Material::AssignRenderTexture(ID3D12GraphicsCommandList* commandList, size_t registerIndex, RenderTargetId renderTargetId)
+{
+	textureRegisterIndices.push_back(registerIndex);
+	renderTargetIndices.push_back(renderTargetId);
 }
 
 void Graphics::Material::SetVertexShader(D3D12_SHADER_BYTECODE shaderBytecode)
@@ -140,15 +146,22 @@ void Graphics::Material::Compose(ID3D12Device* device)
 
 	std::vector<size_t> textureDescriptorIndices;
 
-	std::vector<D3D12_DESCRIPTOR_RANGE> textureDescRange;
-	D3D12_ROOT_DESCRIPTOR_TABLE textureRootDescTable;
+	std::vector<D3D12_DESCRIPTOR_RANGE> textureDescRanges;
+	std::vector<D3D12_ROOT_DESCRIPTOR_TABLE> textureRootDescTables;
 
-	CreateTextureRootDescriptorTable(textureRegisterIndices, textureDescRange, textureRootDescTable);
-	CreatePipelineStateAndRootSignature(device, { inputElementDescs.data() , inputElementDescs.size() }, rasterizerDesc, blendDesc, depthStencilDesc,
-		renderTargetFormat, depthStencilFormat, shaderList, constantBufferRegisterIndices, textureRootDescTable, samplerDescs, &rootSignature, &pipelineState);
+	CreateTextureRootDescriptorTables(textureRegisterIndices, textureDescRanges, textureRootDescTables);
+	D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
-	if (textureIndices.size() > 0)
-		firstTextureDescriptorBase = resourceManager.GetTexture(textureIndices.front()).descriptorAllocation.gpuDescriptorBase;
+	std::vector<D3D12_ROOT_PARAMETER> rootParameters;
+	CreateRootParameters(shaderList, constantBufferRegisterIndices, textureRootDescTables, rootSignatureFlags, rootParameters);
+
+	CreateRootSignature(device, rootParameters, samplerDescs, rootSignatureFlags, &rootSignature);
+
+	CreateGraphicsPipelineState(device, { inputElementDescs.data() , inputElementDescs.size() }, rootSignature.Get(), rasterizerDesc, blendDesc, depthStencilDesc,
+		renderTargetFormat, depthStencilFormat, shaderList, &pipelineState);
+	
+	for (auto& textureIndex : textureIndices)
+		firstTextureDescriptorBases.push_back(resourceManager.GetTexture(textureIndex).descriptorAllocation.gpuDescriptorBase);
 
 	isComposed = true;
 }
@@ -168,7 +181,7 @@ void Graphics::Material::Present(ID3D12GraphicsCommandList* commandList) const
 	for (auto& constantBufferAddress: constantBufferAddresses)
 		commandList->SetGraphicsRootConstantBufferView(rootParameterIndex++, constantBufferAddress);
 
-	if (textureIndices.size() > 0)
+	for (auto& firstTextureDescriptorBase : firstTextureDescriptorBases)
 		commandList->SetGraphicsRootDescriptorTable(rootParameterIndex++, firstTextureDescriptorBase);
 }
 
@@ -181,4 +194,127 @@ void Graphics::Material::CreateInputElementDescs(VertexFormat format, std::vecto
 
 	if (format == VertexFormat::POSITION_TEXCOORD || format == VertexFormat::POSITION_NORMAL_TEXCOORD)
 		inputElementDescs.push_back({ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
+}
+
+void Graphics::Material::CreateTextureRootDescriptorTables(const std::vector<size_t>& textureRegisterIndices, std::vector<D3D12_DESCRIPTOR_RANGE>& descriptorRanges,
+	std::vector<D3D12_ROOT_DESCRIPTOR_TABLE>& rootDescriptorTables)
+{
+	descriptorRanges.clear();
+
+	for (auto& textureRegisterId : textureRegisterIndices)
+	{
+		D3D12_DESCRIPTOR_RANGE descRange{};
+		descRange.NumDescriptors = 1;
+		descRange.BaseShaderRegister = textureRegisterId;
+		descRange.OffsetInDescriptorsFromTableStart = 0;// D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+		descRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		descRange.RegisterSpace = 0;
+
+		descriptorRanges.push_back(descRange);
+	}
+
+	for (auto& descriptorRange: descriptorRanges)
+	{
+		D3D12_ROOT_DESCRIPTOR_TABLE rootDescriptorTable{};
+		rootDescriptorTable.NumDescriptorRanges = 1;
+		rootDescriptorTable.pDescriptorRanges = &descriptorRange;
+
+		rootDescriptorTables.push_back(rootDescriptorTable);
+	}
+}
+
+void Graphics::Material::CreateRootParameters(const ShaderList& shaderList, const std::vector<size_t>& constantBufferRegisterIndices,
+	const std::vector<D3D12_ROOT_DESCRIPTOR_TABLE>& rootDescriptorTables, D3D12_ROOT_SIGNATURE_FLAGS& rootSignatureFlags, std::vector<D3D12_ROOT_PARAMETER>& rootParameters)
+{
+	if (shaderList.vertexShader.pShaderBytecode == nullptr)
+		rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS;
+
+	if (shaderList.hullShader.pShaderBytecode == nullptr)
+		rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
+
+	if (shaderList.domainShader.pShaderBytecode == nullptr)
+		rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS;
+
+	if (shaderList.geometryShader.pShaderBytecode == nullptr)
+		rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
+
+	if (shaderList.pixelShader.pShaderBytecode == nullptr)
+		rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
+
+	for (auto& constantBufferIndex : constantBufferRegisterIndices)
+	{
+		D3D12_ROOT_PARAMETER rootParameter{};
+
+		rootParameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+		rootParameter.Descriptor.RegisterSpace = 0;
+		rootParameter.Descriptor.ShaderRegister = constantBufferIndex;
+		rootParameter.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+		rootParameters.push_back(rootParameter);
+	}
+
+	for (auto& rootDescriptorTable : rootDescriptorTables)
+	{
+		D3D12_ROOT_PARAMETER rootParameter{};
+		rootParameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		rootParameter.DescriptorTable = rootDescriptorTable;
+		rootParameter.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+		
+		rootParameters.push_back(rootParameter);
+	}
+}
+
+void Graphics::Material::CreateRootSignature(ID3D12Device* device, const std::vector<D3D12_ROOT_PARAMETER>& rootParameters,
+	const std::vector<D3D12_STATIC_SAMPLER_DESC>& samplerDescs, D3D12_ROOT_SIGNATURE_FLAGS flags, ID3D12RootSignature** rootSignature)
+{
+	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc{};
+	rootSignatureDesc.NumParameters = rootParameters.size();
+
+	if (rootSignatureDesc.NumParameters > 0)
+		rootSignatureDesc.pParameters = rootParameters.data();
+
+	rootSignatureDesc.NumStaticSamplers = samplerDescs.size();
+
+	if (rootSignatureDesc.NumStaticSamplers > 0)
+		rootSignatureDesc.pStaticSamplers = samplerDescs.data();
+
+	rootSignatureDesc.Flags = flags;
+
+	ComPtr<ID3DBlob> signature;
+	ComPtr<ID3DBlob> error;
+
+	ThrowIfFailed(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, &signature, &error),
+		"Material::CreateRootSignature: Root Signature serialization failed!");
+
+	ThrowIfFailed(device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(rootSignature)),
+		"Material::CreateRootSignature: Root Signature creating failed!");
+}
+
+void Graphics::Material::CreateGraphicsPipelineState(ID3D12Device* device, const D3D12_INPUT_LAYOUT_DESC& inputLayoutDesc, ID3D12RootSignature* rootSignature,
+	const D3D12_RASTERIZER_DESC& rasterizerDesc, const D3D12_BLEND_DESC& blendDesc, const D3D12_DEPTH_STENCIL_DESC& depthStencilDesc,
+	const std::array<DXGI_FORMAT, 8>& rtvFormat, DXGI_FORMAT dsvFormat, const ShaderList& shaderList, ID3D12PipelineState** pipelineState)
+{
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineStateDesc{};
+	pipelineStateDesc.InputLayout = inputLayoutDesc;
+	pipelineStateDesc.pRootSignature = rootSignature;
+	pipelineStateDesc.RasterizerState = rasterizerDesc;
+	pipelineStateDesc.BlendState = blendDesc;
+	pipelineStateDesc.VS = shaderList.vertexShader;
+	pipelineStateDesc.HS = shaderList.hullShader;
+	pipelineStateDesc.DS = shaderList.domainShader;
+	pipelineStateDesc.GS = shaderList.geometryShader;
+	pipelineStateDesc.PS = shaderList.pixelShader;
+	pipelineStateDesc.DepthStencilState = depthStencilDesc;
+	pipelineStateDesc.DSVFormat = dsvFormat;
+	pipelineStateDesc.SampleMask = UINT_MAX;
+	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	pipelineStateDesc.NumRenderTargets = 1;
+
+	for (uint32_t formatId = 0; formatId < rtvFormat.size(); formatId++)
+		pipelineStateDesc.RTVFormats[formatId] = rtvFormat[formatId];
+
+	pipelineStateDesc.SampleDesc.Count = 1;
+
+	ThrowIfFailed(device->CreateGraphicsPipelineState(&pipelineStateDesc, IID_PPV_ARGS(pipelineState)),
+		"Material::CreateGraphicsPipelineState: Graphics Pipeline State creating failed!");
 }

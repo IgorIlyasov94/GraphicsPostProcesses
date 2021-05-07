@@ -40,32 +40,6 @@ void Graphics::CreateSwapChain(IDXGIFactory4* _factory, ID3D12CommandQueue* _com
 		"CreateSwapChain: Swap Chain creating failed!");
 }
 
-void Graphics::CreateRootSignature(ID3D12Device* device, const std::vector<D3D12_ROOT_PARAMETER>& rootParameters, const std::vector<D3D12_STATIC_SAMPLER_DESC>& samplerDescs,
-	D3D12_ROOT_SIGNATURE_FLAGS flags, ID3D12RootSignature** rootSignature)
-{
-	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc{};
-	rootSignatureDesc.NumParameters = rootParameters.size();
-
-	if (rootSignatureDesc.NumParameters > 0)
-		rootSignatureDesc.pParameters = rootParameters.data();
-
-	rootSignatureDesc.NumStaticSamplers = samplerDescs.size();
-
-	if (rootSignatureDesc.NumStaticSamplers > 0)
-		rootSignatureDesc.pStaticSamplers = samplerDescs.data();
-
-	rootSignatureDesc.Flags = flags;
-
-	ComPtr<ID3DBlob> signature;
-	ComPtr<ID3DBlob> error;
-
-	ThrowIfFailed(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, &signature, &error),
-		"CreateRootSignature: Root Signature serialization failed!");
-
-	ThrowIfFailed(device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(rootSignature)),
-		"CreateRootSignature: Root Signature creating failed!");
-}
-
 void Graphics::CreateDescriptorHeap(ID3D12Device* device, uint32_t numDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS flags, D3D12_DESCRIPTOR_HEAP_TYPE type,
 	ID3D12DescriptorHeap** descriptorHeap)
 {
@@ -76,35 +50,6 @@ void Graphics::CreateDescriptorHeap(ID3D12Device* device, uint32_t numDescriptor
 
 	ThrowIfFailed(device->CreateDescriptorHeap(&descriptorHeapDesc, IID_PPV_ARGS(descriptorHeap)),
 		"CreateDescriptorHeap: Descriptor Heap creating failed!");
-}
-
-void Graphics::CreateGraphicsPipelineState(ID3D12Device* device, const D3D12_INPUT_LAYOUT_DESC& inputLayoutDesc, ID3D12RootSignature* rootSignature,
-	const D3D12_RASTERIZER_DESC& rasterizerDesc, const D3D12_BLEND_DESC& blendDesc, const D3D12_DEPTH_STENCIL_DESC& depthStencilDesc,
-	const std::array<DXGI_FORMAT, 8>& rtvFormat, DXGI_FORMAT dsvFormat, const ShaderList& shaderList, ID3D12PipelineState** pipelineState)
-{
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineStateDesc{};
-	pipelineStateDesc.InputLayout = inputLayoutDesc;
-	pipelineStateDesc.pRootSignature = rootSignature;
-	pipelineStateDesc.RasterizerState = rasterizerDesc;
-	pipelineStateDesc.BlendState = blendDesc;
-	pipelineStateDesc.VS = shaderList.vertexShader;
-	pipelineStateDesc.HS = shaderList.hullShader;
-	pipelineStateDesc.DS = shaderList.domainShader;
-	pipelineStateDesc.GS = shaderList.geometryShader;
-	pipelineStateDesc.PS = shaderList.pixelShader;
-	pipelineStateDesc.DepthStencilState = depthStencilDesc;
-	pipelineStateDesc.DSVFormat = dsvFormat;
-	pipelineStateDesc.SampleMask = UINT_MAX;
-	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	pipelineStateDesc.NumRenderTargets = 1;
-
-	for (uint32_t formatId = 0; formatId < rtvFormat.size(); formatId++)
-		pipelineStateDesc.RTVFormats[formatId] = rtvFormat[formatId];
-
-	pipelineStateDesc.SampleDesc.Count = 1;
-
-	ThrowIfFailed(device->CreateGraphicsPipelineState(&pipelineStateDesc, IID_PPV_ARGS(pipelineState)),
-		"CreateGraphicsPipelineState: Graphics Pipeline State creating failed!");
 }
 
 void Graphics::ReadShaderConstantBuffers(const D3D12_SHADER_BYTECODE& shaderBytecode, std::set<size_t>& constantBufferIndices)
@@ -134,66 +79,6 @@ void Graphics::ReadShaderConstantBuffers(const D3D12_SHADER_BYTECODE& shaderByte
 	str << constantBufferHLSLBinds.size();
 
 	throw std::exception(str.str().c_str());
-}
-
-void Graphics::CreateRootParameters(const ShaderList& shaderList, const std::vector<size_t>& constantBufferRegisterIndices, const D3D12_ROOT_DESCRIPTOR_TABLE& rootDescriptorTable,
-	D3D12_ROOT_SIGNATURE_FLAGS& rootSignatureFlags, std::vector<D3D12_ROOT_PARAMETER>& rootParameters)
-{
-	if (shaderList.vertexShader.pShaderBytecode == nullptr)
-		rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS;
-	
-	if (shaderList.hullShader.pShaderBytecode == nullptr)
-		rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
-	
-	if (shaderList.domainShader.pShaderBytecode == nullptr)
-		rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS;
-	
-	if (shaderList.geometryShader.pShaderBytecode == nullptr)
-		rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
-	
-	if (shaderList.pixelShader.pShaderBytecode == nullptr)
-		rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
-
-	for (auto& constantBufferIndex: constantBufferRegisterIndices)
-	{
-		D3D12_ROOT_PARAMETER rootParameter{};
-
-		rootParameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-		rootParameter.Descriptor.RegisterSpace = 0;
-		rootParameter.Descriptor.ShaderRegister = constantBufferIndex;
-		rootParameter.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-
-		rootParameters.push_back(rootParameter);
-	}
-
-	if (rootDescriptorTable.NumDescriptorRanges > 0)
-	{
-		D3D12_ROOT_PARAMETER rootParameter{};
-		rootParameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-		rootParameter.DescriptorTable = rootDescriptorTable;
-		rootParameter.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-
-		rootParameters.push_back(rootParameter);
-	}
-}
-
-void Graphics::CreateTextureRootDescriptorTable(const std::vector<size_t>& textureRegisterIndices, std::vector<D3D12_DESCRIPTOR_RANGE>& descriptorRange,
-	D3D12_ROOT_DESCRIPTOR_TABLE& rootDescriptorTable)
-{
-	for (uint32_t textureRegisterId = 0; textureRegisterId < textureRegisterIndices.size(); textureRegisterId++)
-	{
-		D3D12_DESCRIPTOR_RANGE descRange{};
-		descRange.NumDescriptors = 1;
-		descRange.BaseShaderRegister = textureRegisterIndices[textureRegisterId];
-		descRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-		descRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-		descRange.RegisterSpace = 0;
-
-		descriptorRange.push_back(descRange);
-	}
-
-	rootDescriptorTable.NumDescriptorRanges = descriptorRange.size();
-	rootDescriptorTable.pDescriptorRanges = descriptorRange.data();
 }
 
 void Graphics::CreateStandardSamplerDescs(std::vector<D3D12_STATIC_SAMPLER_DESC>& samplerDescs)
@@ -243,21 +128,6 @@ void Graphics::CreateStandardSamplerDescs(std::vector<D3D12_STATIC_SAMPLER_DESC>
 	samplerDesc.ShaderRegister = 5;
 
 	samplerDescs.push_back(samplerDesc);
-}
-
-void Graphics::CreatePipelineStateAndRootSignature(ID3D12Device* device, const D3D12_INPUT_LAYOUT_DESC& inputLayoutDesc, const D3D12_RASTERIZER_DESC& rasterizerDesc,
-	const D3D12_BLEND_DESC& blendDesc, const D3D12_DEPTH_STENCIL_DESC& depthStencilDesc, const std::array<DXGI_FORMAT, 8>& rtvFormat, DXGI_FORMAT dsvFormat,
-	const ShaderList& shaderList, const std::vector<size_t>& constantBufferIndices, const D3D12_ROOT_DESCRIPTOR_TABLE& texturesRootDescriptorTable,
-	const std::vector<D3D12_STATIC_SAMPLER_DESC>& samplerDescs, ID3D12RootSignature** rootSignature, ID3D12PipelineState** pipelineState)
-{
-	D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-
-	std::vector<D3D12_ROOT_PARAMETER> rootParameters;
-	CreateRootParameters(shaderList, constantBufferIndices, texturesRootDescriptorTable, rootSignatureFlags, rootParameters);
-
-	CreateRootSignature(device, rootParameters, samplerDescs, rootSignatureFlags, rootSignature);
-
-	CreateGraphicsPipelineState(device, inputLayoutDesc, *rootSignature, rasterizerDesc, blendDesc, depthStencilDesc, rtvFormat, dsvFormat, shaderList, pipelineState);
 }
 
 void Graphics::GetHardwareAdapter(IDXGIFactory4* factory4, IDXGIAdapter1** adapter)
