@@ -5,3 +5,10 @@
 /.vs/GraphicsPostProcesses/v16/ipch/AutoPCH/2b78801c35718f74/GRAPHICSPOSTPROCESSES.ipch
 /Debug
 /.vs/GraphicsPostProcesses/v16
+/x64/Debug
+/Resources/Textures
+/Resources/Shaders/ScreenQuad.vsh.h
+/Resources/Shaders/MeshStandard.vsh.h
+/Resources/Shaders/MeshStandard.psh.h
+/Resources/Shaders/HDRToneMapping.psh.h
+/Resources/Meshes
