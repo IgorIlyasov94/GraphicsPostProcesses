@@ -25,4 +25,8 @@ ECHO ON
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
 %dxcCmd% /Zi /E"main" /Vn"toneMappingPixelShader" /Tps_6_0 /Fh"HDRToneMapping.psh.h" /nologo HDRToneMapping.psh
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
+%dxcCmd% /Zi /E"main" /Vn"meshStandardVertexShader" /Tvs_6_0 /Fh"MeshStandard.vsh.h" /nologo MeshStandard.vsh
+@IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
+%dxcCmd% /Zi /E"main" /Vn"meshStandardPixelShader" /Tps_6_0 /Fh"MeshStandard.psh.h" /nologo MeshStandard.psh
+@IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
 ECHO Done.
