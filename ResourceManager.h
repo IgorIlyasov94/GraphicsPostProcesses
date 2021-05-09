@@ -57,7 +57,7 @@ namespace Graphics
 	{
 		D3D12_CONSTANT_BUFFER_VIEW_DESC constantBufferViewDesc;
 		BufferAllocation uploadBufferAllocation;
-		DescriptorAllocation descriptorAllocation;
+		DescriptorAllocation bufferDescriptorAllocation;
 	};
 
 	struct Texture
@@ -65,13 +65,13 @@ namespace Graphics
 		D3D12_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
 		TextureInfo info;
 		TextureAllocation textureAllocation;
-		DescriptorAllocation descriptorAllocation;
+		DescriptorAllocation shaderResourceDescriptorAllocation;
 	};
 
 	struct Sampler
 	{
 		D3D12_SAMPLER_DESC samplerDesc;
-		DescriptorAllocation descriptorAllocation;
+		DescriptorAllocation samplerDescriptorAllocation;
 	};
 
 	struct RenderTarget
@@ -80,7 +80,8 @@ namespace Graphics
 		D3D12_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
 		TextureInfo info;
 		TextureAllocation textureAllocation;
-		DescriptorAllocation descriptorAllocation;
+		DescriptorAllocation renderTargetDescriptorAllocation;
+		DescriptorAllocation shaderResourceDescriptorAllocation;
 	};
 
 	struct DepthStencil
@@ -89,7 +90,8 @@ namespace Graphics
 		D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc;
 		TextureInfo info;
 		TextureAllocation textureAllocation;
-		DescriptorAllocation descriptorAllocation;
+		DescriptorAllocation depthStencilDescriptorAllocation;
+		DescriptorAllocation shaderResourceDescriptorAllocation;
 	};
 
 	class ResourceManager
@@ -126,6 +128,8 @@ namespace Graphics
 
 		const D3D12_CPU_DESCRIPTOR_HANDLE& GetRenderTargetDescriptorBase(const RenderTargetId& resourceId) const;
 		const D3D12_CPU_DESCRIPTOR_HANDLE& GetDepthStencilDescriptorBase(const DepthStencilId& resourceId) const;
+
+		ID3D12DescriptorHeap* GetShaderResourceViewDescriptorHeap();
 
 		void UpdateConstantBuffer(const ConstantBufferId& resourceId, const void* data, size_t dataSize);
 

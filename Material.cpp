@@ -57,7 +57,7 @@ void Graphics::Material::AssignTexture(ID3D12GraphicsCommandList* commandList, s
 
 void Graphics::Material::AssignRenderTexture(ID3D12GraphicsCommandList* commandList, size_t registerIndex, RenderTargetId renderTargetId)
 {
-	textureRegisterIndices.push_back(registerIndex);
+	renderTextureRegisterIndices.push_back(registerIndex);
 	renderTargetIndices.push_back(renderTargetId);
 }
 
@@ -149,7 +149,7 @@ void Graphics::Material::Compose(ID3D12Device* device)
 	std::vector<D3D12_DESCRIPTOR_RANGE> textureDescRanges;
 	std::vector<D3D12_ROOT_DESCRIPTOR_TABLE> textureRootDescTables;
 
-	CreateTextureRootDescriptorTables(textureRegisterIndices, textureDescRanges, textureRootDescTables);
+	CreateTextureRootDescriptorTables(textureRegisterIndices, renderTextureRegisterIndices, textureDescRanges, textureRootDescTables);
 	D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
 	std::vector<D3D12_ROOT_PARAMETER> rootParameters;
@@ -157,11 +157,14 @@ void Graphics::Material::Compose(ID3D12Device* device)
 
 	CreateRootSignature(device, rootParameters, samplerDescs, rootSignatureFlags, &rootSignature);
 
-	CreateGraphicsPipelineState(device, { inputElementDescs.data() , inputElementDescs.size() }, rootSignature.Get(), rasterizerDesc, blendDesc, depthStencilDesc,
-		renderTargetFormat, depthStencilFormat, shaderList, &pipelineState);
+	CreateGraphicsPipelineState(device, { inputElementDescs.data() , static_cast<uint32_t>(inputElementDescs.size()) }, rootSignature.Get(), rasterizerDesc,
+		blendDesc, depthStencilDesc, renderTargetFormat, depthStencilFormat, shaderList, &pipelineState);
 	
 	for (auto& textureIndex : textureIndices)
-		firstTextureDescriptorBases.push_back(resourceManager.GetTexture(textureIndex).descriptorAllocation.gpuDescriptorBase);
+		firstTextureDescriptorBases.push_back(resourceManager.GetTexture(textureIndex).shaderResourceDescriptorAllocation.gpuDescriptorBase);
+
+	for (auto& renderTargetIndex : renderTargetIndices)
+		firstTextureDescriptorBases.push_back(resourceManager.GetRenderTarget(renderTargetIndex).shaderResourceDescriptorAllocation.gpuDescriptorBase);
 
 	isComposed = true;
 }
@@ -196,8 +199,8 @@ void Graphics::Material::CreateInputElementDescs(VertexFormat format, std::vecto
 		inputElementDescs.push_back({ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
 }
 
-void Graphics::Material::CreateTextureRootDescriptorTables(const std::vector<size_t>& textureRegisterIndices, std::vector<D3D12_DESCRIPTOR_RANGE>& descriptorRanges,
-	std::vector<D3D12_ROOT_DESCRIPTOR_TABLE>& rootDescriptorTables)
+void Graphics::Material::CreateTextureRootDescriptorTables(const std::vector<size_t>& textureRegisterIndices, const std::vector<size_t>& renderTextureRegisterIndices,
+	std::vector<D3D12_DESCRIPTOR_RANGE>& descriptorRanges, std::vector<D3D12_ROOT_DESCRIPTOR_TABLE>& rootDescriptorTables)
 {
 	descriptorRanges.clear();
 
@@ -206,6 +209,18 @@ void Graphics::Material::CreateTextureRootDescriptorTables(const std::vector<siz
 		D3D12_DESCRIPTOR_RANGE descRange{};
 		descRange.NumDescriptors = 1;
 		descRange.BaseShaderRegister = textureRegisterId;
+		descRange.OffsetInDescriptorsFromTableStart = 0;// D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+		descRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		descRange.RegisterSpace = 0;
+
+		descriptorRanges.push_back(descRange);
+	}
+
+	for (auto& renderTextureRegisterId : renderTextureRegisterIndices)
+	{
+		D3D12_DESCRIPTOR_RANGE descRange{};
+		descRange.NumDescriptors = 1;
+		descRange.BaseShaderRegister = renderTextureRegisterId;
 		descRange.OffsetInDescriptorsFromTableStart = 0;// D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 		descRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 		descRange.RegisterSpace = 0;

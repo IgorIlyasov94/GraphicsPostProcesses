@@ -102,7 +102,7 @@ Graphics::ConstantBufferId Graphics::ResourceManager::CreateConstantBuffer(const
 
 	ConstantBuffer constantBuffer{};
 	constantBuffer.uploadBufferAllocation = constantBufferAllocation;
-	constantBuffer.descriptorAllocation = constantBufferDescriptorAllocation;
+	constantBuffer.bufferDescriptorAllocation = constantBufferDescriptorAllocation;
 	constantBuffer.constantBufferViewDesc = constantBufferViewDesc;
 
 	constantBufferPool.push_back(constantBuffer);
@@ -189,7 +189,7 @@ Graphics::TextureId Graphics::ResourceManager::CreateTexture(const std::vector<u
 	texture.shaderResourceViewDesc = shaderResourceViewDesc;
 	texture.info = textureInfo;
 	texture.textureAllocation = textureAllocation;
-	texture.descriptorAllocation = shaderResourceDescriptorAllocation;
+	texture.shaderResourceDescriptorAllocation = shaderResourceDescriptorAllocation;
 
 	texturePool.push_back(texture);
 
@@ -205,7 +205,7 @@ Graphics::SamplerId Graphics::ResourceManager::CreateSampler(const D3D12_SAMPLER
 
 	Sampler sampler{};
 	sampler.samplerDesc = samplerDesc;
-	sampler.descriptorAllocation = samplerDescriptorAllocation;
+	sampler.samplerDescriptorAllocation = samplerDescriptorAllocation;
 
 	samplerPool.push_back(sampler);
 
@@ -225,7 +225,6 @@ Graphics::RenderTargetId Graphics::ResourceManager::CreateRenderTarget(uint64_t 
 
 	D3D12_CLEAR_VALUE clearValue{};
 	clearValue.Format = format;
-	clearValue.Color[3] = 1.0f;
 
 	TextureAllocation textureAllocation{};
 	textureAllocator.Allocate(device, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, &clearValue, textureInfo, textureAllocation);
@@ -243,7 +242,7 @@ Graphics::RenderTargetId Graphics::ResourceManager::CreateRenderTarget(uint64_t 
 	D3D12_RENDER_TARGET_VIEW_DESC renderTargetViewDesc{};
 	renderTargetViewDesc.Format = format;
 	renderTargetViewDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-
+	
 	DescriptorAllocation renderTargetDescriptorAllocation{};
 	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, renderTargetDescriptorAllocation);
 
@@ -256,7 +255,8 @@ Graphics::RenderTargetId Graphics::ResourceManager::CreateRenderTarget(uint64_t 
 	renderTarget.renderTargetViewDesc = renderTargetViewDesc;
 	renderTarget.info = textureInfo;
 	renderTarget.textureAllocation = textureAllocation;
-	renderTarget.descriptorAllocation = renderTargetDescriptorAllocation;
+	renderTarget.renderTargetDescriptorAllocation = renderTargetDescriptorAllocation;
+	renderTarget.shaderResourceDescriptorAllocation = shaderResourceDescriptorAllocation;
 
 	renderTargetPool.push_back(renderTarget);
 
@@ -307,7 +307,8 @@ Graphics::DepthStencilId Graphics::ResourceManager::CreateDepthStencil(uint64_t 
 	depthStencil.depthStencilViewDesc = depthStencilViewDesc;
 	depthStencil.info = textureInfo;
 	depthStencil.textureAllocation = textureAllocation;
-	depthStencil.descriptorAllocation = depthStencilDescriptorAllocation;
+	depthStencil.depthStencilDescriptorAllocation = depthStencilDescriptorAllocation;
+	depthStencil.shaderResourceDescriptorAllocation = shaderResourceDescriptorAllocation;
 
 	depthStencilPool.push_back(depthStencil);
 
@@ -387,12 +388,20 @@ D3D12_INDEX_BUFFER_VIEW Graphics::ResourceManager::GetIndexBufferView(const Inde
 
 const D3D12_CPU_DESCRIPTOR_HANDLE& Graphics::ResourceManager::GetRenderTargetDescriptorBase(const RenderTargetId& resourceId) const
 {
-	return renderTargetPool[resourceId.value].descriptorAllocation.descriptorBase;
+	return renderTargetPool[resourceId.value].renderTargetDescriptorAllocation.descriptorBase;
 }
 
 const D3D12_CPU_DESCRIPTOR_HANDLE& Graphics::ResourceManager::GetDepthStencilDescriptorBase(const DepthStencilId& resourceId) const
 {
-	return depthStencilPool[resourceId.value].descriptorAllocation.descriptorBase;
+	return depthStencilPool[resourceId.value].depthStencilDescriptorAllocation.descriptorBase;
+}
+
+ID3D12DescriptorHeap* Graphics::ResourceManager::GetShaderResourceViewDescriptorHeap()
+{
+	if (texturePool.empty())
+		return nullptr;
+
+	return texturePool.front().shaderResourceDescriptorAllocation.descriptorHeap;
 }
 
 void Graphics::ResourceManager::UpdateConstantBuffer(const ConstantBufferId& resourceId, const void* data, size_t dataSize)

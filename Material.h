@@ -43,8 +43,8 @@ namespace Graphics
 
 	private:
 		void CreateInputElementDescs(VertexFormat format, std::vector<D3D12_INPUT_ELEMENT_DESC>& inputElementDescs) const noexcept;
-		void CreateTextureRootDescriptorTables(const std::vector<size_t>& textureRegisterIndices, std::vector<D3D12_DESCRIPTOR_RANGE>& descriptorRanges,
-			std::vector<D3D12_ROOT_DESCRIPTOR_TABLE>& rootDescriptorTable);
+		void CreateTextureRootDescriptorTables(const std::vector<size_t>& textureRegisterIndices, const std::vector<size_t>& renderTextureRegisterIndices,
+			std::vector<D3D12_DESCRIPTOR_RANGE>& descriptorRanges, std::vector<D3D12_ROOT_DESCRIPTOR_TABLE>& rootDescriptorTable);
 
 		void CreateRootParameters(const ShaderList& shaderList, const std::vector<size_t>& constantBufferRegisterIndices,
 			const std::vector<D3D12_ROOT_DESCRIPTOR_TABLE>& rootDescriptorTables, D3D12_ROOT_SIGNATURE_FLAGS& rootSignatureFlags, std::vector<D3D12_ROOT_PARAMETER>& rootParameters);
@@ -60,6 +60,7 @@ namespace Graphics
 
 		std::vector<size_t> constantBufferRegisterIndices;
 		std::vector<size_t> textureRegisterIndices;
+		std::vector<size_t> renderTextureRegisterIndices;
 
 		std::vector<ConstantBufferId> constantBufferIndices;
 		std::vector<TextureId> textureIndices;

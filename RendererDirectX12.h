@@ -37,12 +37,12 @@ namespace Graphics
 		ComPtr<ID3D12DescriptorHeap> swapChainRtvHeap;
 		ComPtr<ID3D12CommandAllocator> commandAllocator[SWAP_CHAIN_BUFFER_COUNT];
 		ComPtr<ID3D12GraphicsCommandList> commandList;
-		ComPtr<ID3D12PipelineState> pipelineState;
 		ComPtr<ID3D12Fence> fence;
 
 		ComPtr<IDXGIFactory4> factory;
 		ComPtr<IDXGISwapChain4> swapChain;
 		
+		RenderTargetId sceneRenderTargetId;
 		DepthStencilId sceneDepthStencilId;
 
 		HANDLE fenceEvent;

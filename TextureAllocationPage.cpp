@@ -31,6 +31,11 @@ Graphics::TextureAllocationPage::TextureAllocationPage(ID3D12Device* device, D3D
 		resourceState = D3D12_RESOURCE_STATE_COMMON;
 	}
 
+	if (resourceFlags == D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET)
+		resourceState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	else if (resourceFlags == D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL)
+		resourceState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+
 	ThrowIfFailed(device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &resourceDesc, resourceState, clearValue,
 		IID_PPV_ARGS(&pageResource)), "TextureAllocationPage::TextureAllocationPage: Resource creating error");
 
