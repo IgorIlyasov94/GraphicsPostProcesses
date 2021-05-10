@@ -12,3 +12,6 @@
 /Resources/Shaders/MeshStandard.psh.h
 /Resources/Shaders/HDRToneMapping.psh.h
 /Resources/Meshes
+/Resources/Shaders/HDRBrightPass.psh.h
+/Resources/Shaders/GaussianBlurY.psh.h
+/Resources/Shaders/GaussianBlurX.psh.h

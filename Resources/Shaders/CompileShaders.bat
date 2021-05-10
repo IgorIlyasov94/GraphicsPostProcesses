@@ -23,7 +23,13 @@ ECHO Start compiling shaders...
 ECHO ON
 %dxcCmd% /Zi /E"main" /Vn"quadVertexShader" /Tvs_6_0 /Fh"ScreenQuad.vsh.h" /nologo ScreenQuad.vsh
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
+%dxcCmd% /Zi /E"main" /Vn"gaussianBlurXPixelShader" /Tps_6_0 /Fh"GaussianBlurX.psh.h" /nologo GaussianBlurX.psh
+@IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
+%dxcCmd% /Zi /E"main" /Vn"gaussianBlurYPixelShader" /Tps_6_0 /Fh"GaussianBlurY.psh.h" /nologo GaussianBlurY.psh
+@IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
 %dxcCmd% /Zi /E"main" /Vn"toneMappingPixelShader" /Tps_6_0 /Fh"HDRToneMapping.psh.h" /nologo HDRToneMapping.psh
+@IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
+%dxcCmd% /Zi /E"main" /Vn"brightPassPixelShader" /Tps_6_0 /Fh"HDRBrightPass.psh.h" /nologo HDRBrightPass.psh
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
 %dxcCmd% /Zi /E"main" /Vn"meshStandardVertexShader" /Tvs_6_0 /Fh"MeshStandard.vsh.h" /nologo MeshStandard.vsh
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
