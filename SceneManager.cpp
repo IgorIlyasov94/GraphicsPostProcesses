@@ -41,7 +41,7 @@ void Graphics::SceneManager::InitializeTestScene(ID3D12Device* device)
 	cubeMaterial->SetDepthTest(true);
 	cubeMaterial->SetDepthStencilFormat(32);
 	cubeMaterial->SetCullMode(D3D12_CULL_MODE_NONE);
-	cubeMaterial->SetRenderTargetFormat(0, DXGI_FORMAT_R8G8B8A8_UNORM);
+	cubeMaterial->SetRenderTargetFormat(0, DXGI_FORMAT_R16G16B16A16_FLOAT);
 
 	cubeConstBuffer.wvp = camera->GetViewProjection();
 

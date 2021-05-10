@@ -39,7 +39,7 @@ Output main(Input input)
 		int shift = texelId - KERNEL_SIZE / 2;
 		float weight = CalculateWeight(KERNEL_SIZE, texelId, 3.0f);
 		
-		color += texScene.Load(int3((int2) input.position.xy + int2(0, shift * 4), 0)).xyz * weight;
+		color += texScene.Load(int3((int2) input.position.xy + int2(0, shift), 0)).xyz * weight;
 	}
 	
 	output.color = float4(saturate(color), 1.0f);

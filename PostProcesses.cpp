@@ -69,6 +69,14 @@ void Graphics::PostProcesses::Initialize(ID3D12Device* device, ID3D12GraphicsCom
 		intermediate8bHalfTargetDescriptor[renderTargetId] = resourceManager.GetRenderTargetDescriptorBase(intermediate8bHalfTargetId[renderTargetId]);
 	}
 
+	for (uint32_t renderTargetId = 0; renderTargetId < INTERMEDIATE_8B_QUART_RENDER_TARGET_COUNT; renderTargetId++)
+	{
+		intermediate8bQuartTargetId[renderTargetId] = resourceManager.CreateRenderTarget(GraphicsSettings::GetResolutionX() / 4, GraphicsSettings::GetResolutionY() / 4,
+			DXGI_FORMAT_R8G8B8A8_UNORM);
+
+		intermediate8bQuartTargetDescriptor[renderTargetId] = resourceManager.GetRenderTargetDescriptorBase(intermediate8bQuartTargetId[renderTargetId]);
+	}
+
 	for (uint32_t renderTargetId = 0; renderTargetId < INTERMEDIATE_16B_RENDER_TARGET_COUNT; renderTargetId++)
 	{
 		intermediate16bTargetId[renderTargetId] = resourceManager.CreateRenderTarget(GraphicsSettings::GetResolutionX(), GraphicsSettings::GetResolutionY(),
@@ -124,7 +132,7 @@ void Graphics::PostProcesses::Compose(ID3D12Device* device, ID3D12GraphicsComman
 		{
 			gaussianBlurXMaterial = std::make_shared<Material>();
 			gaussianBlurXMaterial->SetVertexFormat(VertexFormat::POSITION_TEXCOORD);
-			gaussianBlurXMaterial->AssignRenderTexture(commandList, 0, intermediate8bHalfTargetId[0]);
+			gaussianBlurXMaterial->AssignRenderTexture(commandList, 0, intermediate8bQuartTargetId[0]);
 			gaussianBlurXMaterial->SetVertexShader({ quadVertexShader, sizeof(quadVertexShader) });
 			gaussianBlurXMaterial->SetPixelShader({ gaussianBlurXPixelShader, sizeof(gaussianBlurXPixelShader) });
 			gaussianBlurXMaterial->SetRenderTargetFormat(0, DXGI_FORMAT_R8G8B8A8_UNORM);
@@ -139,7 +147,7 @@ void Graphics::PostProcesses::Compose(ID3D12Device* device, ID3D12GraphicsComman
 		{
 			gaussianBlurYMaterial = std::make_shared<Material>();
 			gaussianBlurYMaterial->SetVertexFormat(VertexFormat::POSITION_TEXCOORD);
-			gaussianBlurYMaterial->AssignRenderTexture(commandList, 0, intermediate8bHalfTargetId[1]);
+			gaussianBlurYMaterial->AssignRenderTexture(commandList, 0, intermediate8bQuartTargetId[1]);
 			gaussianBlurYMaterial->SetVertexShader({ quadVertexShader, sizeof(quadVertexShader) });
 			gaussianBlurYMaterial->SetPixelShader({ gaussianBlurYPixelShader, sizeof(gaussianBlurYPixelShader) });
 			gaussianBlurYMaterial->SetRenderTargetFormat(0, DXGI_FORMAT_R8G8B8A8_UNORM);
@@ -155,11 +163,13 @@ void Graphics::PostProcesses::Compose(ID3D12Device* device, ID3D12GraphicsComman
 			toneMappingMaterial = std::make_shared<Material>();
 			toneMappingMaterial->SetVertexFormat(VertexFormat::POSITION_TEXCOORD);
 			toneMappingMaterial->AssignRenderTexture(commandList, 0, hdrInputRenderTargetId);
-			toneMappingMaterial->AssignRenderTexture(commandList, 1, intermediate8bHalfTargetId[0]);
+			toneMappingMaterial->AssignRenderTexture(commandList, 1, intermediate8bQuartTargetId[0]);
 			toneMappingMaterial->SetVertexShader({ quadVertexShader, sizeof(quadVertexShader) });
 			toneMappingMaterial->SetPixelShader({ toneMappingPixelShader, sizeof(toneMappingPixelShader) });
 			toneMappingMaterial->SetRenderTargetFormat(0, DXGI_FORMAT_R8G8B8A8_UNORM);
 			toneMappingMaterial->AssignConstantBuffer(0, hdrConstantBufferId);
+			toneMappingMaterial->SetSampler(0, D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
+				D3D12_TEXTURE_ADDRESS_MODE_CLAMP, 1);
 
 			toneMappingMaterial->Compose(device);
 
@@ -202,29 +212,29 @@ void Graphics::PostProcesses::ProcessHDR(ID3D12GraphicsCommandList* commandList,
 	commandList->RSSetScissorRects(1, &sceneScissorRectHalf);
 
 	{
-		commandList->OMSetRenderTargets(1, &intermediate8bHalfTargetDescriptor[0], false, nullptr);
+		commandList->OMSetRenderTargets(1, &intermediate8bQuartTargetDescriptor[0], false, nullptr);
 		brightPass->Draw(commandList);
 	}
 
 	{
-		SetResourceBarrier(commandList, resourceManager.GetRenderTarget(intermediate8bHalfTargetId[0]).textureAllocation.textureResource, D3D12_RESOURCE_STATE_RENDER_TARGET,
+		SetResourceBarrier(commandList, resourceManager.GetRenderTarget(intermediate8bQuartTargetId[0]).textureAllocation.textureResource, D3D12_RESOURCE_STATE_RENDER_TARGET,
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-		commandList->OMSetRenderTargets(1, &intermediate8bHalfTargetDescriptor[1], false, nullptr);
+		commandList->OMSetRenderTargets(1, &intermediate8bQuartTargetDescriptor[1], false, nullptr);
 		gaussianBlurX->Draw(commandList);
 
-		SetResourceBarrier(commandList, resourceManager.GetRenderTarget(intermediate8bHalfTargetId[0]).textureAllocation.textureResource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		SetResourceBarrier(commandList, resourceManager.GetRenderTarget(intermediate8bQuartTargetId[0]).textureAllocation.textureResource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 			D3D12_RESOURCE_STATE_RENDER_TARGET);
 	}
 
 	{
-		SetResourceBarrier(commandList, resourceManager.GetRenderTarget(intermediate8bHalfTargetId[1]).textureAllocation.textureResource, D3D12_RESOURCE_STATE_RENDER_TARGET,
+		SetResourceBarrier(commandList, resourceManager.GetRenderTarget(intermediate8bQuartTargetId[1]).textureAllocation.textureResource, D3D12_RESOURCE_STATE_RENDER_TARGET,
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-		commandList->OMSetRenderTargets(1, &intermediate8bHalfTargetDescriptor[0], false, nullptr);
+		commandList->OMSetRenderTargets(1, &intermediate8bQuartTargetDescriptor[0], false, nullptr);
 		gaussianBlurY->Draw(commandList);
 
-		SetResourceBarrier(commandList, resourceManager.GetRenderTarget(intermediate8bHalfTargetId[1]).textureAllocation.textureResource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		SetResourceBarrier(commandList, resourceManager.GetRenderTarget(intermediate8bQuartTargetId[1]).textureAllocation.textureResource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 			D3D12_RESOURCE_STATE_RENDER_TARGET);
 	}
 
@@ -232,13 +242,13 @@ void Graphics::PostProcesses::ProcessHDR(ID3D12GraphicsCommandList* commandList,
 	commandList->RSSetScissorRects(1, &sceneScissorRect);
 
 	{
-		SetResourceBarrier(commandList, resourceManager.GetRenderTarget(intermediate8bHalfTargetId[0]).textureAllocation.textureResource, D3D12_RESOURCE_STATE_RENDER_TARGET,
+		SetResourceBarrier(commandList, resourceManager.GetRenderTarget(intermediate8bQuartTargetId[0]).textureAllocation.textureResource, D3D12_RESOURCE_STATE_RENDER_TARGET,
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 		commandList->OMSetRenderTargets(1, destRenderTargetDescriptor, false, nullptr);
 		toneMapping->Draw(commandList);
 
-		SetResourceBarrier(commandList, resourceManager.GetRenderTarget(intermediate8bHalfTargetId[0]).textureAllocation.textureResource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		SetResourceBarrier(commandList, resourceManager.GetRenderTarget(intermediate8bQuartTargetId[0]).textureAllocation.textureResource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 			D3D12_RESOURCE_STATE_RENDER_TARGET);
 	}
 }
