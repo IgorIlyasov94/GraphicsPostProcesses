@@ -1,6 +1,7 @@
 #include "CommonHandler.h"
 
 Graphics::CommonHandler::CommonHandler()
+	: inFocus(true)
 {
 
 }
@@ -48,4 +49,24 @@ void Graphics::CommonHandler::OnKeyDown(uint8_t key)
 void Graphics::CommonHandler::OnKeyUp(uint8_t key)
 {
 
+}
+
+void Graphics::CommonHandler::OnSetFocus()
+{
+	if (!inFocus)
+	{
+		renderer.OnSetFocus();
+
+		inFocus = true;
+	}
+}
+
+void Graphics::CommonHandler::OnLostFocus()
+{
+	if (inFocus)
+	{
+		renderer.OnLostFocus();
+
+		inFocus = false;
+	}
 }

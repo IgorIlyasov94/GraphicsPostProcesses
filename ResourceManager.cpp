@@ -376,6 +376,24 @@ ID3D12Resource* Graphics::ResourceManager::GetSwapChainBuffer(uint32_t bufferId)
 	return swapChainBuffers[bufferId].Get();
 }
 
+void Graphics::ResourceManager::ResetSwapChainBuffers(IDXGISwapChain4* swapChain)
+{
+	for (auto& swapChainBuffer : swapChainBuffers)
+		swapChainBuffer.Reset();
+
+	DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
+	swapChain->GetDesc1(&swapChainDesc);
+
+	ThrowIfFailed(swapChain->ResizeBuffers(swapChainBuffers.size(), swapChainDesc.Width, swapChainDesc.Height, swapChainDesc.Format, swapChainDesc.Flags),
+		"ResourceManager::ResetSwapChainBuffers: Back buffers resizing error!");
+
+	for (uint32_t swapChainBufferId = 0; swapChainBufferId < swapChainBuffers.size(); swapChainBufferId++)
+	{
+		swapChain->GetBuffer(swapChainBufferId, IID_PPV_ARGS(&swapChainBuffers[swapChainBufferId]));
+		device->CreateRenderTargetView(swapChainBuffers[swapChainBufferId].Get(), nullptr, swapChainDescriptorBases[swapChainBufferId]);
+	}
+}
+
 D3D12_VERTEX_BUFFER_VIEW Graphics::ResourceManager::GetVertexBufferView(const VertexBufferId& resourceId) const
 {
 	return vertexBufferPool[resourceId.value].vertexBufferView;

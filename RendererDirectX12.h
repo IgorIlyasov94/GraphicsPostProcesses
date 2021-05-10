@@ -12,6 +12,9 @@ namespace Graphics
 
 		void Initialize(HWND& windowHandler);
 		void GpuRelease();
+		void OnSetFocus();
+		void OnLostFocus();
+		
 		void FrameRender();
 
 	private:
@@ -25,6 +28,7 @@ namespace Graphics
 
 		void PrepareNextFrame();
 		void WaitForGpu();
+		void SwitchFullscreenMode(bool toggleFullscreen);
 
 #if defined(_DEBUG)
 		void EnableDebugLayer();

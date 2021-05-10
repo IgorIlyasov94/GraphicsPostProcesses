@@ -17,6 +17,9 @@ namespace Graphics
 		void OnKeyDown(uint8_t key);
 		void OnKeyUp(uint8_t key);
 
+		void OnSetFocus();
+		void OnLostFocus();
+
 	private:
 		CommonHandler();
 		~CommonHandler() {}
@@ -25,6 +28,8 @@ namespace Graphics
 		CommonHandler(CommonHandler&&) = delete;
 		CommonHandler& operator=(const CommonHandler&) = delete;
 		CommonHandler& operator=(CommonHandler&&) = delete;
+
+		bool inFocus;
 
 		RendererDirectX12& renderer = RendererDirectX12::GetInstance();
 	};

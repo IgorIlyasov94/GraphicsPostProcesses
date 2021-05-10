@@ -115,6 +115,18 @@ LRESULT Graphics::GraphicsWinApplication::WindowProc(HWND windowHandler, UINT me
 
 			return 0;
 		}
+		case WM_SETFOCUS:
+		{
+			transmittedCommonHandler->OnSetFocus();
+
+			return 0;
+		}
+		case WM_KILLFOCUS:
+		{
+			transmittedCommonHandler->OnLostFocus();
+
+			return 0;
+		}
 		case WM_CLOSE:
 		{
 			PostQuitMessage(0);

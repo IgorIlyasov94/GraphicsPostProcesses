@@ -44,6 +44,9 @@ void Graphics::RendererDirectX12::Initialize(HWND& windowHandler)
 	
 	ThrowIfFailed(swapChain1.As(&swapChain), "RendererDirectX12::Initialize: Swap Chain conversion error!");
 
+	if (GraphicsSettings::IsFullscreen())
+		SwitchFullscreenMode(true);
+
 	bufferIndex = swapChain->GetCurrentBackBufferIndex();
 
 	for (auto swapChainBufferId = 0; swapChainBufferId < SWAP_CHAIN_BUFFER_COUNT; swapChainBufferId++)
@@ -64,7 +67,7 @@ void Graphics::RendererDirectX12::Initialize(HWND& windowHandler)
 	resourceManager.Initialize(device.Get(), commandList.Get());
 	resourceManager.CreateSwapChainBuffers(swapChain.Get(), SWAP_CHAIN_BUFFER_COUNT);
 
-	sceneRenderTargetId = resourceManager.CreateRenderTarget(GraphicsSettings::GetResolutionX(), GraphicsSettings::GetResolutionY(), DXGI_FORMAT_R8G8B8A8_UNORM);
+	sceneRenderTargetId = resourceManager.CreateRenderTarget(GraphicsSettings::GetResolutionX(), GraphicsSettings::GetResolutionY(), DXGI_FORMAT_R16G16B16A16_FLOAT);
 	sceneDepthStencilId = resourceManager.CreateDepthStencil(GraphicsSettings::GetResolutionX(), GraphicsSettings::GetResolutionY(), 32);
 
 	//Test
@@ -72,7 +75,7 @@ void Graphics::RendererDirectX12::Initialize(HWND& windowHandler)
 
 	postProcesses.Initialize(device.Get(), commandList.Get(), GraphicsSettings::GetResolutionX(), GraphicsSettings::GetResolutionY(), sceneViewport, sceneScissorRect,
 		sceneRenderTargetId);
-	postProcesses.EnableHDR(float3(0.01f, 0.01f, 0.01f), 0.6f, 0.8f, 5.0f, 10.0f);
+	postProcesses.EnableHDR(float3(1.4f, 0.6f, 0.9f), 0.6f, 0.8f, 5.0f, 10.0f);
 
 	postProcesses.Compose(device.Get(), commandList.Get());
 
@@ -91,7 +94,37 @@ void Graphics::RendererDirectX12::GpuRelease()
 {
 	WaitForGpu();
 
+	swapChain->SetFullscreenState(false, nullptr);
+
 	CloseHandle(fenceEvent);
+}
+
+void Graphics::RendererDirectX12::OnSetFocus()
+{
+	WaitForGpu();
+
+	swapChain->SetFullscreenState(true, nullptr);
+
+	for (auto& fenceValue : fenceValues)
+		fenceValue = fenceValues[bufferIndex];
+
+	resourceManager.ResetSwapChainBuffers(swapChain.Get());
+
+	bufferIndex = swapChain->GetCurrentBackBufferIndex();
+}
+
+void Graphics::RendererDirectX12::OnLostFocus()
+{
+	WaitForGpu();
+
+	swapChain->SetFullscreenState(false, nullptr);
+
+	for (auto& fenceValue : fenceValues)
+		fenceValue = fenceValues[bufferIndex];
+
+	resourceManager.ResetSwapChainBuffers(swapChain.Get());
+
+	bufferIndex = swapChain->GetCurrentBackBufferIndex();
 }
 
 void Graphics::RendererDirectX12::FrameRender()
@@ -161,6 +194,17 @@ void Graphics::RendererDirectX12::WaitForGpu()
 	WaitForSingleObjectEx(fenceEvent, INFINITE, false);
 
 	fenceValues[bufferIndex]++;
+}
+
+void Graphics::RendererDirectX12::SwitchFullscreenMode(bool toggleFullscreen)
+{
+	ThrowIfFailed(swapChain->SetFullscreenState(toggleFullscreen, nullptr), "RendererDirectX12::SwitchFullscreenMode: Fullscreen transition failed!");
+
+	DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
+	swapChain->GetDesc1(&swapChainDesc);
+
+	ThrowIfFailed(swapChain->ResizeBuffers(SWAP_CHAIN_BUFFER_COUNT, swapChainDesc.Width, swapChainDesc.Height, swapChainDesc.Format, swapChainDesc.Flags),
+		"RendererDirectX12::SwitchFullscreenMode: Back buffers resizing error!");
 }
 
 #if defined(_DEBUG)

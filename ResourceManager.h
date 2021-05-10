@@ -122,6 +122,7 @@ namespace Graphics
 
 		const D3D12_CPU_DESCRIPTOR_HANDLE& GetSwapChainDescriptorBase(uint32_t bufferId) const;
 		ID3D12Resource* GetSwapChainBuffer(uint32_t bufferId) const;
+		void ResetSwapChainBuffers(IDXGISwapChain4* swapChain);
 
 		D3D12_VERTEX_BUFFER_VIEW GetVertexBufferView(const VertexBufferId& resourceId) const;
 		D3D12_INDEX_BUFFER_VIEW GetIndexBufferView(const IndexBufferId& resourceId) const;
