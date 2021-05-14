@@ -2,9 +2,9 @@
 
 void Graphics::GraphicsSettings::SetStandard()
 {
-	resolutionX = 1320;
-	resolutionY = 990;
-	toggleFullscreen = true;
+	resolutionX = 1920;
+	resolutionY = 1080;
+	toggleFullscreen = false;
 }
 
 const uint32_t& Graphics::GraphicsSettings::GetResolutionX()
@@ -32,6 +32,6 @@ Graphics::GraphicsSettings::~GraphicsSettings()
 
 }
 
-uint32_t Graphics::GraphicsSettings::resolutionX = 1320;
-uint32_t Graphics::GraphicsSettings::resolutionY = 990;
-bool Graphics::GraphicsSettings::toggleFullscreen = false;
+uint32_t Graphics::GraphicsSettings::resolutionX = 1920;
+uint32_t Graphics::GraphicsSettings::resolutionY = 1080;
+bool Graphics::GraphicsSettings::toggleFullscreen = true;

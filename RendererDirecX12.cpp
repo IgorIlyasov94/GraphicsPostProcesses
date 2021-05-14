@@ -67,15 +67,17 @@ void Graphics::RendererDirectX12::Initialize(HWND& windowHandler)
 	resourceManager.Initialize(device.Get(), commandList.Get());
 	resourceManager.CreateSwapChainBuffers(swapChain.Get(), SWAP_CHAIN_BUFFER_COUNT);
 
-	sceneRenderTargetId = resourceManager.CreateRenderTarget(GraphicsSettings::GetResolutionX(), GraphicsSettings::GetResolutionY(), DXGI_FORMAT_R16G16B16A16_FLOAT);
+	sceneRenderTargetId[0] = resourceManager.CreateRenderTarget(GraphicsSettings::GetResolutionX(), GraphicsSettings::GetResolutionY(), DXGI_FORMAT_R16G16B16A16_FLOAT);
+	sceneRenderTargetId[1] = resourceManager.CreateRenderTarget(GraphicsSettings::GetResolutionX(), GraphicsSettings::GetResolutionY(), DXGI_FORMAT_R8G8B8A8_SNORM);
 	sceneDepthStencilId = resourceManager.CreateDepthStencil(GraphicsSettings::GetResolutionX(), GraphicsSettings::GetResolutionY(), 32);
 
 	//Test
 	sceneManager.InitializeTestScene(device.Get());
 
 	postProcesses.Initialize(device.Get(), commandList.Get(), GraphicsSettings::GetResolutionX(), GraphicsSettings::GetResolutionY(), sceneViewport, sceneScissorRect,
-		sceneRenderTargetId);
-	postProcesses.EnableHDR(float3(1.4f, 0.6f, 0.9f), 0.6f, 0.8f, 5.0f, 10.0f);
+		sceneRenderTargetId[0], sceneRenderTargetId[1], sceneDepthStencilId);
+	postProcesses.EnableAA();
+	//postProcesses.EnableHDR(float3(1.4f, 0.6f, 0.9f), 0.6f, 0.8f, 5.0f, 10.0f);
 
 	postProcesses.Compose(device.Get(), commandList.Get());
 
@@ -140,22 +142,22 @@ void Graphics::RendererDirectX12::FrameRender()
 	ID3D12DescriptorHeap* descHeaps[] = { resourceManager.GetShaderResourceViewDescriptorHeap() };
 	commandList->SetDescriptorHeaps(_countof(descHeaps), descHeaps);
 
-	commandList->OMSetRenderTargets(1, &resourceManager.GetRenderTargetDescriptorBase(sceneRenderTargetId), true,
-		&resourceManager.GetDepthStencilDescriptorBase(sceneDepthStencilId));
+	D3D12_CPU_DESCRIPTOR_HANDLE multiplyRenderTarget[] =
+	{
+		resourceManager.GetRenderTargetDescriptorBase(sceneRenderTargetId[0]),
+		resourceManager.GetRenderTargetDescriptorBase(sceneRenderTargetId[1])
+	};
+
+	commandList->OMSetRenderTargets(MULTIPLY_RENDER_TARGET_COUNT, multiplyRenderTarget, true, &resourceManager.GetDepthStencilDescriptorBase(sceneDepthStencilId));
 
 	const float clearColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-	commandList->ClearRenderTargetView(resourceManager.GetRenderTargetDescriptorBase(sceneRenderTargetId), clearColor, 0, nullptr);
+	commandList->ClearRenderTargetView(resourceManager.GetRenderTargetDescriptorBase(sceneRenderTargetId[0]), clearColor, 0, nullptr);
+	commandList->ClearRenderTargetView(resourceManager.GetRenderTargetDescriptorBase(sceneRenderTargetId[1]), clearColor, 0, nullptr);
 	commandList->ClearDepthStencilView(resourceManager.GetDepthStencilDescriptorBase(sceneDepthStencilId), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 	sceneManager.DrawCurrentScene(commandList.Get());
 
-	SetResourceBarrier(commandList.Get(), resourceManager.GetRenderTarget(sceneRenderTargetId).textureAllocation.textureResource, D3D12_RESOURCE_STATE_RENDER_TARGET,
-		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-
 	postProcesses.PresentProcessChain(commandList.Get(), &resourceManager.GetSwapChainDescriptorBase(bufferIndex));
-
-	SetResourceBarrier(commandList.Get(), resourceManager.GetRenderTarget(sceneRenderTargetId).textureAllocation.textureResource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-		D3D12_RESOURCE_STATE_RENDER_TARGET);
 
 	SetResourceBarrier(commandList.Get(), resourceManager.GetSwapChainBuffer(bufferIndex), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 

@@ -23,6 +23,8 @@ ECHO Start compiling shaders...
 ECHO ON
 %dxcCmd% /Zi /E"main" /Vn"quadVertexShader" /Tvs_6_0 /Fh"ScreenQuad.vsh.h" /nologo ScreenQuad.vsh
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
+%dxcCmd% /Zi /E"main" /Vn"antiAliasingPixelShader" /Tps_6_0 /Fh"AntiAliasing.psh.h" /nologo AntiAliasing.psh
+@IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
 %dxcCmd% /Zi /E"main" /Vn"gaussianBlurXPixelShader" /Tps_6_0 /Fh"GaussianBlurX.psh.h" /nologo GaussianBlurX.psh
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
 %dxcCmd% /Zi /E"main" /Vn"gaussianBlurYPixelShader" /Tps_6_0 /Fh"GaussianBlurY.psh.h" /nologo GaussianBlurY.psh

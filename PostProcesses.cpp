@@ -1,12 +1,13 @@
 #include "PostProcesses.h"
 #include "Resources/Shaders/ScreenQuad.vsh.h"
+#include "Resources/Shaders/AntiAliasing.psh.h"
 #include "Resources/Shaders/GaussianBlurX.psh.h"
 #include "Resources/Shaders/GaussianBlurY.psh.h"
 #include "Resources/Shaders/HDRBrightPass.psh.h"
 #include "Resources/Shaders/HDRToneMapping.psh.h"
 
 Graphics::PostProcesses::PostProcesses()
-	: sceneViewport{}, isHDREnabled{}, isComposed{}, hdrConstantBuffer{}
+	: sceneViewport{}, isAAEnabled{}, isHDREnabled{}, isComposed{}, aaConstantBuffer{}, hdrConstantBuffer{}
 {
 
 }
@@ -19,7 +20,8 @@ Graphics::PostProcesses& Graphics::PostProcesses::GetInstance()
 }
 
 void Graphics::PostProcesses::Initialize(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, const int32_t& resolutionX, const int32_t& resolutionY,
-	const D3D12_VIEWPORT& _sceneViewport, const D3D12_RECT& _sceneScissorRect, const RenderTargetId& _sceneRenderTargetId)
+	const D3D12_VIEWPORT& _sceneViewport, const D3D12_RECT& _sceneScissorRect, const RenderTargetId& _sceneRenderTargetId, const RenderTargetId& _normalRenderTargetId,
+	const DepthStencilId& _sceneDepthStencilId)
 {
 	sceneViewport = _sceneViewport;
 	sceneViewportHalf = _sceneViewport;
@@ -32,7 +34,11 @@ void Graphics::PostProcesses::Initialize(ID3D12Device* device, ID3D12GraphicsCom
 	sceneScissorRectHalf.bottom /= 2;
 
 	sceneRenderTargetId = _sceneRenderTargetId;
+	normalRenderTargetId = _normalRenderTargetId;
+	sceneDepthStencilId = _sceneDepthStencilId;
 	sceneRenderTargetDescriptor = resourceManager.GetRenderTargetDescriptorBase(sceneRenderTargetId);
+	normalRenderTargetDescriptor = resourceManager.GetRenderTargetDescriptorBase(normalRenderTargetId);
+	sceneDepthStencilDescriptor = resourceManager.GetDepthStencilDescriptorBase(sceneDepthStencilId);
 
 	noiseTextureId = resourceManager.CreateTexture("Resources\\Textures\\Noise.dds");
 	diffuseTextureId = resourceManager.CreateTexture("Resources\\Textures\\Diffuse0.dds");
@@ -94,6 +100,13 @@ void Graphics::PostProcesses::Initialize(ID3D12Device* device, ID3D12GraphicsCom
 	}
 }
 
+void Graphics::PostProcesses::EnableAA()
+{
+	isAAEnabled = true;
+
+	aaConstantBuffer.pixelSize = float2(1.0f / GraphicsSettings::GetResolutionX(), 1.0f / GraphicsSettings::GetResolutionY());
+}
+
 void Graphics::PostProcesses::EnableHDR(float3 shiftVector, float middleGray, float whiteCutoff,
 	float brightPassThreshold, float brightPassOffset)
 {
@@ -108,14 +121,40 @@ void Graphics::PostProcesses::EnableHDR(float3 shiftVector, float middleGray, fl
 
 void Graphics::PostProcesses::Compose(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
+	auto srcRenderTarget = sceneRenderTargetId;
+	
+	if (isAAEnabled)
+	{
+		antiAliasingMaterial = std::make_shared<Material>();
+		antiAliasingMaterial->SetVertexFormat(VertexFormat::POSITION_TEXCOORD);
+		antiAliasingMaterial->AssignRenderTexture(0, srcRenderTarget);
+		antiAliasingMaterial->AssignRenderTexture(1, normalRenderTargetId);
+		antiAliasingMaterial->AssignDepthTexture(2, sceneDepthStencilId);
+		antiAliasingMaterial->SetVertexShader({ quadVertexShader, sizeof(quadVertexShader) });
+		antiAliasingMaterial->SetPixelShader({ antiAliasingPixelShader, sizeof(antiAliasingPixelShader) });
+		antiAliasingMaterial->SetRenderTargetFormat(0, DXGI_FORMAT_R16G16B16A16_FLOAT);
+		antiAliasingMaterial->SetConstantBuffer(0, &aaConstantBuffer, sizeof(AAConstantBuffer));
+		antiAliasingMaterial->SetSampler(0, D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
+			D3D12_TEXTURE_ADDRESS_MODE_CLAMP, 1);
+
+		antiAliasingMaterial->Compose(device);
+
+		antiAliasing = std::make_shared<GraphicObject>();
+		antiAliasing->AssignMaterial(antiAliasingMaterial.get());
+		antiAliasing->AssignMesh(screenQuadMesh.get());
+
+		aaSrcRenderTargetId = srcRenderTarget;
+		aaDestRenderTargetDescriptor = &intermediate16bTargetDescriptor[0];
+		srcRenderTarget = intermediate16bTargetId[0];
+		finalDestRenderTargetDescriptor = aaDestRenderTargetDescriptor;
+	}
+
 	if (isHDREnabled)
 	{
-		hdrInputRenderTargetId = sceneRenderTargetId;
-
 		{
 			brightPassMaterial = std::make_shared<Material>();
 			brightPassMaterial->SetVertexFormat(VertexFormat::POSITION_TEXCOORD);
-			brightPassMaterial->AssignRenderTexture(commandList, 0, hdrInputRenderTargetId);
+			brightPassMaterial->AssignRenderTexture(0, srcRenderTarget);
 			brightPassMaterial->SetVertexShader({ quadVertexShader, sizeof(quadVertexShader) });
 			brightPassMaterial->SetPixelShader({ brightPassPixelShader, sizeof(brightPassPixelShader) });
 			brightPassMaterial->SetRenderTargetFormat(0, DXGI_FORMAT_R8G8B8A8_UNORM);
@@ -132,7 +171,7 @@ void Graphics::PostProcesses::Compose(ID3D12Device* device, ID3D12GraphicsComman
 		{
 			gaussianBlurXMaterial = std::make_shared<Material>();
 			gaussianBlurXMaterial->SetVertexFormat(VertexFormat::POSITION_TEXCOORD);
-			gaussianBlurXMaterial->AssignRenderTexture(commandList, 0, intermediate8bQuartTargetId[0]);
+			gaussianBlurXMaterial->AssignRenderTexture(0, intermediate8bQuartTargetId[0]);
 			gaussianBlurXMaterial->SetVertexShader({ quadVertexShader, sizeof(quadVertexShader) });
 			gaussianBlurXMaterial->SetPixelShader({ gaussianBlurXPixelShader, sizeof(gaussianBlurXPixelShader) });
 			gaussianBlurXMaterial->SetRenderTargetFormat(0, DXGI_FORMAT_R8G8B8A8_UNORM);
@@ -147,7 +186,7 @@ void Graphics::PostProcesses::Compose(ID3D12Device* device, ID3D12GraphicsComman
 		{
 			gaussianBlurYMaterial = std::make_shared<Material>();
 			gaussianBlurYMaterial->SetVertexFormat(VertexFormat::POSITION_TEXCOORD);
-			gaussianBlurYMaterial->AssignRenderTexture(commandList, 0, intermediate8bQuartTargetId[1]);
+			gaussianBlurYMaterial->AssignRenderTexture(0, intermediate8bQuartTargetId[1]);
 			gaussianBlurYMaterial->SetVertexShader({ quadVertexShader, sizeof(quadVertexShader) });
 			gaussianBlurYMaterial->SetPixelShader({ gaussianBlurYPixelShader, sizeof(gaussianBlurYPixelShader) });
 			gaussianBlurYMaterial->SetRenderTargetFormat(0, DXGI_FORMAT_R8G8B8A8_UNORM);
@@ -162,8 +201,8 @@ void Graphics::PostProcesses::Compose(ID3D12Device* device, ID3D12GraphicsComman
 		{
 			toneMappingMaterial = std::make_shared<Material>();
 			toneMappingMaterial->SetVertexFormat(VertexFormat::POSITION_TEXCOORD);
-			toneMappingMaterial->AssignRenderTexture(commandList, 0, hdrInputRenderTargetId);
-			toneMappingMaterial->AssignRenderTexture(commandList, 1, intermediate8bQuartTargetId[0]);
+			toneMappingMaterial->AssignRenderTexture(0, srcRenderTarget);
+			toneMappingMaterial->AssignRenderTexture(1, intermediate8bQuartTargetId[0]);
 			toneMappingMaterial->SetVertexShader({ quadVertexShader, sizeof(quadVertexShader) });
 			toneMappingMaterial->SetPixelShader({ toneMappingPixelShader, sizeof(toneMappingPixelShader) });
 			toneMappingMaterial->SetRenderTargetFormat(0, DXGI_FORMAT_R8G8B8A8_UNORM);
@@ -178,6 +217,11 @@ void Graphics::PostProcesses::Compose(ID3D12Device* device, ID3D12GraphicsComman
 			toneMapping->AssignMaterial(toneMappingMaterial.get());
 			toneMapping->AssignMesh(screenQuadMesh.get());
 		}
+
+		hdrSrcRenderTargetId = srcRenderTarget;
+		hdrDestRenderTargetDescriptor = &intermediate8bTargetDescriptor[0];
+		srcRenderTarget = intermediate16bTargetId[0];
+		finalDestRenderTargetDescriptor = hdrDestRenderTargetDescriptor;
 	}
 
 	isComposed = true;
@@ -201,17 +245,47 @@ void Graphics::PostProcesses::PresentProcessChain(ID3D12GraphicsCommandList* com
 	if (!isComposed)
 		return;
 
+	SetResourceBarrier(commandList, resourceManager.GetDepthStencil(sceneDepthStencilId).textureAllocation.textureResource, D3D12_RESOURCE_STATE_DEPTH_WRITE,
+		D3D12_RESOURCE_STATE_DEPTH_READ | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+	*finalDestRenderTargetDescriptor = *destRenderTargetDescriptor;
+
+	if (isAAEnabled)
+		ProcessAA(commandList, aaSrcRenderTargetId, aaDestRenderTargetDescriptor);
+
 	if (isHDREnabled)
-		ProcessHDR(commandList, hdrInputRenderTargetId, destRenderTargetDescriptor);
+		ProcessHDR(commandList, hdrSrcRenderTargetId, hdrDestRenderTargetDescriptor);
+
+	SetResourceBarrier(commandList, resourceManager.GetDepthStencil(sceneDepthStencilId).textureAllocation.textureResource,
+		D3D12_RESOURCE_STATE_DEPTH_READ | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 }
 
-void Graphics::PostProcesses::ProcessHDR(ID3D12GraphicsCommandList* commandList, const RenderTargetId& srcRenderTargetId,
-	const D3D12_CPU_DESCRIPTOR_HANDLE* destRenderTargetDescriptor)
+void Graphics::PostProcesses::ProcessAA(ID3D12GraphicsCommandList* commandList, const RenderTargetId& srcRenderTargetId, const D3D12_CPU_DESCRIPTOR_HANDLE* destRenderTargetDescriptor)
+{
+	commandList->RSSetViewports(1, &sceneViewport);
+	commandList->RSSetScissorRects(1, &sceneScissorRect);
+
+	{
+		SetResourceBarrier(commandList, resourceManager.GetRenderTarget(srcRenderTargetId).textureAllocation.textureResource, D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+		commandList->OMSetRenderTargets(1, destRenderTargetDescriptor, false, nullptr);
+		antiAliasing->Draw(commandList);
+
+		SetResourceBarrier(commandList, resourceManager.GetRenderTarget(srcRenderTargetId).textureAllocation.textureResource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_RENDER_TARGET);
+	}
+}
+
+void Graphics::PostProcesses::ProcessHDR(ID3D12GraphicsCommandList* commandList, const RenderTargetId& srcRenderTargetId, const D3D12_CPU_DESCRIPTOR_HANDLE* destRenderTargetDescriptor)
 {
 	commandList->RSSetViewports(1, &sceneViewportHalf);
 	commandList->RSSetScissorRects(1, &sceneScissorRectHalf);
 
 	{
+		SetResourceBarrier(commandList, resourceManager.GetRenderTarget(srcRenderTargetId).textureAllocation.textureResource, D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
 		commandList->OMSetRenderTargets(1, &intermediate8bQuartTargetDescriptor[0], false, nullptr);
 		brightPass->Draw(commandList);
 	}
@@ -251,4 +325,7 @@ void Graphics::PostProcesses::ProcessHDR(ID3D12GraphicsCommandList* commandList,
 		SetResourceBarrier(commandList, resourceManager.GetRenderTarget(intermediate8bQuartTargetId[0]).textureAllocation.textureResource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 			D3D12_RESOURCE_STATE_RENDER_TARGET);
 	}
+
+	SetResourceBarrier(commandList, resourceManager.GetRenderTarget(srcRenderTargetId).textureAllocation.textureResource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		D3D12_RESOURCE_STATE_RENDER_TARGET);
 }

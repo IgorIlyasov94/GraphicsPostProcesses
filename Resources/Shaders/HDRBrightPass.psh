@@ -29,7 +29,7 @@ Output main(Input input)
 	
 	float3 color = texScene.Load(int3((int2) input.position.xy, 0) * SIZE_MULTIPLIER).xyz;
 	
-	float luminance = 0.4f;
+	float luminance = 0.3f;
 	
 	color = (color * middleGray) / (luminance + 0.001f);
 	color *= (1.0f + color / (whiteCutoff * whiteCutoff));
