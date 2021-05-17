@@ -44,6 +44,7 @@ void Graphics::SceneManager::InitializeTestScene(ID3D12Device* device)
 	cubeMaterial->SetRenderTargetFormat(0, DXGI_FORMAT_R16G16B16A16_FLOAT);
 	cubeMaterial->SetRenderTargetFormat(1, DXGI_FORMAT_R8G8B8A8_SNORM);
 
+	cubeConstBuffer.world = XMMatrixIdentity();
 	cubeConstBuffer.wvp = camera->GetViewProjection();
 
 	cubeConstBufferId = cubeMaterial->SetConstantBuffer(0, &cubeConstBuffer, sizeof(cubeConstBuffer));
@@ -54,8 +55,31 @@ void Graphics::SceneManager::InitializeTestScene(ID3D12Device* device)
 	cube->AssignMesh(cubeMesh.get());
 	cube->AssignMaterial(cubeMaterial.get());
 
+	cubeSecondMaterial = std::make_shared<Material>();
+
+	cubeSecondMaterial->SetVertexFormat(cubeMesh->GetVertexFormat());
+	cubeSecondMaterial->SetVertexShader({ meshStandardVertexShader, sizeof(meshStandardVertexShader) });
+	cubeSecondMaterial->SetPixelShader({ meshStandardPixelShader, sizeof(meshStandardPixelShader) });
+	cubeSecondMaterial->SetDepthTest(true);
+	cubeSecondMaterial->SetDepthStencilFormat(32);
+	cubeSecondMaterial->SetCullMode(D3D12_CULL_MODE_NONE);
+	cubeSecondMaterial->SetRenderTargetFormat(0, DXGI_FORMAT_R16G16B16A16_FLOAT);
+	cubeSecondMaterial->SetRenderTargetFormat(1, DXGI_FORMAT_R8G8B8A8_SNORM);
+
+	cubeSecondConstBuffer.world = XMMatrixIdentity();
+	cubeSecondConstBuffer.wvp = camera->GetViewProjection();
+
+	cubeSecondConstBufferId = cubeSecondMaterial->SetConstantBuffer(0, &cubeSecondConstBuffer, sizeof(cubeSecondConstBuffer));
+
+	cubeSecondMaterial->Compose(device);
+
+	cubeSecond = std::make_shared<GraphicObject>();
+	cubeSecond->AssignMesh(cubeMesh.get());
+	cubeSecond->AssignMaterial(cubeSecondMaterial.get());
+
 	currentScene->SetMainCamera(camera.get());
 	currentScene->EmplaceGraphicObject(cube.get(), false);
+	currentScene->EmplaceGraphicObject(cubeSecond.get(), false);
 }
 
 void Graphics::SceneManager::DrawCurrentScene(ID3D12GraphicsCommandList* commandList)
@@ -63,15 +87,23 @@ void Graphics::SceneManager::DrawCurrentScene(ID3D12GraphicsCommandList* command
 	if (currentScene == nullptr)
 		return;
 
-	cameraShift += 0.01f;
+	cameraShift += 0.005f;
 
 	camera->Move(float3(std::cos(cameraShift) * 5.0f, 2.0f, std::sin(cameraShift) * 5.0f));
-
 	camera->Update();
 
 	cubeConstBuffer.wvp = camera->GetViewProjection();
 
+	float3 translation = float3(-std::cos(cameraShift) * 10.0f, -5.0f, -std::sin(cameraShift) * 10.0f);
+	float3 rotationOrigin = float3(0.0f, 0.0f, 0.0f);
+	floatN rotation = XMQuaternionRotationRollPitchYaw(0.0f, XM_PI / 4.0f, 0.0f);
+	float3 scale = float3(5.0f, 5.0f, 5.0f);
+
+	cubeSecondConstBuffer.world = XMMatrixAffineTransformation(XMLoadFloat3(&scale), XMLoadFloat3(&rotationOrigin), rotation, XMLoadFloat3(&translation));
+	cubeSecondConstBuffer.wvp = XMMatrixMultiply(cubeSecondConstBuffer.world, camera->GetViewProjection());
+
 	cubeMaterial->UpdateConstantBuffer(cubeConstBufferId, &cubeConstBuffer, sizeof(cubeConstBuffer));
+	cubeSecondMaterial->UpdateConstantBuffer(cubeSecondConstBufferId, &cubeSecondConstBuffer, sizeof(cubeSecondConstBuffer));
 
 	currentScene->Draw(commandList);
 }
