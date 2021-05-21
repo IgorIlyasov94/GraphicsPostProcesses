@@ -147,18 +147,25 @@ void Graphics::OBJLoader::GetFace(const std::string& objLine, VertexFormat faceF
 		uint32_t attributeIndex;
 
 		objLineStream >> attributeIndex;
-		objLineStream.ignore(1);
 
 		if (objLineStream.bad() || objLineStream.fail())
 			break;
 
 		face.push_back(--attributeIndex);
 
-		if (faceFormat == VertexFormat::POSITION_NORMAL)
+		if (faceFormat == VertexFormat::POSITION)
+			continue;
+
+		objLineStream.ignore((faceFormat == VertexFormat::POSITION_NORMAL) ? 2 : 1);
+
+		objLineStream >> attributeIndex;
+		face.push_back(--attributeIndex);
+
+		if (faceFormat == VertexFormat::POSITION_NORMAL_TEXCOORD)
 		{
 			objLineStream.ignore(1);
-			objLineStream >> attributeIndex;
 
+			objLineStream >> attributeIndex;
 			face.push_back(--attributeIndex);
 		}
 	}
@@ -185,16 +192,27 @@ void Graphics::OBJLoader::TriangulateFace(VertexFormat vertexFormat, const std::
 	for (uint32_t vertexId = 0; vertexId < verticesCount; vertexId++)
 		freeVertices.push_back(vertexId);
 
-	auto vertexItPrevious = freeVertices.begin();
-	auto vertexItCurrent = freeVertices.begin();
-	vertexItCurrent++;
-	auto vertexItNext = freeVertices.begin();
-	vertexItNext++++;
-	
 	float3 faceNormal = CalculatePolygonNormal(vertexFormat, positions, face);
+	uint32_t vertexItShift = 0;
 
 	while (freeVertices.size() > 2)
 	{
+		auto vertexItPrevious = freeVertices.begin();
+		auto vertexItCurrent = freeVertices.begin();
+		auto vertexItNext = freeVertices.begin();
+
+		if ((vertexItShift + 2) < freeVertices.size())
+		{
+			std::advance(vertexItPrevious, vertexItShift);
+			std::advance(vertexItCurrent, vertexItShift + 1);
+			std::advance(vertexItNext, vertexItShift + 2);
+		}
+		else
+		{
+			std::advance(vertexItCurrent, 2);
+			vertexItNext++;
+		}
+
 		bool triangleIsIncorrect = false;
 
 		const float3& positionPrevious = positions[face[*vertexItPrevious * faceStride]];
@@ -211,10 +229,12 @@ void Graphics::OBJLoader::TriangulateFace(VertexFormat vertexFormat, const std::
 				}
 
 		if (!triangleIsIncorrect)
-			if (CheckTriangleInPolygon(positionPrevious, positionCurrent, positionNext, faceNormal))
+			if (!CheckTriangleInPolygon(positionPrevious, positionCurrent, positionNext, faceNormal))
 				triangleIsIncorrect = true;
 
-		if (!triangleIsIncorrect)
+		if (triangleIsIncorrect)
+			vertexItShift++;
+		else
 		{
 			for (uint32_t faceAttributeId = 0; faceAttributeId < faceStride; faceAttributeId++)
 				newFace.push_back(face[*vertexItPrevious * faceStride + faceAttributeId]);
@@ -224,24 +244,10 @@ void Graphics::OBJLoader::TriangulateFace(VertexFormat vertexFormat, const std::
 				newFace.push_back(face[*vertexItNext * faceStride + faceAttributeId]);
 
 			freeVertices.erase(vertexItCurrent);
-
-			vertexItCurrent = vertexItNext;
-		}
-		else
-		{
-			vertexItPrevious++;
-
-			if (vertexItPrevious == freeVertices.end())
-				vertexItPrevious = freeVertices.begin();
 		}
 
-		vertexItCurrent++;
-		vertexItNext++;
-
-		if (vertexItCurrent == freeVertices.end())
-			vertexItCurrent = freeVertices.begin();
-		if (vertexItNext == freeVertices.end())
-			vertexItNext = freeVertices.begin();
+		if ((vertexItShift + 1) >= freeVertices.size())
+			vertexItShift = 0;
 	}
 
 	face = newFace;
@@ -275,10 +281,10 @@ float3 Graphics::OBJLoader::CalculatePolygonNormal(VertexFormat vertexFormat, co
 
 	float3 positionCenter = CalculatePolygonCenter(vertexFormat, positions, face);
 
-	for (uint32_t vertexId = 0; vertexId < verticesCount; vertexId += faceStride)
+	for (uint32_t vertexId = 0; vertexId < verticesCount; vertexId++)
 	{
-		const float3& positionCurrent = positions[face[vertexId]];
-		const float3& positionNext = positions[face[(vertexId + faceStride) % verticesCount]];
+		const float3& positionCurrent = positions[face[vertexId * faceStride]];
+		const float3& positionNext = positions[face[(vertexId * faceStride + faceStride) % (verticesCount * faceStride)]];
 
 		floatN vector0 = XMLoadFloat3(&positionCurrent) - XMLoadFloat3(&positionCenter);
 		floatN vector1 = XMLoadFloat3(&positionNext) - XMLoadFloat3(&positionCenter);
@@ -286,7 +292,7 @@ float3 Graphics::OBJLoader::CalculatePolygonNormal(VertexFormat vertexFormat, co
 		normal += XMVector3Cross(vector0, vector1);
 	}
 
-	normal = XMVector3NormalizeEst(normal);
+	normal = XMVector3Normalize(normal);
 
 	float3 result{};
 
@@ -347,7 +353,7 @@ float3 Graphics::OBJLoader::CalculateNormal(float3 position0, float3 position1, 
 	floatN vector1_2 = XMLoadFloat3(&position2) - XMLoadFloat3(&position1);
 
 	floatN normal = XMVector3Cross(vector0_1, vector1_2);
-	normal = XMVector3NormalizeEst(normal);
+	normal = XMVector3Normalize(normal);
 
 	float3 result;
 
@@ -445,7 +451,7 @@ void Graphics::OBJLoader::SmoothNormals(VertexFormat vertexFormat, const std::ve
 			averageNormal += XMLoadFloat3(&normals[faces[samePositionFaceIndex + 2]]);
 
 		averageNormal /= static_cast<float>(samePositionFaceIndices.size());
-		averageNormal = XMVector3NormalizeEst(averageNormal);
+		averageNormal = XMVector3Normalize(averageNormal);
 
 		for (auto& samePositionFaceIndex : samePositionFaceIndices)
 			XMStoreFloat3(&newNormals[faces[samePositionFaceIndex + 2]], averageNormal);
