@@ -434,27 +434,39 @@ void Graphics::OBJLoader::CalculateTangents(const std::vector<float3>& normals, 
 	}
 }
 
-void Graphics::OBJLoader::SmoothNormals(VertexFormat vertexFormat, const std::vector<float3>& positions, const std::vector<uint32_t>& faces,
+void Graphics::OBJLoader::SmoothNormals(VertexFormat vertexFormat, const std::vector<float3>& positions, std::vector<uint32_t>& faces,
 	std::vector<float3>& normals)
 {
-	uint32_t faceStride = (vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD) ? 3 : 2;
+	size_t faceStride = (vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD) ? 3 : 2;
 
-	std::vector<float3> newNormals(normals.begin(), normals.end());
+	std::vector<float3> newNormals;
+
+	std::set<uint32_t> processedFaceIds;
 
 	for (uint32_t faceId = 0; faceId < faces.size(); faceId += faceStride)
 	{
-		std::vector<uint32_t> samePositionFaceIndices = GetFaceIndicesForSamePosition(vertexFormat, positions, faces, 0, positions[faces[faceId]]);
+		if (processedFaceIds.find(faceId) != processedFaceIds.end())
+			continue;
+
+		std::vector<uint32_t> samePositionFaceIndices = GetFaceIndicesForSamePosition(vertexFormat, positions, faces, faceId, positions[faces[faceId]]);
 
 		floatN averageNormal{};
 
 		for (auto& samePositionFaceIndex : samePositionFaceIndices)
-			averageNormal += XMLoadFloat3(&normals[faces[samePositionFaceIndex + 2]]);
-
-		averageNormal /= static_cast<float>(samePositionFaceIndices.size());
+		{
+			auto normalSample = XMLoadFloat3(&normals[faces[samePositionFaceIndex + faceStride - 1]]);
+			averageNormal += normalSample;
+		}
+		
 		averageNormal = XMVector3Normalize(averageNormal);
 
+		newNormals.push_back(float3(averageNormal.m128_f32[0], averageNormal.m128_f32[1], averageNormal.m128_f32[2]));
+
 		for (auto& samePositionFaceIndex : samePositionFaceIndices)
-			XMStoreFloat3(&newNormals[faces[samePositionFaceIndex + 2]], averageNormal);
+		{
+			faces[samePositionFaceIndex + faceStride - 1] = newNormals.size() - 1;
+			processedFaceIds.insert(samePositionFaceIndex);
+		}
 	}
 
 	normals = newNormals;
