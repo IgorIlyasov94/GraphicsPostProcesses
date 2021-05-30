@@ -57,7 +57,7 @@ void Graphics::PostProcesses::Initialize(ID3D12Device* device, ID3D12GraphicsCom
 		2, 1, 3
 	};
 
-	screenQuadMesh = std::make_shared<Mesh>(VertexFormat::POSITION_TEXCOORD, &vertices, sizeof(vertices), &indices, sizeof(indices));
+	screenQuadMesh = std::shared_ptr<Mesh>(new Mesh(VertexFormat::POSITION_TEXCOORD, &vertices, sizeof(vertices), &indices, sizeof(indices)));
 
 	for (uint32_t renderTargetId = 0; renderTargetId < INTERMEDIATE_8B_RENDER_TARGET_COUNT; renderTargetId++)
 	{
@@ -132,7 +132,7 @@ void Graphics::PostProcesses::Compose(ID3D12Device* device, ID3D12GraphicsComman
 		antiAliasingMaterial->AssignDepthTexture(2, sceneDepthStencilId);
 		antiAliasingMaterial->SetVertexShader({ quadVertexShader, sizeof(quadVertexShader) });
 		antiAliasingMaterial->SetPixelShader({ antiAliasingPixelShader, sizeof(antiAliasingPixelShader) });
-		antiAliasingMaterial->SetRenderTargetFormat(0, DXGI_FORMAT_R16G16B16A16_FLOAT);
+		antiAliasingMaterial->SetRenderTargetFormat(0, (isHDREnabled) ? DXGI_FORMAT_R16G16B16A16_FLOAT : DXGI_FORMAT_R8G8B8A8_UNORM);
 		antiAliasingMaterial->SetConstantBuffer(0, &aaConstantBuffer, sizeof(AAConstantBuffer));
 		antiAliasingMaterial->SetSampler(0, D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
 			D3D12_TEXTURE_ADDRESS_MODE_CLAMP, 1);
