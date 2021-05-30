@@ -16,7 +16,11 @@
 #include <d3d11.h>
 #include <d3d12.h>
 #include <dxgi1_6.h>
-
+/*
+#ifndef _XM_NO_INTRINSICS_
+#define _XM_NO_INTRINSICS_
+#endif
+*/
 #include <DirectXMath.h>
 
 #include <wrl/client.h>

@@ -1,12 +1,12 @@
 #include "Mesh.h"
 
-Graphics::Mesh::Mesh(std::filesystem::path filePath)
+Graphics::Mesh::Mesh(std::filesystem::path filePath, bool calculateNormals, bool calculateTangents, bool smoothNormals)
 	: indicesCount(0), vertexFormat(VertexFormat::UNDEFINED), boundingBox{}, vertexBufferView{}, indexBufferView{}
 {
 	std::vector<uint8_t> verticesData;
 	std::vector<uint8_t> indicesData;
 	
-	Graphics::OBJLoader::Load(filePath, true, false, false, vertexFormat, verticesData, indicesData);
+	Graphics::OBJLoader::Load(filePath, calculateNormals, calculateTangents, smoothNormals, vertexFormat, verticesData, indicesData);
 
 	FindBoundingBox(verticesData.data(), verticesData.size(), vertexFormat, boundingBox);
 	
@@ -18,7 +18,6 @@ Graphics::Mesh::Mesh(std::filesystem::path filePath)
 
 	vertexBufferView = resourceManager.GetVertexBufferView(vertexBufferId);
 	indexBufferView = resourceManager.GetIndexBufferView(indexBufferId);
-
 }
 
 Graphics::Mesh::Mesh(VertexFormat _vertexFormat, const void* verticesData, size_t verticesDataSize, const void* indicesData, size_t indicesDataSize)

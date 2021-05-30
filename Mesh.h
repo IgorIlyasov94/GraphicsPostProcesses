@@ -8,7 +8,7 @@ namespace Graphics
 	class Mesh
 	{
 	public:
-		Mesh(std::filesystem::path filePath);
+		Mesh(std::filesystem::path filePath, bool calculateNormals,bool calculateTangents, bool smoothNormals);
 		Mesh(VertexFormat _vertexFormat, const void* verticesData, size_t verticesDataSize, const void* indicesData, size_t indicesDataSize);
 		~Mesh();
 
