@@ -28,7 +28,6 @@ namespace Graphics
 	private:
 		friend class ResourceManager;
 
-
 		uint8_t category;
 	};
 
@@ -36,9 +35,12 @@ namespace Graphics
 	using IndexBufferId = typename ResourceId<1>;
 	using ConstantBufferId = typename ResourceId<2>;
 	using TextureId = typename ResourceId<3>;
-	using SamplerId = typename ResourceId<4>;
-	using RenderTargetId = typename ResourceId<5>;
-	using DepthStencilId = typename ResourceId<6>;
+	using BufferId = typename ResourceId<4>;
+	using SamplerId = typename ResourceId<5>;
+	using RenderTargetId = typename ResourceId<6>;
+	using DepthStencilId = typename ResourceId<7>;
+	using RWTextureId = typename ResourceId<8>;
+	using RWBufferId = typename ResourceId<9>;
 
 	struct VertexBuffer
 	{
@@ -68,6 +70,13 @@ namespace Graphics
 		DescriptorAllocation shaderResourceDescriptorAllocation;
 	};
 
+	struct Buffer
+	{
+		D3D12_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
+		BufferAllocation bufferAllocation;
+		DescriptorAllocation shaderResourceDescriptorAllocation;
+	};
+
 	struct Sampler
 	{
 		D3D12_SAMPLER_DESC samplerDesc;
@@ -80,8 +89,8 @@ namespace Graphics
 		D3D12_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
 		TextureInfo info;
 		TextureAllocation textureAllocation;
-		DescriptorAllocation renderTargetDescriptorAllocation;
 		DescriptorAllocation shaderResourceDescriptorAllocation;
+		DescriptorAllocation renderTargetDescriptorAllocation;
 	};
 
 	struct DepthStencil
@@ -90,8 +99,27 @@ namespace Graphics
 		D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc;
 		TextureInfo info;
 		TextureAllocation textureAllocation;
-		DescriptorAllocation depthStencilDescriptorAllocation;
 		DescriptorAllocation shaderResourceDescriptorAllocation;
+		DescriptorAllocation depthStencilDescriptorAllocation;
+	};
+
+	struct RWTexture
+	{
+		D3D12_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
+		D3D12_UNORDERED_ACCESS_VIEW_DESC unorderedAccessViewDesc;
+		TextureInfo info;
+		TextureAllocation textureAllocation;
+		DescriptorAllocation shaderResourceDescriptorAllocation;
+		DescriptorAllocation unorderedAccessDescriptorAllocation;
+	};
+
+	struct RWBuffer
+	{
+		D3D12_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
+		D3D12_UNORDERED_ACCESS_VIEW_DESC unorderedAccessViewDesc;
+		BufferAllocation bufferAllocation;
+		DescriptorAllocation shaderResourceDescriptorAllocation;
+		DescriptorAllocation unorderedAccessDescriptorAllocation;
 	};
 
 	class ResourceManager
@@ -106,9 +134,12 @@ namespace Graphics
 		ConstantBufferId CreateConstantBuffer(const void* data, size_t dataSize);
 		TextureId CreateTexture(const std::filesystem::path& fileName);
 		TextureId CreateTexture(const std::vector<uint8_t>& data, const TextureInfo& textureInfo, D3D12_RESOURCE_FLAGS resourceFlags);
+		BufferId CreateBuffer(const void* data, size_t dataSize, uint32_t bufferStride, DXGI_FORMAT format);
 		SamplerId CreateSampler(const D3D12_SAMPLER_DESC& samplerDesc);
 		RenderTargetId CreateRenderTarget(uint64_t width, uint32_t height, DXGI_FORMAT format);
 		DepthStencilId CreateDepthStencil(uint64_t width, uint32_t height, uint32_t depthBit);
+		RWTextureId CreateRWTexture(const TextureInfo& textureInfo, D3D12_RESOURCE_FLAGS resourceFlags);
+		RWBufferId CreateRWBuffer(const void* initialData, size_t dataSize, uint32_t bufferStride, DXGI_FORMAT format);
 
 		void CreateSwapChainBuffers(IDXGISwapChain4* swapChain, uint32_t buffersCount);
 
@@ -116,9 +147,12 @@ namespace Graphics
 		const IndexBuffer& GetIndexBuffer(const IndexBufferId& resourceId) const;
 		const ConstantBuffer& GetConstantBuffer(const ConstantBufferId& resourceId) const;
 		const Texture& GetTexture(const TextureId& resourceId) const;
+		const Buffer& GetBuffer(const BufferId& resourceId) const;
 		const Sampler& GetSampler(const SamplerId& resourceId) const;
 		const RenderTarget& GetRenderTarget(const RenderTargetId& resourceId) const;
 		const DepthStencil& GetDepthStencil(const DepthStencilId& resourceId) const;
+		const RWTexture& GetRWTexture(const RWTextureId& resourceId) const;
+		const RWBuffer& GetRWBuffer(const RWBufferId& resourceId) const;
 
 		const D3D12_CPU_DESCRIPTOR_HANDLE& GetSwapChainDescriptorBase(uint32_t bufferId) const;
 		ID3D12Resource* GetSwapChainBuffer(uint32_t bufferId) const;
@@ -157,9 +191,12 @@ namespace Graphics
 		std::vector<IndexBuffer> indexBufferPool;
 		std::vector<ConstantBuffer> constantBufferPool;
 		std::vector<Texture> texturePool;
+		std::vector<Buffer> bufferPool;
 		std::vector<Sampler> samplerPool;
 		std::vector<RenderTarget> renderTargetPool;
 		std::vector<DepthStencil> depthStencilPool;
+		std::vector<RWTexture> rwTexturePool;
+		std::vector<RWBuffer> rwBufferPool;
 
 		std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> swapChainDescriptorBases;
 		std::vector<ComPtr<ID3D12Resource>> swapChainBuffers;

@@ -55,6 +55,12 @@
     <Filter Include="Исходные файлы\GraphicsSceneManagement\GraphicsObjects">
       <UniqueIdentifier>{ec5f4340-975d-4991-9c09-9c54ded11e7b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Файлы заголовков\GraphicsCore\GraphicsLightingSystem">
+      <UniqueIdentifier>{bdc1253b-6830-4dea-ac62-641663da080c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\GraphicsCore\GraphicsLightingSystem">
+      <UniqueIdentifier>{17645696-f055-4027-99fe-2dfaf0ef7913}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -126,6 +132,15 @@
     <ClCompile Include="SceneManager.cpp">
       <Filter>Исходные файлы\GraphicsSceneManagement</Filter>
     </ClCompile>
+    <ClCompile Include="LightingSystem.cpp">
+      <Filter>Исходные файлы\GraphicsCore\GraphicsLightingSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="PointLight.cpp">
+      <Filter>Исходные файлы\GraphicsCore\GraphicsLightingSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="ComputeObject.cpp">
+      <Filter>Исходные файлы\GraphicsSceneManagement\GraphicsObjects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -196,6 +211,15 @@
     </ClInclude>
     <ClInclude Include="SceneManager.h">
       <Filter>Файлы заголовков\GraphicsSceneManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="LightingSystem.h">
+      <Filter>Файлы заголовков\GraphicsCore\GraphicsLightingSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="PointLight.h">
+      <Filter>Файлы заголовков\GraphicsCore\GraphicsLightingSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="ComputeObject.h">
+      <Filter>Файлы заголовков\GraphicsSceneManagement\GraphicsObjects</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

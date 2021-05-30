@@ -1,13 +1,13 @@
 #include "BufferAllocationPage.h"
 
-Graphics::BufferAllocationPage::BufferAllocationPage(ID3D12Device* device, D3D12_HEAP_TYPE _heapType, uint64_t _pageSize)
+Graphics::BufferAllocationPage::BufferAllocationPage(ID3D12Device* device, D3D12_HEAP_TYPE _heapType, D3D12_RESOURCE_FLAGS resourceFlags, uint64_t _pageSize)
 	: heapType(_heapType), pageSize(_pageSize), offset(0), currentCPUAddress(nullptr), currentGPUAddress(D3D12_GPU_VIRTUAL_ADDRESS(0))
 {
 	D3D12_HEAP_PROPERTIES heapProperties;
 	SetupHeapProperties(heapProperties, heapType);
 
 	D3D12_RESOURCE_DESC resourceDesc;
-	SetupResourceBufferDesc(resourceDesc, _pageSize);
+	SetupResourceBufferDesc(resourceDesc, _pageSize, resourceFlags);
 
 	D3D12_RESOURCE_STATES resourceState;
 

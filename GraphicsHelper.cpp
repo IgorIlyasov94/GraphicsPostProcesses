@@ -274,6 +274,16 @@ void Graphics::SetResourceBarrier(ID3D12GraphicsCommandList* commandList, ID3D12
 	commandList->ResourceBarrier(1, &resourceBarrier);
 }
 
+void Graphics::SetUAVBarrier(ID3D12GraphicsCommandList* commandList, ID3D12Resource* const resource)
+{
+	D3D12_RESOURCE_BARRIER resourceBarrier{};
+	resourceBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+	resourceBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	resourceBarrier.UAV.pResource = resource;
+
+	commandList->ResourceBarrier(1, &resourceBarrier);
+}
+
 bool Graphics::CheckBoxInBox(const BoundingBox& sourceBox, const BoundingBox& destinationBox) noexcept
 {
 	if (sourceBox.maxCornerPoint.x <= destinationBox.maxCornerPoint.x &&

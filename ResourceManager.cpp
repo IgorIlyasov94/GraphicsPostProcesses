@@ -196,6 +196,47 @@ Graphics::TextureId Graphics::ResourceManager::CreateTexture(const std::vector<u
 	return TextureId(texturePool.size() - 1);
 }
 
+Graphics::BufferId Graphics::ResourceManager::CreateBuffer(const void* data, size_t dataSize, uint32_t bufferStride, DXGI_FORMAT format)
+{
+	BufferAllocation bufferAllocation{};
+	bufferAllocator.AllocateUnorderedAccess(device, dataSize, 64 * _KB, bufferAllocation);
+
+	BufferAllocation uploadBufferAllocation{};
+	bufferAllocator.AllocateTemporaryUpload(device, dataSize, uploadBufferAllocation);
+
+	std::copy(reinterpret_cast<const uint8_t*>(data), reinterpret_cast<const uint8_t*>(data) + dataSize, uploadBufferAllocation.cpuAddress);
+
+	if (bufferAllocation.bufferResource == nullptr)
+		throw std::exception("ResourceManager::CreateBuffer: Buffer Resource is null!");
+
+	if (uploadBufferAllocation.bufferResource == nullptr)
+		throw std::exception("ResourceManager::CreateBuffer: Upload Buffer Resource is null!");
+
+	commandList->CopyBufferRegion(bufferAllocation.bufferResource, bufferAllocation.gpuPageOffset, uploadBufferAllocation.bufferResource,
+		0, uploadBufferAllocation.bufferResource->GetDesc().Width);
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc{};
+	shaderResourceViewDesc.Format = (bufferStride == 0) ? format : (bufferStride == 1) ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_UNKNOWN;
+	shaderResourceViewDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+	shaderResourceViewDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	shaderResourceViewDesc.Buffer.Flags = (bufferStride == 1) ? D3D12_BUFFER_SRV_FLAG_RAW : D3D12_BUFFER_SRV_FLAG_NONE;
+	shaderResourceViewDesc.Buffer.NumElements = dataSize / bufferStride;
+	shaderResourceViewDesc.Buffer.StructureByteStride = bufferStride;
+
+	DescriptorAllocation shaderResourceDescriptorAllocation{};
+	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, shaderResourceDescriptorAllocation);
+	device->CreateShaderResourceView(bufferAllocation.bufferResource, &shaderResourceViewDesc, shaderResourceDescriptorAllocation.descriptorBase);
+
+	Buffer buffer{};
+	buffer.bufferAllocation = bufferAllocation;
+	buffer.shaderResourceViewDesc = shaderResourceViewDesc;
+	buffer.shaderResourceDescriptorAllocation = shaderResourceDescriptorAllocation;
+
+	bufferPool.push_back(buffer);
+
+	return BufferId(bufferPool.size() - 1);
+}
+
 Graphics::SamplerId Graphics::ResourceManager::CreateSampler(const D3D12_SAMPLER_DESC& samplerDesc)
 {
 	DescriptorAllocation samplerDescriptorAllocation{};
@@ -229,6 +270,9 @@ Graphics::RenderTargetId Graphics::ResourceManager::CreateRenderTarget(uint64_t 
 	TextureAllocation textureAllocation{};
 	textureAllocator.Allocate(device, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, &clearValue, textureInfo, textureAllocation);
 	
+	if (textureAllocation.textureResource == nullptr)
+		throw std::exception("ResourceManager::CreateRenderTarget: Texture Resource is null!");
+
 	D3D12_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc{};
 	shaderResourceViewDesc.Format = format;
 	shaderResourceViewDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
@@ -282,6 +326,9 @@ Graphics::DepthStencilId Graphics::ResourceManager::CreateDepthStencil(uint64_t 
 	TextureAllocation textureAllocation{};
 	textureAllocator.Allocate(device, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, &clearValue, textureInfo, textureAllocation);
 
+	if (textureAllocation.textureResource == nullptr)
+		throw std::exception("ResourceManager::CreateDepthStencil: Texture Resource is null!");
+
 	D3D12_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc{};
 	shaderResourceViewDesc.Format = (depthBit == 32) ? DXGI_FORMAT_R32_FLOAT : DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
 	shaderResourceViewDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
@@ -313,6 +360,134 @@ Graphics::DepthStencilId Graphics::ResourceManager::CreateDepthStencil(uint64_t 
 	depthStencilPool.push_back(depthStencil);
 
 	return DepthStencilId(depthStencilPool.size() - 1);
+}
+
+Graphics::RWTextureId Graphics::ResourceManager::CreateRWTexture(const TextureInfo& textureInfo, D3D12_RESOURCE_FLAGS resourceFlags)
+{
+	D3D12_CLEAR_VALUE clearValue{};
+	clearValue.Format = textureInfo.format;
+
+	TextureAllocation textureAllocation{};
+	textureAllocator.Allocate(device, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, &clearValue, textureInfo, textureAllocation);
+
+	if (textureAllocation.textureResource == nullptr)
+		throw std::exception("ResourceManager::CreateRWTexture: Texture Resource is null!");
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc{};
+	shaderResourceViewDesc.Format = textureInfo.format;
+	shaderResourceViewDesc.ViewDimension = textureInfo.srvDimension;
+	shaderResourceViewDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+	D3D12_UNORDERED_ACCESS_VIEW_DESC unorderedAccessViewDesc{};
+	unorderedAccessViewDesc.Format = textureInfo.format;
+
+	if (shaderResourceViewDesc.ViewDimension == D3D12_SRV_DIMENSION_TEXTURE1D)
+	{
+		shaderResourceViewDesc.Texture1D.MipLevels = 1;
+		unorderedAccessViewDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE1D;
+	}
+	else if (shaderResourceViewDesc.ViewDimension == D3D12_SRV_DIMENSION_TEXTURE2D)
+	{
+		shaderResourceViewDesc.Texture2D.MipLevels = 1;
+		unorderedAccessViewDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+	}
+	else if (shaderResourceViewDesc.ViewDimension == D3D12_SRV_DIMENSION_TEXTURE3D)
+	{
+		shaderResourceViewDesc.Texture3D.MipLevels = 1;
+		unorderedAccessViewDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE3D;
+	}
+	else if (shaderResourceViewDesc.ViewDimension == D3D12_SRV_DIMENSION_TEXTURE1DARRAY)
+	{
+		shaderResourceViewDesc.Texture1DArray.MipLevels = 1;
+		shaderResourceViewDesc.Texture1DArray.ArraySize = textureInfo.depth;
+		unorderedAccessViewDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE1DARRAY;
+		unorderedAccessViewDesc.Texture1DArray.ArraySize = textureInfo.depth;
+	}
+	else if (shaderResourceViewDesc.ViewDimension == D3D12_SRV_DIMENSION_TEXTURE2DARRAY)
+	{
+		shaderResourceViewDesc.Texture2DArray.MipLevels = 1;
+		shaderResourceViewDesc.Texture2DArray.ArraySize = textureInfo.depth;
+		unorderedAccessViewDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+		unorderedAccessViewDesc.Texture2DArray.ArraySize = textureInfo.depth;
+	}
+	
+	DescriptorAllocation shaderResourceDescriptorAllocation{};
+	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, shaderResourceDescriptorAllocation);
+	device->CreateShaderResourceView(textureAllocation.textureResource, &shaderResourceViewDesc, shaderResourceDescriptorAllocation.descriptorBase);
+
+	DescriptorAllocation unorderedAccessDescriptorAllocation{};
+	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, unorderedAccessDescriptorAllocation);
+	device->CreateUnorderedAccessView(textureAllocation.textureResource, nullptr, &unorderedAccessViewDesc, unorderedAccessDescriptorAllocation.descriptorBase);
+
+	SetResourceBarrier(commandList, textureAllocation.textureResource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+	RWTexture rwTexture{};
+	rwTexture.shaderResourceViewDesc = shaderResourceViewDesc;
+	rwTexture.unorderedAccessViewDesc = unorderedAccessViewDesc;
+	rwTexture.info = textureInfo;
+	rwTexture.textureAllocation = textureAllocation;
+	rwTexture.unorderedAccessDescriptorAllocation = unorderedAccessDescriptorAllocation;
+	rwTexture.shaderResourceDescriptorAllocation = shaderResourceDescriptorAllocation;
+
+	rwTexturePool.push_back(rwTexture);
+
+	return RWTextureId(rwTexturePool.size() - 1);
+}
+
+Graphics::RWBufferId Graphics::ResourceManager::CreateRWBuffer(const void* initialData, size_t dataSize, uint32_t bufferStride, DXGI_FORMAT format)
+{
+	BufferAllocation bufferAllocation{};
+	bufferAllocator.AllocateUnorderedAccess(device, dataSize, 64 * _KB, bufferAllocation);
+
+	if (bufferAllocation.bufferResource == nullptr)
+		throw std::exception("ResourceManager::CreateRWBuffer: Buffer Resource is null!");
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc{};
+	shaderResourceViewDesc.Format = (bufferStride == 0) ? format : (bufferStride == 1) ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_UNKNOWN;
+	shaderResourceViewDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+	shaderResourceViewDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	shaderResourceViewDesc.Buffer.Flags = (bufferStride == 1) ? D3D12_BUFFER_SRV_FLAG_RAW : D3D12_BUFFER_SRV_FLAG_NONE;
+	shaderResourceViewDesc.Buffer.NumElements = dataSize / bufferStride;
+	shaderResourceViewDesc.Buffer.StructureByteStride = bufferStride;
+
+	DescriptorAllocation shaderResourceDescriptorAllocation{};
+	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, shaderResourceDescriptorAllocation);
+	device->CreateShaderResourceView(bufferAllocation.bufferResource, &shaderResourceViewDesc, shaderResourceDescriptorAllocation.descriptorBase);
+
+	D3D12_UNORDERED_ACCESS_VIEW_DESC unorderedAccessViewDesc{};
+	unorderedAccessViewDesc.Format = (bufferStride == 0) ? format : (bufferStride == 1) ? DXGI_FORMAT_R32_TYPELESS : DXGI_FORMAT_UNKNOWN;
+	unorderedAccessViewDesc.Buffer.Flags = (bufferStride == 1) ? D3D12_BUFFER_UAV_FLAG_RAW : D3D12_BUFFER_UAV_FLAG_NONE;
+	unorderedAccessViewDesc.Buffer.NumElements = dataSize / bufferStride;
+	unorderedAccessViewDesc.Buffer.StructureByteStride = bufferStride;
+
+	DescriptorAllocation unorderedAccessDescriptorAllocation{};
+	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, unorderedAccessDescriptorAllocation);
+
+	if (bufferStride == 1)
+		device->CreateUnorderedAccessView(bufferAllocation.bufferResource, nullptr, &unorderedAccessViewDesc, unorderedAccessDescriptorAllocation.descriptorBase);
+	else
+	{
+		BufferAllocation counterBufferAllocation{};
+		bufferAllocator.AllocateUnorderedAccess(device, 4, 64 * _KB, counterBufferAllocation);
+
+		device->CreateUnorderedAccessView(bufferAllocation.bufferResource, counterBufferAllocation.bufferResource, &unorderedAccessViewDesc,
+			unorderedAccessDescriptorAllocation.descriptorBase);
+
+		SetResourceBarrier(commandList, counterBufferAllocation.bufferResource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	}
+
+	SetResourceBarrier(commandList, bufferAllocation.bufferResource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+	RWBuffer rwBuffer{};
+	rwBuffer.bufferAllocation = bufferAllocation;
+	rwBuffer.shaderResourceViewDesc = shaderResourceViewDesc;
+	rwBuffer.unorderedAccessViewDesc = unorderedAccessViewDesc;
+	rwBuffer.unorderedAccessDescriptorAllocation = unorderedAccessDescriptorAllocation;
+	rwBuffer.shaderResourceDescriptorAllocation = shaderResourceDescriptorAllocation;
+	
+	rwBufferPool.push_back(rwBuffer);
+
+	return RWBufferId(rwBufferPool.size() - 1);
 }
 
 void Graphics::ResourceManager::CreateSwapChainBuffers(IDXGISwapChain4* swapChain, uint32_t buffersCount)
@@ -351,6 +526,11 @@ const Graphics::Texture& Graphics::ResourceManager::GetTexture(const TextureId& 
 	return texturePool[resourceId.value];
 }
 
+const Graphics::Buffer& Graphics::ResourceManager::GetBuffer(const BufferId& resourceId) const
+{
+	return bufferPool[resourceId.value];
+}
+
 const Graphics::Sampler& Graphics::ResourceManager::GetSampler(const SamplerId& resourceId) const
 {
 	return samplerPool[resourceId.value];
@@ -364,6 +544,16 @@ const Graphics::RenderTarget& Graphics::ResourceManager::GetRenderTarget(const R
 const Graphics::DepthStencil& Graphics::ResourceManager::GetDepthStencil(const DepthStencilId& resourceId) const
 {
 	return depthStencilPool[resourceId.value];
+}
+
+const Graphics::RWTexture& Graphics::ResourceManager::GetRWTexture(const RWTextureId& resourceId) const
+{
+	return rwTexturePool[resourceId.value];
+}
+
+const Graphics::RWBuffer& Graphics::ResourceManager::GetRWBuffer(const RWBufferId& resourceId) const
+{
+	return rwBufferPool[resourceId.value];
 }
 
 const D3D12_CPU_DESCRIPTOR_HANDLE& Graphics::ResourceManager::GetSwapChainDescriptorBase(uint32_t bufferId) const

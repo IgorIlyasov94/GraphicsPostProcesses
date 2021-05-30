@@ -152,7 +152,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="ComputeObject.cpp" />
     <ClCompile Include="GraphicsSettings.cpp" />
+    <ClCompile Include="LightingSystem.cpp" />
     <ClCompile Include="Octree.cpp" />
     <ClCompile Include="BufferAllocationPage.cpp" />
     <ClCompile Include="CommonHandler.cpp" />
@@ -165,6 +167,7 @@
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="OBJLoader.cpp" />
     <ClCompile Include="GraphicsHelper.cpp" />
+    <ClCompile Include="PointLight.cpp" />
     <ClCompile Include="PostProcesses.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="Scene.cpp" />
@@ -177,7 +180,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="ComputeObject.h" />
     <ClInclude Include="GraphicsSettings.h" />
+    <ClInclude Include="LightingSystem.h" />
     <ClInclude Include="Octree.h" />
     <ClInclude Include="BufferAllocationPage.h" />
     <ClInclude Include="CommonHandler.h" />
@@ -190,6 +195,7 @@
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="OBJLoader.h" />
     <ClInclude Include="GraphicsHelper.h" />
+    <ClInclude Include="PointLight.h" />
     <ClInclude Include="PostProcesses.h" />
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="Scene.h" />

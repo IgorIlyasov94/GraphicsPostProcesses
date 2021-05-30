@@ -14,12 +14,12 @@ Graphics::Material::~Material()
 
 Graphics::ConstantBufferId Graphics::Material::SetConstantBuffer(size_t registerIndex, void* bufferData, size_t bufferSize)
 {
-	constantBufferRegisterIndices.push_back(registerIndex);
-	constantBufferIndices.push_back(resourceManager.CreateConstantBuffer(bufferData, bufferSize));
+	registerSet.constantBufferRegisterIndices.push_back(registerIndex);
+	indexSet.constantBufferIndices.push_back(resourceManager.CreateConstantBuffer(bufferData, bufferSize));
 
-	constantBufferAddresses.push_back(resourceManager.GetConstantBuffer(constantBufferIndices.back()).constantBufferViewDesc.BufferLocation);
+	constantBufferAddresses.push_back(resourceManager.GetConstantBuffer(indexSet.constantBufferIndices.back()).constantBufferViewDesc.BufferLocation);
 
-	return constantBufferIndices.back();
+	return indexSet.constantBufferIndices.back();
 }
 
 void Graphics::Material::SetSampler(size_t registerIndex, D3D12_FILTER filter, D3D12_TEXTURE_ADDRESS_MODE addressU, D3D12_TEXTURE_ADDRESS_MODE addressV,
@@ -40,31 +40,61 @@ void Graphics::Material::SetSampler(size_t registerIndex, D3D12_FILTER filter, D
 
 void Graphics::Material::AssignConstantBuffer(size_t registerIndex, ConstantBufferId constantBufferId)
 {
-	constantBufferRegisterIndices.push_back(registerIndex);
-	constantBufferIndices.push_back(constantBufferId);
+	registerSet.constantBufferRegisterIndices.push_back(registerIndex);
+	indexSet.constantBufferIndices.push_back(constantBufferId);
 
 	constantBufferAddresses.push_back(resourceManager.GetConstantBuffer(constantBufferId).constantBufferViewDesc.BufferLocation);
 }
 
 void Graphics::Material::AssignTexture(ID3D12GraphicsCommandList* commandList, size_t registerIndex, TextureId textureId, bool asPixelShaderResource)
 {
-	textureRegisterIndices.push_back(registerIndex);
-	textureIndices.push_back(textureId);
+	registerSet.textureRegisterIndices.push_back(registerIndex);
+	indexSet.textureIndices.push_back(textureId);
 
 	SetResourceBarrier(commandList, resourceManager.GetTexture(textureId).textureAllocation.textureResource, D3D12_RESOURCE_STATE_COMMON,
 		(asPixelShaderResource) ? D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 }
 
-void Graphics::Material::AssignRenderTexture(size_t registerIndex, RenderTargetId renderTargetId)
+void Graphics::Material::AssignTexture(size_t registerIndex, RWTextureId rwTextureId)
 {
-	renderTextureRegisterIndices.push_back(registerIndex);
-	renderTargetIndices.push_back(renderTargetId);
+	registerSet.rwTextureReadOnlyRegisterIndices.push_back(registerIndex);
+	indexSet.rwTextureReadOnlyIndices.push_back(rwTextureId);
 }
 
-void Graphics::Material::AssignDepthTexture(size_t registerIndex, DepthStencilId renderTargetId)
+void Graphics::Material::AssignRenderTexture(size_t registerIndex, RenderTargetId renderTargetId)
 {
-	depthTextureRegisterIndices.push_back(registerIndex);
-	depthStencilIndices.push_back(renderTargetId);
+	registerSet.renderTextureRegisterIndices.push_back(registerIndex);
+	indexSet.renderTargetIndices.push_back(renderTargetId);
+}
+
+void Graphics::Material::AssignDepthTexture(size_t registerIndex, DepthStencilId depthStencilId)
+{
+	registerSet.depthTextureRegisterIndices.push_back(registerIndex);
+	indexSet.depthStencilIndices.push_back(depthStencilId);
+}
+
+void Graphics::Material::AssignBuffer(size_t registerIndex, BufferId bufferId)
+{
+	registerSet.bufferRegisterIndices.push_back(registerIndex);
+	indexSet.bufferIndices.push_back(bufferId);
+}
+
+void Graphics::Material::AssignBuffer(size_t registerIndex, RWBufferId rwBufferId)
+{
+	registerSet.rwBufferReadOnlyRegisterIndices.push_back(registerIndex);
+	indexSet.rwBufferReadOnlyIndices.push_back(rwBufferId);
+}
+
+void Graphics::Material::AssignRWTexture(size_t registerIndex, RWTextureId rwTextureId)
+{
+	registerSet.rwTextureRegisterIndices.push_back(registerIndex);
+	indexSet.rwTextureIndices.push_back(rwTextureId);
+}
+
+void Graphics::Material::AssignRWBuffer(size_t registerIndex, RWBufferId rwBufferId)
+{
+	registerSet.rwBufferRegisterIndices.push_back(registerIndex);
+	indexSet.rwBufferIndices.push_back(rwBufferId);
 }
 
 void Graphics::Material::SetVertexShader(D3D12_SHADER_BYTECODE shaderBytecode)
@@ -150,30 +180,43 @@ void Graphics::Material::Compose(ID3D12Device* device)
 	D3D12_DEPTH_STENCIL_DESC depthStencilDesc;
 	SetupDepthStencilDesc(depthStencilDesc, useDepthBuffer);
 
-	std::vector<size_t> textureDescriptorIndices;
-
 	std::vector<D3D12_DESCRIPTOR_RANGE> textureDescRanges;
 	std::vector<D3D12_ROOT_DESCRIPTOR_TABLE> textureRootDescTables;
 
-	CreateTextureRootDescriptorTables(textureRegisterIndices, renderTextureRegisterIndices, depthTextureRegisterIndices, textureDescRanges, textureRootDescTables);
+	CreateResourceRootDescriptorTables(registerSet, textureDescRanges, textureRootDescTables);
 	D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
 	std::vector<D3D12_ROOT_PARAMETER> rootParameters;
-	CreateRootParameters(shaderList, constantBufferRegisterIndices, textureRootDescTables, rootSignatureFlags, rootParameters);
+	CreateRootParameters(shaderList, registerSet, textureRootDescTables, rootSignatureFlags, rootParameters);
 
 	CreateRootSignature(device, rootParameters, samplerDescs, rootSignatureFlags, &rootSignature);
 
 	CreateGraphicsPipelineState(device, { inputElementDescs.data() , static_cast<uint32_t>(inputElementDescs.size()) }, rootSignature.Get(), rasterizerDesc,
 		blendDesc, depthStencilDesc, renderTargetFormat, depthStencilFormat, shaderList, &pipelineState);
-	
-	for (auto& textureIndex : textureIndices)
-		firstTextureDescriptorBases.push_back(resourceManager.GetTexture(textureIndex).shaderResourceDescriptorAllocation.gpuDescriptorBase);
 
-	for (auto& renderTargetIndex : renderTargetIndices)
-		firstTextureDescriptorBases.push_back(resourceManager.GetRenderTarget(renderTargetIndex).shaderResourceDescriptorAllocation.gpuDescriptorBase);
+	for (auto& textureIndex : indexSet.textureIndices)
+		firstResourceDescriptorBases.push_back(resourceManager.GetTexture(textureIndex).shaderResourceDescriptorAllocation.gpuDescriptorBase);
 
-	for (auto& depthStencilIndex : depthStencilIndices)
-		firstTextureDescriptorBases.push_back(resourceManager.GetDepthStencil(depthStencilIndex).shaderResourceDescriptorAllocation.gpuDescriptorBase);
+	for (auto& rwTextureIndex : indexSet.rwTextureReadOnlyIndices)
+		firstResourceDescriptorBases.push_back(resourceManager.GetRWTexture(rwTextureIndex).shaderResourceDescriptorAllocation.gpuDescriptorBase);
+
+	for (auto& renderTargetIndex : indexSet.renderTargetIndices)
+		firstResourceDescriptorBases.push_back(resourceManager.GetRenderTarget(renderTargetIndex).shaderResourceDescriptorAllocation.gpuDescriptorBase);
+
+	for (auto& depthStencilIndex : indexSet.depthStencilIndices)
+		firstResourceDescriptorBases.push_back(resourceManager.GetDepthStencil(depthStencilIndex).shaderResourceDescriptorAllocation.gpuDescriptorBase);
+
+	for (auto& bufferIndex : indexSet.bufferIndices)
+		firstResourceDescriptorBases.push_back(resourceManager.GetBuffer(bufferIndex).shaderResourceDescriptorAllocation.gpuDescriptorBase);
+
+	for (auto& rwBufferIndex : indexSet.rwBufferReadOnlyIndices)
+		firstResourceDescriptorBases.push_back(resourceManager.GetRWBuffer(rwBufferIndex).shaderResourceDescriptorAllocation.gpuDescriptorBase);
+
+	for (auto& rwTextureIndex : indexSet.rwTextureIndices)
+		firstResourceDescriptorBases.push_back(resourceManager.GetRWTexture(rwTextureIndex).unorderedAccessDescriptorAllocation.gpuDescriptorBase);
+
+	for (auto& rwBufferIndex : indexSet.rwBufferIndices)
+		firstResourceDescriptorBases.push_back(resourceManager.GetRWBuffer(rwBufferIndex).unorderedAccessDescriptorAllocation.gpuDescriptorBase);
 
 	isComposed = true;
 }
@@ -193,7 +236,7 @@ void Graphics::Material::Present(ID3D12GraphicsCommandList* commandList) const
 	for (auto& constantBufferAddress: constantBufferAddresses)
 		commandList->SetGraphicsRootConstantBufferView(rootParameterIndex++, constantBufferAddress);
 
-	for (auto& firstTextureDescriptorBase : firstTextureDescriptorBases)
+	for (auto& firstTextureDescriptorBase : firstResourceDescriptorBases)
 		commandList->SetGraphicsRootDescriptorTable(rootParameterIndex++, firstTextureDescriptorBase);
 }
 
@@ -208,48 +251,66 @@ void Graphics::Material::CreateInputElementDescs(VertexFormat format, std::vecto
 		inputElementDescs.push_back({ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
 }
 
-void Graphics::Material::CreateTextureRootDescriptorTables(const std::vector<size_t>& _textureRegisterIndices, const std::vector<size_t>& _renderTextureRegisterIndices,
-	const std::vector<size_t>& _depthStencilRegisterIndices, std::vector<D3D12_DESCRIPTOR_RANGE>& descriptorRanges, std::vector<D3D12_ROOT_DESCRIPTOR_TABLE>& rootDescriptorTables)
+void Graphics::Material::CreateResourceRootDescriptorTables(const RegisterSet& _registerSet, std::vector<D3D12_DESCRIPTOR_RANGE>& descriptorRanges,
+	std::vector<D3D12_ROOT_DESCRIPTOR_TABLE>& rootDescriptorTables)
 {
 	descriptorRanges.clear();
 
-	for (auto& textureRegisterId : _textureRegisterIndices)
+	D3D12_DESCRIPTOR_RANGE descRange{};
+	descRange.NumDescriptors = 1;
+	descRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+
+	for (auto& textureRegisterId : _registerSet.textureRegisterIndices)
 	{
-		D3D12_DESCRIPTOR_RANGE descRange{};
-		descRange.NumDescriptors = 1;
 		descRange.BaseShaderRegister = textureRegisterId;
-		descRange.OffsetInDescriptorsFromTableStart = 0;// D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-		descRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-		descRange.RegisterSpace = 0;
-
 		descriptorRanges.push_back(descRange);
 	}
 
-	for (auto& renderTextureRegisterId : _renderTextureRegisterIndices)
+	for (auto& rwTextureRegisterId : _registerSet.rwTextureReadOnlyRegisterIndices)
 	{
-		D3D12_DESCRIPTOR_RANGE descRange{};
-		descRange.NumDescriptors = 1;
+		descRange.BaseShaderRegister = rwTextureRegisterId;
+		descriptorRanges.push_back(descRange);
+	}
+
+	for (auto& renderTextureRegisterId : _registerSet.renderTextureRegisterIndices)
+	{
 		descRange.BaseShaderRegister = renderTextureRegisterId;
-		descRange.OffsetInDescriptorsFromTableStart = 0;// D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-		descRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-		descRange.RegisterSpace = 0;
-
 		descriptorRanges.push_back(descRange);
 	}
 
-	for (auto& depthTextureRegisterId : _depthStencilRegisterIndices)
+	for (auto& depthTextureRegisterId : _registerSet.depthTextureRegisterIndices)
 	{
-		D3D12_DESCRIPTOR_RANGE descRange{};
-		descRange.NumDescriptors = 1;
 		descRange.BaseShaderRegister = depthTextureRegisterId;
-		descRange.OffsetInDescriptorsFromTableStart = 0;// D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-		descRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-		descRange.RegisterSpace = 0;
-
 		descriptorRanges.push_back(descRange);
 	}
 
-	for (auto& descriptorRange: descriptorRanges)
+	for (auto& bufferRegisterId : _registerSet.bufferRegisterIndices)
+	{
+		descRange.BaseShaderRegister = bufferRegisterId;
+		descriptorRanges.push_back(descRange);
+	}
+
+	for (auto& rwBufferRegisterId : _registerSet.rwBufferReadOnlyRegisterIndices)
+	{
+		descRange.BaseShaderRegister = rwBufferRegisterId;
+		descriptorRanges.push_back(descRange);
+	}
+
+	descRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+
+	for (auto& rwTextureRegisterId : _registerSet.rwTextureRegisterIndices)
+	{
+		descRange.BaseShaderRegister = rwTextureRegisterId;
+		descriptorRanges.push_back(descRange);
+	}
+
+	for (auto& rwBufferRegisterId : _registerSet.rwBufferRegisterIndices)
+	{
+		descRange.BaseShaderRegister = rwBufferRegisterId;
+		descriptorRanges.push_back(descRange);
+	}
+
+	for (auto& descriptorRange : descriptorRanges)
 	{
 		D3D12_ROOT_DESCRIPTOR_TABLE rootDescriptorTable{};
 		rootDescriptorTable.NumDescriptorRanges = 1;
@@ -259,7 +320,7 @@ void Graphics::Material::CreateTextureRootDescriptorTables(const std::vector<siz
 	}
 }
 
-void Graphics::Material::CreateRootParameters(const ShaderList& shaderList, const std::vector<size_t>& constantBufferRegisterIndices,
+void Graphics::Material::CreateRootParameters(const ShaderList& shaderList, const RegisterSet& _registerSet,
 	const std::vector<D3D12_ROOT_DESCRIPTOR_TABLE>& rootDescriptorTables, D3D12_ROOT_SIGNATURE_FLAGS& rootSignatureFlags, std::vector<D3D12_ROOT_PARAMETER>& rootParameters)
 {
 	if (shaderList.vertexShader.pShaderBytecode == nullptr)
@@ -277,7 +338,7 @@ void Graphics::Material::CreateRootParameters(const ShaderList& shaderList, cons
 	if (shaderList.pixelShader.pShaderBytecode == nullptr)
 		rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
 
-	for (auto& constantBufferIndex : constantBufferRegisterIndices)
+	for (auto& constantBufferIndex : _registerSet.constantBufferRegisterIndices)
 	{
 		D3D12_ROOT_PARAMETER rootParameter{};
 
