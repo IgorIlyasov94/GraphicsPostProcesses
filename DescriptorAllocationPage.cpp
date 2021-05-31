@@ -1,14 +1,15 @@
 #include "DescriptorAllocationPage.h"
 
 Graphics::DescriptorAllocationPage::DescriptorAllocationPage(ID3D12Device* device, D3D12_DESCRIPTOR_HEAP_TYPE _descriptorHeapType,
-	uint32_t _numDescriptors)
+	bool isUAVShaderNonVisible, uint32_t _numDescriptors)
 	: numDescriptors(_numDescriptors), descriptorHeapType(_descriptorHeapType), descriptorBaseOffset(0u), gpuDescriptorBaseOffset(0u)
 {
 	D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc{};
 	descriptorHeapDesc.NumDescriptors = numDescriptors;
 	descriptorHeapDesc.Type = descriptorHeapType;
 
-	if (_descriptorHeapType == D3D12_DESCRIPTOR_HEAP_TYPE_RTV || _descriptorHeapType == D3D12_DESCRIPTOR_HEAP_TYPE_DSV)
+	if (descriptorHeapType == D3D12_DESCRIPTOR_HEAP_TYPE_RTV || descriptorHeapType == D3D12_DESCRIPTOR_HEAP_TYPE_DSV ||
+		descriptorHeapType == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV && isUAVShaderNonVisible)
 		descriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 	else
 		descriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;

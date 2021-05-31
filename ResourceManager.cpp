@@ -90,7 +90,7 @@ Graphics::ConstantBufferId Graphics::ResourceManager::CreateConstantBuffer(const
 	bufferAllocator.Allocate(device, dataSize, 64 * _KB, D3D12_HEAP_TYPE_UPLOAD, constantBufferAllocation);
 
 	DescriptorAllocation constantBufferDescriptorAllocation{};
-	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, constantBufferDescriptorAllocation);
+	descriptorAllocator.Allocate(device, false, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, constantBufferDescriptorAllocation);
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC constantBufferViewDesc{};
 	constantBufferViewDesc.BufferLocation = constantBufferAllocation.gpuAddress;
@@ -181,7 +181,7 @@ Graphics::TextureId Graphics::ResourceManager::CreateTexture(const std::vector<u
 	SetResourceBarrier(commandList, textureAllocation.textureResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COMMON);
 
 	DescriptorAllocation shaderResourceDescriptorAllocation{};
-	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, shaderResourceDescriptorAllocation);
+	descriptorAllocator.Allocate(device, false, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, shaderResourceDescriptorAllocation);
 
 	device->CreateShaderResourceView(textureAllocation.textureResource, &shaderResourceViewDesc, shaderResourceDescriptorAllocation.descriptorBase);
 
@@ -224,7 +224,7 @@ Graphics::BufferId Graphics::ResourceManager::CreateBuffer(const void* data, siz
 	shaderResourceViewDesc.Buffer.StructureByteStride = bufferStride;
 
 	DescriptorAllocation shaderResourceDescriptorAllocation{};
-	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, shaderResourceDescriptorAllocation);
+	descriptorAllocator.Allocate(device, false, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, shaderResourceDescriptorAllocation);
 	device->CreateShaderResourceView(bufferAllocation.bufferResource, &shaderResourceViewDesc, shaderResourceDescriptorAllocation.descriptorBase);
 
 	Buffer buffer{};
@@ -240,7 +240,7 @@ Graphics::BufferId Graphics::ResourceManager::CreateBuffer(const void* data, siz
 Graphics::SamplerId Graphics::ResourceManager::CreateSampler(const D3D12_SAMPLER_DESC& samplerDesc)
 {
 	DescriptorAllocation samplerDescriptorAllocation{};
-	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, samplerDescriptorAllocation);
+	descriptorAllocator.Allocate(device, false, 1, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, samplerDescriptorAllocation);
 
 	device->CreateSampler(&samplerDesc, samplerDescriptorAllocation.descriptorBase);
 
@@ -280,7 +280,7 @@ Graphics::RenderTargetId Graphics::ResourceManager::CreateRenderTarget(uint64_t 
 	shaderResourceViewDesc.Texture2D.MipLevels = 1;
 
 	DescriptorAllocation shaderResourceDescriptorAllocation{};
-	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, shaderResourceDescriptorAllocation);
+	descriptorAllocator.Allocate(device, false, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, shaderResourceDescriptorAllocation);
 	device->CreateShaderResourceView(textureAllocation.textureResource, &shaderResourceViewDesc, shaderResourceDescriptorAllocation.descriptorBase);
 
 	D3D12_RENDER_TARGET_VIEW_DESC renderTargetViewDesc{};
@@ -288,7 +288,7 @@ Graphics::RenderTargetId Graphics::ResourceManager::CreateRenderTarget(uint64_t 
 	renderTargetViewDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 	
 	DescriptorAllocation renderTargetDescriptorAllocation{};
-	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, renderTargetDescriptorAllocation);
+	descriptorAllocator.Allocate(device, false, 1, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, renderTargetDescriptorAllocation);
 
 	device->CreateRenderTargetView(textureAllocation.textureResource, &renderTargetViewDesc, renderTargetDescriptorAllocation.descriptorBase);
 
@@ -336,7 +336,7 @@ Graphics::DepthStencilId Graphics::ResourceManager::CreateDepthStencil(uint64_t 
 	shaderResourceViewDesc.Texture2D.MipLevels = 1;
 
 	DescriptorAllocation shaderResourceDescriptorAllocation{};
-	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, shaderResourceDescriptorAllocation);
+	descriptorAllocator.Allocate(device, false, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, shaderResourceDescriptorAllocation);
 	device->CreateShaderResourceView(textureAllocation.textureResource, &shaderResourceViewDesc, shaderResourceDescriptorAllocation.descriptorBase);
 
 	D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc{};
@@ -344,7 +344,7 @@ Graphics::DepthStencilId Graphics::ResourceManager::CreateDepthStencil(uint64_t 
 	depthStencilViewDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 
 	DescriptorAllocation depthStencilDescriptorAllocation{};
-	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, depthStencilDescriptorAllocation);
+	descriptorAllocator.Allocate(device, false, 1, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, depthStencilDescriptorAllocation);
 	device->CreateDepthStencilView(textureAllocation.textureResource, &depthStencilViewDesc, depthStencilDescriptorAllocation.descriptorBase);
 
 	SetResourceBarrier(commandList, textureAllocation.textureResource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_DEPTH_WRITE);
@@ -362,13 +362,10 @@ Graphics::DepthStencilId Graphics::ResourceManager::CreateDepthStencil(uint64_t 
 	return DepthStencilId(depthStencilPool.size() - 1);
 }
 
-Graphics::RWTextureId Graphics::ResourceManager::CreateRWTexture(const TextureInfo& textureInfo, D3D12_RESOURCE_FLAGS resourceFlags)
+Graphics::RWTextureId Graphics::ResourceManager::CreateRWTexture(const TextureInfo& textureInfo)
 {
-	D3D12_CLEAR_VALUE clearValue{};
-	clearValue.Format = textureInfo.format;
-
 	TextureAllocation textureAllocation{};
-	textureAllocator.Allocate(device, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, &clearValue, textureInfo, textureAllocation);
+	textureAllocator.Allocate(device, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, nullptr, textureInfo, textureAllocation);
 
 	if (textureAllocation.textureResource == nullptr)
 		throw std::exception("ResourceManager::CreateRWTexture: Texture Resource is null!");
@@ -412,12 +409,16 @@ Graphics::RWTextureId Graphics::ResourceManager::CreateRWTexture(const TextureIn
 	}
 	
 	DescriptorAllocation shaderResourceDescriptorAllocation{};
-	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, shaderResourceDescriptorAllocation);
+	descriptorAllocator.Allocate(device, false, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, shaderResourceDescriptorAllocation);
 	device->CreateShaderResourceView(textureAllocation.textureResource, &shaderResourceViewDesc, shaderResourceDescriptorAllocation.descriptorBase);
 
 	DescriptorAllocation unorderedAccessDescriptorAllocation{};
-	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, unorderedAccessDescriptorAllocation);
+	descriptorAllocator.Allocate(device, false, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, unorderedAccessDescriptorAllocation);
 	device->CreateUnorderedAccessView(textureAllocation.textureResource, nullptr, &unorderedAccessViewDesc, unorderedAccessDescriptorAllocation.descriptorBase);
+	
+	DescriptorAllocation shaderNonVisibleDescriptorAllocation{};
+	descriptorAllocator.Allocate(device, true, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, shaderNonVisibleDescriptorAllocation);
+	device->CreateUnorderedAccessView(textureAllocation.textureResource, nullptr, &unorderedAccessViewDesc, shaderNonVisibleDescriptorAllocation.descriptorBase);
 
 	SetResourceBarrier(commandList, textureAllocation.textureResource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
@@ -428,6 +429,7 @@ Graphics::RWTextureId Graphics::ResourceManager::CreateRWTexture(const TextureIn
 	rwTexture.textureAllocation = textureAllocation;
 	rwTexture.unorderedAccessDescriptorAllocation = unorderedAccessDescriptorAllocation;
 	rwTexture.shaderResourceDescriptorAllocation = shaderResourceDescriptorAllocation;
+	rwTexture.shaderNonVisibleDescriptorAllocation = shaderNonVisibleDescriptorAllocation;
 
 	rwTexturePool.push_back(rwTexture);
 
@@ -462,7 +464,7 @@ Graphics::RWBufferId Graphics::ResourceManager::CreateRWBuffer(const void* initi
 	shaderResourceViewDesc.Buffer.StructureByteStride = (bufferStride > 1) ? bufferStride : 0;
 
 	DescriptorAllocation shaderResourceDescriptorAllocation{};
-	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, shaderResourceDescriptorAllocation);
+	descriptorAllocator.Allocate(device, false, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, shaderResourceDescriptorAllocation);
 	device->CreateShaderResourceView(bufferAllocation.bufferResource, &shaderResourceViewDesc, shaderResourceDescriptorAllocation.descriptorBase);
 
 	D3D12_UNORDERED_ACCESS_VIEW_DESC unorderedAccessViewDesc{};
@@ -473,7 +475,7 @@ Graphics::RWBufferId Graphics::ResourceManager::CreateRWBuffer(const void* initi
 	unorderedAccessViewDesc.Buffer.StructureByteStride = (bufferStride > 1) ? bufferStride : 0;
 
 	DescriptorAllocation unorderedAccessDescriptorAllocation{};
-	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, unorderedAccessDescriptorAllocation);
+	descriptorAllocator.Allocate(device, false, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, unorderedAccessDescriptorAllocation);
 
 	if (bufferStride <= 1)
 		device->CreateUnorderedAccessView(bufferAllocation.bufferResource, nullptr, &unorderedAccessViewDesc, unorderedAccessDescriptorAllocation.descriptorBase);
@@ -504,7 +506,7 @@ void Graphics::ResourceManager::CreateSwapChainBuffers(IDXGISwapChain4* swapChai
 	{
 		DescriptorAllocation renderTargetDescriptorAllocation{};
 
-		descriptorAllocator.Allocate(device, buffersCount, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, renderTargetDescriptorAllocation);
+		descriptorAllocator.Allocate(device, false, buffersCount, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, renderTargetDescriptorAllocation);
 		swapChainDescriptorBases.push_back(renderTargetDescriptorAllocation.descriptorBase);
 
 		swapChainBuffers.push_back(nullptr);

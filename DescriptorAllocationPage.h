@@ -15,7 +15,7 @@ namespace Graphics
 	class DescriptorAllocationPage
 	{
 	public:
-		DescriptorAllocationPage(ID3D12Device* device, D3D12_DESCRIPTOR_HEAP_TYPE _descriptorHeapType, uint32_t _numDescriptors);
+		DescriptorAllocationPage(ID3D12Device* device, D3D12_DESCRIPTOR_HEAP_TYPE _descriptorHeapType, bool isUAVShaderNonVisible, uint32_t _numDescriptors);
 		~DescriptorAllocationPage() {};
 
 		void Allocate(uint32_t _numDescriptors, DescriptorAllocation& allocation);

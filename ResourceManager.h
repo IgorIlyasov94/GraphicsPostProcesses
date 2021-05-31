@@ -111,6 +111,7 @@ namespace Graphics
 		TextureAllocation textureAllocation;
 		DescriptorAllocation shaderResourceDescriptorAllocation;
 		DescriptorAllocation unorderedAccessDescriptorAllocation;
+		DescriptorAllocation shaderNonVisibleDescriptorAllocation;
 	};
 
 	struct RWBuffer
@@ -120,6 +121,7 @@ namespace Graphics
 		BufferAllocation bufferAllocation;
 		DescriptorAllocation shaderResourceDescriptorAllocation;
 		DescriptorAllocation unorderedAccessDescriptorAllocation;
+		DescriptorAllocation shaderNonVisibleDescriptorAllocation;
 	};
 
 	class ResourceManager
@@ -138,7 +140,7 @@ namespace Graphics
 		SamplerId CreateSampler(const D3D12_SAMPLER_DESC& samplerDesc);
 		RenderTargetId CreateRenderTarget(uint64_t width, uint32_t height, DXGI_FORMAT format);
 		DepthStencilId CreateDepthStencil(uint64_t width, uint32_t height, uint32_t depthBit);
-		RWTextureId CreateRWTexture(const TextureInfo& textureInfo, D3D12_RESOURCE_FLAGS resourceFlags);
+		RWTextureId CreateRWTexture(const TextureInfo& textureInfo);
 		RWBufferId CreateRWBuffer(const void* initialData, size_t dataSize, uint32_t bufferStride, uint32_t numElements, DXGI_FORMAT format);
 
 		void CreateSwapChainBuffers(IDXGISwapChain4* swapChain, uint32_t buffersCount);
