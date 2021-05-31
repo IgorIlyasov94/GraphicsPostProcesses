@@ -13,6 +13,8 @@ Graphics::BufferAllocationPage::BufferAllocationPage(ID3D12Device* device, D3D12
 
 	if (heapType == D3D12_HEAP_TYPE_UPLOAD)
 		resourceState = D3D12_RESOURCE_STATE_GENERIC_READ;
+	else if (resourceFlags == D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS)
+		resourceState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	else
 		resourceState = D3D12_RESOURCE_STATE_COPY_DEST;
 

@@ -196,7 +196,7 @@ Graphics::TextureId Graphics::ResourceManager::CreateTexture(const std::vector<u
 	return TextureId(texturePool.size() - 1);
 }
 
-Graphics::BufferId Graphics::ResourceManager::CreateBuffer(const void* data, size_t dataSize, uint32_t bufferStride, DXGI_FORMAT format)
+Graphics::BufferId Graphics::ResourceManager::CreateBuffer(const void* data, size_t dataSize, uint32_t bufferStride, uint32_t numElements, DXGI_FORMAT format)
 {
 	BufferAllocation bufferAllocation{};
 	bufferAllocator.AllocateUnorderedAccess(device, dataSize, 64 * _KB, bufferAllocation);
@@ -220,7 +220,7 @@ Graphics::BufferId Graphics::ResourceManager::CreateBuffer(const void* data, siz
 	shaderResourceViewDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
 	shaderResourceViewDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	shaderResourceViewDesc.Buffer.Flags = (bufferStride == 1) ? D3D12_BUFFER_SRV_FLAG_RAW : D3D12_BUFFER_SRV_FLAG_NONE;
-	shaderResourceViewDesc.Buffer.NumElements = dataSize / bufferStride;
+	shaderResourceViewDesc.Buffer.NumElements = numElements;
 	shaderResourceViewDesc.Buffer.StructureByteStride = bufferStride;
 
 	DescriptorAllocation shaderResourceDescriptorAllocation{};
@@ -434,21 +434,32 @@ Graphics::RWTextureId Graphics::ResourceManager::CreateRWTexture(const TextureIn
 	return RWTextureId(rwTexturePool.size() - 1);
 }
 
-Graphics::RWBufferId Graphics::ResourceManager::CreateRWBuffer(const void* initialData, size_t dataSize, uint32_t bufferStride, DXGI_FORMAT format)
+Graphics::RWBufferId Graphics::ResourceManager::CreateRWBuffer(const void* initialData, size_t dataSize, uint32_t bufferStride, uint32_t numElements, DXGI_FORMAT format)
 {
 	BufferAllocation bufferAllocation{};
 	bufferAllocator.AllocateUnorderedAccess(device, dataSize, 64 * _KB, bufferAllocation);
 
+	BufferAllocation uploadBufferAllocation{};
+	bufferAllocator.AllocateTemporaryUpload(device, dataSize, uploadBufferAllocation);
+
+	std::copy(reinterpret_cast<const uint8_t*>(initialData), reinterpret_cast<const uint8_t*>(initialData) + dataSize, uploadBufferAllocation.cpuAddress);
+
 	if (bufferAllocation.bufferResource == nullptr)
-		throw std::exception("ResourceManager::CreateRWBuffer: Buffer Resource is null!");
+		throw std::exception("ResourceManager::CreateRWBuffer: RWBuffer Resource is null!");
+
+	if (uploadBufferAllocation.bufferResource == nullptr)
+		throw std::exception("ResourceManager::CreateRWBuffer: Upload Buffer Resource is null!");
+
+	commandList->CopyBufferRegion(bufferAllocation.bufferResource, bufferAllocation.gpuPageOffset, uploadBufferAllocation.bufferResource,
+		0, uploadBufferAllocation.bufferResource->GetDesc().Width);
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc{};
 	shaderResourceViewDesc.Format = (bufferStride == 0) ? format : (bufferStride == 1) ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_UNKNOWN;
 	shaderResourceViewDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
 	shaderResourceViewDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	shaderResourceViewDesc.Buffer.Flags = (bufferStride == 1) ? D3D12_BUFFER_SRV_FLAG_RAW : D3D12_BUFFER_SRV_FLAG_NONE;
-	shaderResourceViewDesc.Buffer.NumElements = dataSize / bufferStride;
-	shaderResourceViewDesc.Buffer.StructureByteStride = bufferStride;
+	shaderResourceViewDesc.Buffer.NumElements = numElements;
+	shaderResourceViewDesc.Buffer.StructureByteStride = (bufferStride > 1) ? bufferStride : 0;
 
 	DescriptorAllocation shaderResourceDescriptorAllocation{};
 	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, shaderResourceDescriptorAllocation);
@@ -456,14 +467,15 @@ Graphics::RWBufferId Graphics::ResourceManager::CreateRWBuffer(const void* initi
 
 	D3D12_UNORDERED_ACCESS_VIEW_DESC unorderedAccessViewDesc{};
 	unorderedAccessViewDesc.Format = (bufferStride == 0) ? format : (bufferStride == 1) ? DXGI_FORMAT_R32_TYPELESS : DXGI_FORMAT_UNKNOWN;
+	unorderedAccessViewDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
 	unorderedAccessViewDesc.Buffer.Flags = (bufferStride == 1) ? D3D12_BUFFER_UAV_FLAG_RAW : D3D12_BUFFER_UAV_FLAG_NONE;
-	unorderedAccessViewDesc.Buffer.NumElements = dataSize / bufferStride;
-	unorderedAccessViewDesc.Buffer.StructureByteStride = bufferStride;
+	unorderedAccessViewDesc.Buffer.NumElements = numElements;
+	unorderedAccessViewDesc.Buffer.StructureByteStride = (bufferStride > 1) ? bufferStride : 0;
 
 	DescriptorAllocation unorderedAccessDescriptorAllocation{};
 	descriptorAllocator.Allocate(device, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, unorderedAccessDescriptorAllocation);
 
-	if (bufferStride == 1)
+	if (bufferStride <= 1)
 		device->CreateUnorderedAccessView(bufferAllocation.bufferResource, nullptr, &unorderedAccessViewDesc, unorderedAccessDescriptorAllocation.descriptorBase);
 	else
 	{
@@ -472,11 +484,7 @@ Graphics::RWBufferId Graphics::ResourceManager::CreateRWBuffer(const void* initi
 
 		device->CreateUnorderedAccessView(bufferAllocation.bufferResource, counterBufferAllocation.bufferResource, &unorderedAccessViewDesc,
 			unorderedAccessDescriptorAllocation.descriptorBase);
-
-		SetResourceBarrier(commandList, counterBufferAllocation.bufferResource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 	}
-
-	SetResourceBarrier(commandList, bufferAllocation.bufferResource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 	RWBuffer rwBuffer{};
 	rwBuffer.bufferAllocation = bufferAllocation;
