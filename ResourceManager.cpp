@@ -488,12 +488,17 @@ Graphics::RWBufferId Graphics::ResourceManager::CreateRWBuffer(const void* initi
 			unorderedAccessDescriptorAllocation.descriptorBase);
 	}
 
+	DescriptorAllocation shaderNonVisibleDescriptorAllocation{};
+	descriptorAllocator.Allocate(device, true, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, shaderNonVisibleDescriptorAllocation);
+	device->CreateUnorderedAccessView(bufferAllocation.bufferResource, nullptr, &unorderedAccessViewDesc, shaderNonVisibleDescriptorAllocation.descriptorBase);
+
 	RWBuffer rwBuffer{};
 	rwBuffer.bufferAllocation = bufferAllocation;
 	rwBuffer.shaderResourceViewDesc = shaderResourceViewDesc;
 	rwBuffer.unorderedAccessViewDesc = unorderedAccessViewDesc;
 	rwBuffer.unorderedAccessDescriptorAllocation = unorderedAccessDescriptorAllocation;
 	rwBuffer.shaderResourceDescriptorAllocation = shaderResourceDescriptorAllocation;
+	rwBuffer.shaderNonVisibleDescriptorAllocation = shaderNonVisibleDescriptorAllocation;
 	
 	rwBufferPool.push_back(rwBuffer);
 
