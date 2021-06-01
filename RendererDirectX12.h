@@ -15,7 +15,10 @@ namespace Graphics
 		void OnSetFocus();
 		void OnLostFocus();
 		
+		void FrameStart();
 		void FrameRender();
+
+		ID3D12GraphicsCommandList* GetCommandList() const;
 
 	private:
 		RendererDirectX12();

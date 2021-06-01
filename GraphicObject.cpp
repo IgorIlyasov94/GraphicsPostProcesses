@@ -1,7 +1,7 @@
 #include "GraphicObject.h"
 
 Graphics::GraphicObject::GraphicObject()
-	: drawFunction(nullptr), boundingBox{}, mesh(nullptr), material(nullptr)
+	: drawFunction(nullptr), boundingBox{}, mesh(nullptr), material(nullptr), computeObject(nullptr)
 {
 
 }
@@ -32,9 +32,26 @@ void Graphics::GraphicObject::AssignMaterial(const Material* newMaterial)
 	material = newMaterial;
 }
 
+void Graphics::GraphicObject::AssignComputeObject(const ComputeObject* newComputeObject)
+{
+	if (newComputeObject != nullptr)
+		if (!newComputeObject->IsComposed())
+			throw std::exception("Graphics::GraphicObject::AssignComputeObject: ComputeObject is not composed");
+
+	computeObject = newComputeObject;
+}
+
 const Graphics::BoundingBox& Graphics::GraphicObject::GetBoundingBox() const noexcept
 {
 	return boundingBox;
+}
+
+void Graphics::GraphicObject::Execute(ID3D12GraphicsCommandList* commandList) const
+{
+	if (computeObject == nullptr)
+		return;
+
+	computeObject->Present(commandList);
 }
 
 void Graphics::GraphicObject::Draw(ID3D12GraphicsCommandList* commandList) const

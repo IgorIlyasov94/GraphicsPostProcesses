@@ -21,18 +21,18 @@ Graphics::VertexBufferId Graphics::ResourceManager::CreateVertexBuffer(const voi
 	BufferAllocation uploadBufferAllocation{};
 	bufferAllocator.AllocateTemporaryUpload(device, dataSize, uploadBufferAllocation);
 
+	if (vertexBufferAllocation.bufferResource == nullptr)
+		throw std::exception("ResourceManager::CreateVertexBuffer: Vertex Buffer Resource is null!");
+
+	if (uploadBufferAllocation.bufferResource == nullptr)
+		throw std::exception("ResourceManager::CreateVertexBuffer: Upload Buffer Resource is null!");
+
 	std::copy(reinterpret_cast<const uint8_t*>(data), reinterpret_cast<const uint8_t*>(data) + dataSize, uploadBufferAllocation.cpuAddress);
 
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
 	vertexBufferView.BufferLocation = vertexBufferAllocation.gpuAddress;
 	vertexBufferView.SizeInBytes = dataSize;
 	vertexBufferView.StrideInBytes = vertexStride;
-
-	if (vertexBufferAllocation.bufferResource == nullptr)
-		throw std::exception("ResourceManager::CreateVertexBuffer: Vertex Buffer Resource is null!");
-
-	if (uploadBufferAllocation.bufferResource == nullptr)
-		throw std::exception("ResourceManager::CreateVertexBuffer: Upload Buffer Resource is null!");
 
 	commandList->CopyBufferRegion(vertexBufferAllocation.bufferResource, vertexBufferAllocation.gpuPageOffset, uploadBufferAllocation.bufferResource,
 		0, uploadBufferAllocation.bufferResource->GetDesc().Width);
@@ -52,9 +52,15 @@ Graphics::IndexBufferId Graphics::ResourceManager::CreateIndexBuffer(const void*
 {
 	BufferAllocation indexBufferAllocation{};
 	bufferAllocator.Allocate(device, dataSize, 64 * _KB, D3D12_HEAP_TYPE_DEFAULT, indexBufferAllocation);
+	
 	BufferAllocation uploadBufferAllocation{};
-
 	bufferAllocator.AllocateTemporaryUpload(device, dataSize, uploadBufferAllocation);
+
+	if (indexBufferAllocation.bufferResource == nullptr)
+		throw std::exception("ResourceManager::CreateIndexBuffer: Index Buffer Resource is null!");
+
+	if (uploadBufferAllocation.bufferResource == nullptr)
+		throw std::exception("ResourceManager::CreateIndexBuffer: Upload Buffer Resource is null!");
 
 	std::copy(reinterpret_cast<const uint8_t*>(data), reinterpret_cast<const uint8_t*>(data) + dataSize, uploadBufferAllocation.cpuAddress);
 
@@ -62,12 +68,6 @@ Graphics::IndexBufferId Graphics::ResourceManager::CreateIndexBuffer(const void*
 	indexBufferView.BufferLocation = indexBufferAllocation.gpuAddress;
 	indexBufferView.SizeInBytes = dataSize;
 	indexBufferView.Format = (indexStride == 4) ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
-
-	if (indexBufferAllocation.bufferResource == nullptr)
-		throw std::exception("ResourceManager::CreateIndexBuffer: Index Buffer Resource is null!");
-
-	if (uploadBufferAllocation.bufferResource == nullptr)
-		throw std::exception("ResourceManager::CreateIndexBuffer: Upload Buffer Resource is null!");
 
 	commandList->CopyBufferRegion(indexBufferAllocation.bufferResource, indexBufferAllocation.gpuPageOffset, uploadBufferAllocation.bufferResource,
 		0, uploadBufferAllocation.bufferResource->GetDesc().Width);
@@ -88,6 +88,9 @@ Graphics::ConstantBufferId Graphics::ResourceManager::CreateConstantBuffer(const
 {
 	BufferAllocation constantBufferAllocation{};
 	bufferAllocator.Allocate(device, dataSize, 64 * _KB, D3D12_HEAP_TYPE_UPLOAD, constantBufferAllocation);
+
+	if (constantBufferAllocation.bufferResource == nullptr)
+		throw std::exception("ResourceManager::CreateConstantBuffer: Buffer Resource is null!");
 
 	DescriptorAllocation constantBufferDescriptorAllocation{};
 	descriptorAllocator.Allocate(device, false, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, constantBufferDescriptorAllocation);
@@ -204,13 +207,13 @@ Graphics::BufferId Graphics::ResourceManager::CreateBuffer(const void* data, siz
 	BufferAllocation uploadBufferAllocation{};
 	bufferAllocator.AllocateTemporaryUpload(device, dataSize, uploadBufferAllocation);
 
-	std::copy(reinterpret_cast<const uint8_t*>(data), reinterpret_cast<const uint8_t*>(data) + dataSize, uploadBufferAllocation.cpuAddress);
-
 	if (bufferAllocation.bufferResource == nullptr)
 		throw std::exception("ResourceManager::CreateBuffer: Buffer Resource is null!");
 
 	if (uploadBufferAllocation.bufferResource == nullptr)
 		throw std::exception("ResourceManager::CreateBuffer: Upload Buffer Resource is null!");
+
+	std::copy(reinterpret_cast<const uint8_t*>(data), reinterpret_cast<const uint8_t*>(data) + dataSize, uploadBufferAllocation.cpuAddress);
 
 	commandList->CopyBufferRegion(bufferAllocation.bufferResource, bufferAllocation.gpuPageOffset, uploadBufferAllocation.bufferResource,
 		0, uploadBufferAllocation.bufferResource->GetDesc().Width);
@@ -444,13 +447,13 @@ Graphics::RWBufferId Graphics::ResourceManager::CreateRWBuffer(const void* initi
 	BufferAllocation uploadBufferAllocation{};
 	bufferAllocator.AllocateTemporaryUpload(device, dataSize, uploadBufferAllocation);
 
-	std::copy(reinterpret_cast<const uint8_t*>(initialData), reinterpret_cast<const uint8_t*>(initialData) + dataSize, uploadBufferAllocation.cpuAddress);
-
 	if (bufferAllocation.bufferResource == nullptr)
 		throw std::exception("ResourceManager::CreateRWBuffer: RWBuffer Resource is null!");
 
 	if (uploadBufferAllocation.bufferResource == nullptr)
 		throw std::exception("ResourceManager::CreateRWBuffer: Upload Buffer Resource is null!");
+
+	std::copy(reinterpret_cast<const uint8_t*>(initialData), reinterpret_cast<const uint8_t*>(initialData) + dataSize, uploadBufferAllocation.cpuAddress);
 
 	commandList->CopyBufferRegion(bufferAllocation.bufferResource, bufferAllocation.gpuPageOffset, uploadBufferAllocation.bufferResource,
 		0, uploadBufferAllocation.bufferResource->GetDesc().Width);
@@ -473,7 +476,7 @@ Graphics::RWBufferId Graphics::ResourceManager::CreateRWBuffer(const void* initi
 	unorderedAccessViewDesc.Buffer.Flags = (bufferStride == 1) ? D3D12_BUFFER_UAV_FLAG_RAW : D3D12_BUFFER_UAV_FLAG_NONE;
 	unorderedAccessViewDesc.Buffer.NumElements = numElements;
 	unorderedAccessViewDesc.Buffer.StructureByteStride = (bufferStride > 1) ? bufferStride : 0;
-
+	
 	DescriptorAllocation unorderedAccessDescriptorAllocation{};
 	descriptorAllocator.Allocate(device, false, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, unorderedAccessDescriptorAllocation);
 
@@ -490,6 +493,9 @@ Graphics::RWBufferId Graphics::ResourceManager::CreateRWBuffer(const void* initi
 	{
 		BufferAllocation counterBufferAllocation{};
 		bufferAllocator.AllocateUnorderedAccess(device, 4, 64 * _KB, counterBufferAllocation);
+
+		if (counterBufferAllocation.bufferResource == nullptr)
+			throw std::exception("ResourceManager::CreateRWBuffer: Counter Resource is null!");
 
 		device->CreateUnorderedAccessView(bufferAllocation.bufferResource, counterBufferAllocation.bufferResource, &unorderedAccessViewDesc,
 			unorderedAccessDescriptorAllocation.descriptorBase);

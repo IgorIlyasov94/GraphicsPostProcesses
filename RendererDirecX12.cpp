@@ -129,19 +129,22 @@ void Graphics::RendererDirectX12::OnLostFocus()
 	bufferIndex = swapChain->GetCurrentBackBufferIndex();
 }
 
+void Graphics::RendererDirectX12::FrameStart()
+{
+	ThrowIfFailed(commandAllocator[bufferIndex]->Reset(), "RendererDirectX12::FrameStart: Command Allocator resetting error!");
+	ThrowIfFailed(commandList->Reset(commandAllocator[bufferIndex].Get(), nullptr), "RendererDirectX12::FrameStart: Command List resetting error!");
+
+	ID3D12DescriptorHeap* descHeaps[] = { resourceManager.GetShaderResourceViewDescriptorHeap() };
+	commandList->SetDescriptorHeaps(_countof(descHeaps), descHeaps);
+}
+
 void Graphics::RendererDirectX12::FrameRender()
 {
-	ThrowIfFailed(commandAllocator[bufferIndex]->Reset(), "RendererDirectX12::FrameRender: Command Allocator resetting error!");
-	ThrowIfFailed(commandList->Reset(commandAllocator[bufferIndex].Get(), nullptr), "RendererDirectX12::FrameRender: Command List resetting error!");
-
 	SetResourceBarrier(commandList.Get(), resourceManager.GetSwapChainBuffer(bufferIndex), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
 	commandList->RSSetViewports(1, &sceneViewport);
 	commandList->RSSetScissorRects(1, &sceneScissorRect);
 	
-	ID3D12DescriptorHeap* descHeaps[] = { resourceManager.GetShaderResourceViewDescriptorHeap() };
-	commandList->SetDescriptorHeaps(_countof(descHeaps), descHeaps);
-
 	D3D12_CPU_DESCRIPTOR_HANDLE multiplyRenderTarget[] =
 	{
 		resourceManager.GetRenderTargetDescriptorBase(sceneRenderTargetId[0]),
@@ -170,6 +173,11 @@ void Graphics::RendererDirectX12::FrameRender()
 	ThrowIfFailed(swapChain->Present(1, 0), "RendererDirectX12::FrameRender: Frame not presented!");
 
 	PrepareNextFrame();
+}
+
+ID3D12GraphicsCommandList* Graphics::RendererDirectX12::GetCommandList() const
+{
+	return commandList.Get();
 }
 
 void Graphics::RendererDirectX12::PrepareNextFrame()

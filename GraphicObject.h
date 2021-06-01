@@ -2,6 +2,7 @@
 
 #include "Mesh.h"
 #include "Material.h"
+#include "ComputeObject.h"
 
 namespace Graphics
 {
@@ -13,9 +14,11 @@ namespace Graphics
 
 		void AssignMesh(const Mesh* newMesh);
 		void AssignMaterial(const Material* newMaterial);
+		void AssignComputeObject(const ComputeObject* newComputeObject);
 
 		const BoundingBox& GetBoundingBox() const noexcept;
 
+		void Execute(ID3D12GraphicsCommandList* commandList) const;
 		void Draw(ID3D12GraphicsCommandList* commandList) const;
 
 	private:
@@ -29,5 +32,6 @@ namespace Graphics
 
 		const Mesh* mesh;
 		const Material* material;
+		const ComputeObject* computeObject;
 	};
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "RendererDirectX12.h"
+#include "SceneManager.h"
 
 namespace Graphics
 {
@@ -8,8 +9,7 @@ namespace Graphics
 	{
 	public:
 		static CommonHandler& GetInstance();
-		RendererDirectX12& getRenderer();
-
+		
 		void Initialize(HWND& windowHandler);
 		void Update();
 		void Stop();
@@ -32,5 +32,6 @@ namespace Graphics
 		bool inFocus;
 
 		RendererDirectX12& renderer = RendererDirectX12::GetInstance();
+		SceneManager& sceneManager = SceneManager::GetInstance();
 	};
 }

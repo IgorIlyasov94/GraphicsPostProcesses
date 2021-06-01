@@ -13,11 +13,6 @@ Graphics::CommonHandler& Graphics::CommonHandler::GetInstance()
 	return instance;
 }
 
-Graphics::RendererDirectX12& Graphics::CommonHandler::getRenderer()
-{
-	return renderer;
-}
-
 void Graphics::CommonHandler::Initialize(HWND& windowHandler)
 {
 	renderer.Initialize(windowHandler);
@@ -25,6 +20,10 @@ void Graphics::CommonHandler::Initialize(HWND& windowHandler)
 
 void Graphics::CommonHandler::Update()
 {
+	renderer.FrameStart();
+
+	sceneManager.ExecuteScripts(renderer.GetCommandList());
+
 	renderer.FrameRender();
 }
 
