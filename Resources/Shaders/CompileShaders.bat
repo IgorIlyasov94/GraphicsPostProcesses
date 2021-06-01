@@ -37,4 +37,6 @@ ECHO ON
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
 %dxcCmd% /Zi /E"main" /Vn"meshStandardPixelShader" /Tps_6_0 /Fh"MeshStandard.psh.h" /nologo MeshStandard.psh
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
+%dxcCmd% /Zi /E"main" /Vn"addPointLightToBufferCS" /Tcs_6_0 /Fh"AddPointLightToBufferCS.hlsl.h" /nologo AddPointLightToBufferCS.hlsl
+@IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
 ECHO Done.

@@ -16,3 +16,4 @@
 /Resources/Shaders/GaussianBlurY.psh.h
 /Resources/Shaders/GaussianBlurX.psh.h
 /Resources/Shaders/AntiAliasing.psh.h
+/Resources/Shaders/AddPointLightToBufferCS.hlsl.h
