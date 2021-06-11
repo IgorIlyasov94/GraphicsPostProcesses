@@ -1,10 +1,10 @@
-cbuffer CB : register( b0 )
+cbuffer CB : register(b0)
 {
 	float3 position;
 	float radius;
 	float3 color;
 	float intensity;
-	uint pointLightNumber;
+	uint pointLightId;
 };
 
 struct PointLight
@@ -15,7 +15,7 @@ struct PointLight
 	uint intensity;
 };
 
-RWStructuredBuffer<PointLight> pointLightBuffer : register( u0 );
+RWStructuredBuffer<PointLight> pointLightBuffer : register(u0);
 
 [numthreads(1, 1, 1)]
 void main(uint3 dispatchThreadId : SV_DispatchThreadID)
@@ -26,5 +26,5 @@ void main(uint3 dispatchThreadId : SV_DispatchThreadID)
 	pointLight.color = color;
 	pointLight.intensity = intensity;
 	
-	pointLightBuffer[pointLightNumber] = pointLight;
+	pointLightBuffer[pointLightId] = pointLight;
 }
