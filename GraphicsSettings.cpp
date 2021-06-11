@@ -4,6 +4,7 @@ void Graphics::GraphicsSettings::SetStandard()
 {
 	resolutionX = 1920;
 	resolutionY = 1080;
+
 	toggleFullscreen = false;
 }
 
@@ -34,4 +35,5 @@ Graphics::GraphicsSettings::~GraphicsSettings()
 
 uint32_t Graphics::GraphicsSettings::resolutionX = 1920;
 uint32_t Graphics::GraphicsSettings::resolutionY = 1080;
+
 bool Graphics::GraphicsSettings::toggleFullscreen = true;

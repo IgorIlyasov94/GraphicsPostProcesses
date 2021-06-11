@@ -72,12 +72,12 @@ void Graphics::RendererDirectX12::Initialize(HWND& windowHandler)
 	sceneDepthStencilId = resourceManager.CreateDepthStencil(GraphicsSettings::GetResolutionX(), GraphicsSettings::GetResolutionY(), 32);
 
 	//Test
-	sceneManager.InitializeTestScene(device.Get());
+	sceneManager.InitializeTestScene(device.Get(), commandList.Get());
 
 	postProcesses.Initialize(device.Get(), commandList.Get(), GraphicsSettings::GetResolutionX(), GraphicsSettings::GetResolutionY(), sceneViewport, sceneScissorRect,
 		sceneRenderTargetId[0], sceneRenderTargetId[1], sceneDepthStencilId);
 	postProcesses.EnableAA();
-	//postProcesses.EnableHDR(float3(1.4f, 0.6f, 0.9f), 0.6f, 0.8f, 5.0f, 10.0f);
+	postProcesses.EnableHDR(float3(1.4f, 0.6f, 0.9f), 0.6f, 0.8f, 5.0f, 10.0f);
 
 	postProcesses.Compose(device.Get(), commandList.Get());
 

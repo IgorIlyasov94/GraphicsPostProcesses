@@ -50,9 +50,14 @@ bool Graphics::Camera::BoundingBoxInScope(const BoundingBox& boundingBox) const
 	return true;
 }
 
-const float4x4& Graphics::Camera::GetViewProjection()
+const float4x4& Graphics::Camera::GetViewProjection() const
 {
 	return viewProjection;
+}
+
+const float4x4& Graphics::Camera::GetInvViewProjection() const
+{
+	return invViewProjection;
 }
 
 void Graphics::Camera::Update()

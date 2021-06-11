@@ -4,9 +4,9 @@
 
 Graphics::SceneManager& Graphics::SceneManager::GetInstance()
 {
-	static SceneManager sceneManager;
+	static SceneManager instance;
 
-	return sceneManager;
+	return instance;
 }
 
 Graphics::Scene* Graphics::SceneManager::CreateNewScene()
@@ -16,7 +16,7 @@ Graphics::Scene* Graphics::SceneManager::CreateNewScene()
 	return &scenes.back();
 }
 
-void Graphics::SceneManager::InitializeTestScene(ID3D12Device* device)
+void Graphics::SceneManager::InitializeTestScene(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
 {
 	const float fovAngleY = XM_PI / 4.0f;
 	const float aspectRatio = GraphicsSettings::GetResolutionX() / static_cast<float>(GraphicsSettings::GetResolutionY());
@@ -25,39 +25,50 @@ void Graphics::SceneManager::InitializeTestScene(ID3D12Device* device)
 
 	camera = std::make_shared<Camera>(fovAngleY, aspectRatio, nearZ, farZ);
 
-	camera->Move({ -5.0f, 2.0f, -5.0f });
-	camera->LookAt({ 0.0f, 0.0f, 0.0f });
+	camera->Move({ 0.0f, 0.0f, -10.0f });
+	camera->LookAt({ 0.0f, 3.0f, 0.0f });
 
 	camera->Update();
 
 	currentScene = CreateNewScene();
 
-	cubeMesh = std::make_shared<Mesh>("Resources\\Meshes\\Cube.obj");
-	cubeMaterial = std::make_shared<Material>();
+	currentScene->GetLightingSystem()->CreatePointLight(float3(0.0f, 0.0f, 0.0f), float3(1.0f, 0.5f, 0.7f), 2.0f, 1.0f, false);
+	currentScene->GetLightingSystem()->CreatePointLight(float3(1.0f, 0.0f, 0.0f), float3(0.5f, 0.5f, 0.7f), 2.0f, 1.0f, false);
+	currentScene->GetLightingSystem()->CreatePointLight(float3(0.0f, 0.0f, 1.0f), float3(0.0f, 1.0f, 0.7f), 2.0f, 1.0f, false);
 
-	cubeMaterial->SetVertexFormat(cubeMesh->GetVertexFormat());
-	cubeMaterial->SetVertexShader({ meshStandardVertexShader, sizeof(meshStandardVertexShader) });
-	cubeMaterial->SetPixelShader({ meshStandardPixelShader, sizeof(meshStandardPixelShader) });
-	cubeMaterial->SetDepthTest(true);
-	cubeMaterial->SetDepthStencilFormat(32);
-	cubeMaterial->SetCullMode(D3D12_CULL_MODE_NONE);
-	cubeMaterial->SetRenderTargetFormat(0, DXGI_FORMAT_R16G16B16A16_FLOAT);
-	cubeMaterial->SetRenderTargetFormat(1, DXGI_FORMAT_R8G8B8A8_SNORM);
+	currentScene->GetLightingSystem()->ComposeLightBuffer(device, commandList);
 
-	cubeConstBuffer.world = XMMatrixIdentity();
-	cubeConstBuffer.wvp = camera->GetViewProjection();
+	goldenFrameMesh = std::shared_ptr<Mesh>(new Mesh("Resources\\Meshes\\GoldenFrame.obj", true, false, true));
+	goldenFrameMaterial = std::make_shared<Material>();
 
-	cubeConstBufferId = cubeMaterial->SetConstantBuffer(0, &cubeConstBuffer, sizeof(cubeConstBuffer));
+	goldenFrameMaterial->SetVertexFormat(goldenFrameMesh->GetVertexFormat());
+	goldenFrameMaterial->SetVertexShader({ meshStandardVertexShader, sizeof(meshStandardVertexShader) });
+	goldenFrameMaterial->SetPixelShader({ meshStandardPixelShader, sizeof(meshStandardPixelShader) });
+	goldenFrameMaterial->SetDepthTest(true);
+	goldenFrameMaterial->SetDepthStencilFormat(32);
+	goldenFrameMaterial->SetCullMode(D3D12_CULL_MODE_BACK);
+	goldenFrameMaterial->SetRenderTargetFormat(0, DXGI_FORMAT_R16G16B16A16_FLOAT);
+	goldenFrameMaterial->SetRenderTargetFormat(1, DXGI_FORMAT_R8G8B8A8_SNORM);
 
-	cubeMaterial->Compose(device);
+	goldenFrameConstBuffer.world = XMMatrixIdentity();
+	goldenFrameConstBuffer.wvp = camera->GetViewProjection();
 
-	cube = std::make_shared<GraphicObject>();
-	cube->AssignMesh(cubeMesh.get());
-	cube->AssignMaterial(cubeMaterial.get());
+	goldenFrameConstBufferId = goldenFrameMaterial->SetConstantBuffer(0, &goldenFrameConstBuffer, sizeof(goldenFrameConstBuffer));
+
+	goldenFrameMaterial->AssignBuffer(0, currentScene->GetLightingSystem()->GetLightBufferId());
+	goldenFrameMaterial->AssignTexture(1, currentScene->GetLightingSystem()->GetLightClusterId());
+
+	goldenFrameMaterial->Compose(device);
+
+	goldenFrame = std::make_shared<GraphicObject>();
+	goldenFrame->AssignMesh(goldenFrameMesh.get());
+	goldenFrame->AssignMaterial(goldenFrameMaterial.get());
+
+	/*cubeMeshSecond = std::make_shared<Mesh>("Resources\\Meshes\\CubeTest.obj");
 
 	cubeSecondMaterial = std::make_shared<Material>();
 
-	cubeSecondMaterial->SetVertexFormat(cubeMesh->GetVertexFormat());
+	cubeSecondMaterial->SetVertexFormat(cubeMeshSecond->GetVertexFormat());
 	cubeSecondMaterial->SetVertexShader({ meshStandardVertexShader, sizeof(meshStandardVertexShader) });
 	cubeSecondMaterial->SetPixelShader({ meshStandardPixelShader, sizeof(meshStandardPixelShader) });
 	cubeSecondMaterial->SetDepthTest(true);
@@ -74,12 +85,17 @@ void Graphics::SceneManager::InitializeTestScene(ID3D12Device* device)
 	cubeSecondMaterial->Compose(device);
 
 	cubeSecond = std::make_shared<GraphicObject>();
-	cubeSecond->AssignMesh(cubeMesh.get());
-	cubeSecond->AssignMaterial(cubeSecondMaterial.get());
+	cubeSecond->AssignMesh(cubeMeshSecond.get());
+	cubeSecond->AssignMaterial(cubeSecondMaterial.get());*/
 
 	currentScene->SetMainCamera(camera.get());
-	currentScene->EmplaceGraphicObject(cube.get(), false);
-	currentScene->EmplaceGraphicObject(cubeSecond.get(), false);
+	currentScene->EmplaceGraphicObject(goldenFrame.get(), false);
+	//currentScene->EmplaceGraphicObject(cubeSecond.get(), false);
+}
+
+void Graphics::SceneManager::ExecuteScripts(ID3D12GraphicsCommandList* commandList)
+{
+	currentScene->ExecuteScripts(commandList);
 }
 
 void Graphics::SceneManager::DrawCurrentScene(ID3D12GraphicsCommandList* commandList)
@@ -89,27 +105,29 @@ void Graphics::SceneManager::DrawCurrentScene(ID3D12GraphicsCommandList* command
 
 	cameraShift += 0.005f;
 
-	camera->Move(float3(std::cos(cameraShift) * 5.0f, 2.0f, std::sin(cameraShift) * 5.0f));
+	//camera->Move(float3(std::cos(cameraShift) * 7.0f, std::sin(cameraShift) * 7.0f, -2.0f));
+	//camera->LookAt(float3(std::cos(cameraShift) * 7.0f, std::sin(cameraShift) * 7.0f, 0.0f));
+	camera->Move(float3(std::cos(cameraShift) * 13.0f, 3.0f, std::sin(cameraShift) * 13.0f));
 	camera->Update();
 
-	cubeConstBuffer.wvp = camera->GetViewProjection();
+	goldenFrameConstBuffer.wvp = camera->GetViewProjection();
 
-	float3 translation = float3(-std::cos(cameraShift) * 10.0f, -5.0f, -std::sin(cameraShift) * 10.0f);
+	/*float3 translation = float3(-std::cos(cameraShift) * 10.0f, -5.0f, -std::sin(cameraShift) * 10.0f);
 	float3 rotationOrigin = float3(0.0f, 0.0f, 0.0f);
 	floatN rotation = XMQuaternionRotationRollPitchYaw(0.0f, XM_PI / 4.0f, 0.0f);
 	float3 scale = float3(5.0f, 5.0f, 5.0f);
 
 	cubeSecondConstBuffer.world = XMMatrixAffineTransformation(XMLoadFloat3(&scale), XMLoadFloat3(&rotationOrigin), rotation, XMLoadFloat3(&translation));
-	cubeSecondConstBuffer.wvp = XMMatrixMultiply(cubeSecondConstBuffer.world, camera->GetViewProjection());
+	cubeSecondConstBuffer.wvp = XMMatrixMultiply(cubeSecondConstBuffer.world, camera->GetViewProjection());*/
 
-	cubeMaterial->UpdateConstantBuffer(cubeConstBufferId, &cubeConstBuffer, sizeof(cubeConstBuffer));
-	cubeSecondMaterial->UpdateConstantBuffer(cubeSecondConstBufferId, &cubeSecondConstBuffer, sizeof(cubeSecondConstBuffer));
+	goldenFrameMaterial->UpdateConstantBuffer(goldenFrameConstBufferId, &goldenFrameConstBuffer, sizeof(goldenFrameConstBuffer));
+	//cubeSecondMaterial->UpdateConstantBuffer(cubeSecondConstBufferId, &cubeSecondConstBuffer, sizeof(cubeSecondConstBuffer));
 
 	currentScene->Draw(commandList);
 }
 
 Graphics::SceneManager::SceneManager()
-	: currentScene(nullptr), cubeConstBuffer{}, cameraShift{}
+	: currentScene(nullptr), goldenFrameConstBuffer{}, cameraShift{}
 {
 	
 }

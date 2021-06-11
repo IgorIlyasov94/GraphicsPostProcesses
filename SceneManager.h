@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Scene.h"
+#include "LightingSystem.h"
 
 namespace Graphics
 {
@@ -11,8 +12,9 @@ namespace Graphics
 
 		Scene* CreateNewScene();
 
-		void InitializeTestScene(ID3D12Device* device);
+		void InitializeTestScene(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 
+		void ExecuteScripts(ID3D12GraphicsCommandList* commandList);
 		void DrawCurrentScene(ID3D12GraphicsCommandList* commandList);
 
 	private:
@@ -30,27 +32,31 @@ namespace Graphics
 
 		//temp
 
-		std::shared_ptr<GraphicObject> cube;
-		std::shared_ptr<Material> cubeMaterial;
-		std::shared_ptr<Mesh> cubeMesh;
-
-		std::shared_ptr<GraphicObject> cubeSecond;
+		std::shared_ptr<GraphicObject> goldenFrame;
+		std::shared_ptr<ComputeObject> goldenFrameCompute;
+		std::shared_ptr<Material> goldenFrameMaterial;
+		std::shared_ptr<Mesh> goldenFrameMesh;
+		
+		/*std::shared_ptr<GraphicObject> cubeSecond;
 		std::shared_ptr<Material> cubeSecondMaterial;
+		std::shared_ptr<Mesh> cubeMeshSecond;*/
 
-		ConstantBufferId cubeConstBufferId;
-		ConstantBufferId cubeSecondConstBufferId;
+		ConstantBufferId goldenFrameConstBufferId;
+		//ConstantBufferId cubeSecondConstBufferId;
 
 		float cameraShift;
 
-		struct CubeConstBuffer
+		struct StandardMeshConstBuffer
 		{
 			float4x4 world;
 			float4x4 wvp;
 		};
 
-		CubeConstBuffer cubeConstBuffer;
-		CubeConstBuffer cubeSecondConstBuffer;
+		StandardMeshConstBuffer goldenFrameConstBuffer;
+		//StandardMeshConstBuffer cubeSecondConstBuffer;
 
 		std::shared_ptr<Camera> camera;
+
+		ResourceManager& resourceManager = ResourceManager::GetInstance();
 	};
 }

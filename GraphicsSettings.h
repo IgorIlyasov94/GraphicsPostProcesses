@@ -20,6 +20,7 @@ namespace Graphics
 
 		static uint32_t resolutionX;
 		static uint32_t resolutionY;
+
 		static bool toggleFullscreen;
 	};
 }

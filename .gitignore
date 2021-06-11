@@ -17,3 +17,6 @@
 /Resources/Shaders/GaussianBlurX.psh.h
 /Resources/Shaders/AntiAliasing.psh.h
 /Resources/Shaders/AddPointLightToBufferCS.hlsl.h
+/Resources/Shaders/SetPointLightCS.hlsl.h
+/Resources/Shaders/DistributePointLightCS.hlsl.h
+/Resources/Shaders/CalculateClusterCoordinatesCS.hlsl.h

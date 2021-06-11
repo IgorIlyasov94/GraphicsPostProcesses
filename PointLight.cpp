@@ -17,27 +17,27 @@ Graphics::PointLight::~PointLight()
 
 }
 
-const float3& Graphics::PointLight::GetPosition()
+const float3& Graphics::PointLight::GetPosition() const
 {
 	return position;
 }
 
-const float3& Graphics::PointLight::GetColor()
+const float3& Graphics::PointLight::GetColor() const
 {
 	return color;
 }
 
-const float& Graphics::PointLight::GetRadius()
+const float& Graphics::PointLight::GetRadius() const
 {
 	return radius;
 }
 
-const float& Graphics::PointLight::GetIntensity()
+const float& Graphics::PointLight::GetIntensity() const
 {
 	return intensity;
 }
 
-const bool& Graphics::PointLight::IsShadowCaster()
+const bool& Graphics::PointLight::IsShadowCaster() const
 {
 	return isShadowCaster;
 }

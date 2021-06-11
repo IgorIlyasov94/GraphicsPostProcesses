@@ -6,12 +6,19 @@ Graphics::Scene::Scene()
 	const uint32_t octreeDepth = 5;
 	const BoundingBox octreeBoundingBox = { {-1024.0f, -1024.0f, -1024.0f}, {1024.0f, 1024.0f, 1024.0f} };
 
-	octree = std::make_shared<Octree>(octreeDepth, octreeBoundingBox);
+	octree = std::shared_ptr<Octree>(new Octree(octreeDepth, octreeBoundingBox));
+
+	lightingSystem = std::shared_ptr<LightingSystem>(new LightingSystem());
 }
 
 Graphics::Scene::~Scene()
 {
 
+}
+
+Graphics::LightingSystem* Graphics::Scene::GetLightingSystem()
+{
+	return lightingSystem.get();
 }
 
 void Graphics::Scene::SetMainCamera(const Camera* camera)
@@ -48,6 +55,8 @@ void Graphics::Scene::ExecuteScripts(ID3D12GraphicsCommandList* commandList)
 
 	for (auto& visibleObject : visibleObjectsList)
 		visibleObject->Execute(commandList);
+
+	lightingSystem->UpdateCluster(commandList, mainCamera->GetInvViewProjection());
 }
 
 void Graphics::Scene::Draw(ID3D12GraphicsCommandList* commandList) const

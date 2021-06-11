@@ -24,8 +24,6 @@ struct Output
 	float4 color : SV_TARGET;
 };
 
-static const int SIZE_DENOMINATOR = 2;
-
 Output main(Input input)
 {
 	Output output = (Output)0;

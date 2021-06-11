@@ -37,6 +37,10 @@ ECHO ON
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
 %dxcCmd% /Zi /E"main" /Vn"meshStandardPixelShader" /Tps_6_0 /Fh"MeshStandard.psh.h" /nologo MeshStandard.psh
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
-%dxcCmd% /Zi /E"main" /Vn"addPointLightToBufferCS" /Tcs_6_0 /Fh"AddPointLightToBufferCS.hlsl.h" /nologo AddPointLightToBufferCS.hlsl
+%dxcCmd% /Zi /E"main" /Vn"setPointLightCS" /Tcs_6_0 /Fh"SetPointLightCS.hlsl.h" /nologo SetPointLightCS.hlsl
+@IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
+%dxcCmd% /Zi /E"main" /Vn"distributePointLightCS" /Tcs_6_0 /Fh"DistributePointLightCS.hlsl.h" /nologo DistributePointLightCS.hlsl
+@IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
+%dxcCmd% /Zi /E"main" /Vn"calculateClusterCoordinatesCS" /Tcs_6_0 /Fh"CalculateClusterCoordinatesCS.hlsl.h" /nologo CalculateClusterCoordinatesCS.hlsl
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
 ECHO Done.
