@@ -395,6 +395,7 @@ Graphics::RWTextureId Graphics::ResourceManager::CreateRWTexture(const TextureIn
 	{
 		shaderResourceViewDesc.Texture3D.MipLevels = 1;
 		unorderedAccessViewDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE3D;
+		unorderedAccessViewDesc.Texture3D.WSize = textureInfo.depth;
 	}
 	else if (shaderResourceViewDesc.ViewDimension == D3D12_SRV_DIMENSION_TEXTURE1DARRAY)
 	{
