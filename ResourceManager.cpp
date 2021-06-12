@@ -29,15 +29,15 @@ Graphics::VertexBufferId Graphics::ResourceManager::CreateVertexBuffer(const voi
 
 	std::copy(reinterpret_cast<const uint8_t*>(data), reinterpret_cast<const uint8_t*>(data) + dataSize, uploadBufferAllocation.cpuAddress);
 
-	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
-	vertexBufferView.BufferLocation = vertexBufferAllocation.gpuAddress;
-	vertexBufferView.SizeInBytes = dataSize;
-	vertexBufferView.StrideInBytes = vertexStride;
-
 	commandList->CopyBufferRegion(vertexBufferAllocation.bufferResource, vertexBufferAllocation.gpuPageOffset, uploadBufferAllocation.bufferResource,
 		0, uploadBufferAllocation.bufferResource->GetDesc().Width);
 
 	SetResourceBarrier(commandList, vertexBufferAllocation.bufferResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+
+	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
+	vertexBufferView.BufferLocation = vertexBufferAllocation.gpuAddress;
+	vertexBufferView.SizeInBytes = dataSize;
+	vertexBufferView.StrideInBytes = vertexStride;
 
 	VertexBuffer vertexBuffer{};
 	vertexBuffer.vertexBufferAllocation = vertexBufferAllocation;
@@ -185,7 +185,6 @@ Graphics::TextureId Graphics::ResourceManager::CreateTexture(const std::vector<u
 
 	DescriptorAllocation shaderResourceDescriptorAllocation{};
 	descriptorAllocator.Allocate(device, false, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, shaderResourceDescriptorAllocation);
-
 	device->CreateShaderResourceView(textureAllocation.textureResource, &shaderResourceViewDesc, shaderResourceDescriptorAllocation.descriptorBase);
 
 	Texture texture{};
@@ -202,7 +201,7 @@ Graphics::TextureId Graphics::ResourceManager::CreateTexture(const std::vector<u
 Graphics::BufferId Graphics::ResourceManager::CreateBuffer(const void* data, size_t dataSize, uint32_t bufferStride, uint32_t numElements, DXGI_FORMAT format)
 {
 	BufferAllocation bufferAllocation{};
-	bufferAllocator.AllocateUnorderedAccess(device, dataSize, 64 * _KB, bufferAllocation);
+	bufferAllocator.Allocate(device, dataSize, 64 * _KB, D3D12_HEAP_TYPE_DEFAULT, bufferAllocation);
 
 	BufferAllocation uploadBufferAllocation{};
 	bufferAllocator.AllocateTemporaryUpload(device, dataSize, uploadBufferAllocation);
@@ -440,7 +439,8 @@ Graphics::RWTextureId Graphics::ResourceManager::CreateRWTexture(const TextureIn
 	return RWTextureId(rwTexturePool.size() - 1);
 }
 
-Graphics::RWBufferId Graphics::ResourceManager::CreateRWBuffer(const void* initialData, size_t dataSize, uint32_t bufferStride, uint32_t numElements, DXGI_FORMAT format)
+Graphics::RWBufferId Graphics::ResourceManager::CreateRWBuffer(const void* initialData, size_t dataSize, uint32_t bufferStride, uint32_t numElements, DXGI_FORMAT format,
+	bool addCounter)
 {
 	BufferAllocation bufferAllocation{};
 	bufferAllocator.AllocateUnorderedAccess(device, dataSize, 64 * _KB, bufferAllocation);
@@ -456,8 +456,12 @@ Graphics::RWBufferId Graphics::ResourceManager::CreateRWBuffer(const void* initi
 
 	std::copy(reinterpret_cast<const uint8_t*>(initialData), reinterpret_cast<const uint8_t*>(initialData) + dataSize, uploadBufferAllocation.cpuAddress);
 
+	SetResourceBarrier(commandList, bufferAllocation.bufferResource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_DEST);
+
 	commandList->CopyBufferRegion(bufferAllocation.bufferResource, bufferAllocation.gpuPageOffset, uploadBufferAllocation.bufferResource,
 		0, uploadBufferAllocation.bufferResource->GetDesc().Width);
+
+	SetResourceBarrier(commandList, bufferAllocation.bufferResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc{};
 	shaderResourceViewDesc.Format = (bufferStride == 0) ? format : (bufferStride == 1) ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_UNKNOWN;
@@ -493,10 +497,14 @@ Graphics::RWBufferId Graphics::ResourceManager::CreateRWBuffer(const void* initi
 	else
 	{
 		BufferAllocation counterBufferAllocation{};
-		bufferAllocator.AllocateUnorderedAccess(device, 4, 64 * _KB, counterBufferAllocation);
 
-		if (counterBufferAllocation.bufferResource == nullptr)
-			throw std::exception("ResourceManager::CreateRWBuffer: Counter Resource is null!");
+		if (addCounter)
+		{
+			bufferAllocator.AllocateUnorderedAccess(device, 4, 64 * _KB, counterBufferAllocation);
+
+			if (counterBufferAllocation.bufferResource == nullptr)
+				throw std::exception("ResourceManager::CreateRWBuffer: Counter Resource is null!");
+		}
 
 		device->CreateUnorderedAccessView(bufferAllocation.bufferResource, counterBufferAllocation.bufferResource, &unorderedAccessViewDesc,
 			unorderedAccessDescriptorAllocation.descriptorBase);

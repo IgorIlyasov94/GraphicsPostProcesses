@@ -141,7 +141,7 @@ namespace Graphics
 		RenderTargetId CreateRenderTarget(uint64_t width, uint32_t height, DXGI_FORMAT format);
 		DepthStencilId CreateDepthStencil(uint64_t width, uint32_t height, uint32_t depthBit);
 		RWTextureId CreateRWTexture(const TextureInfo& textureInfo);
-		RWBufferId CreateRWBuffer(const void* initialData, size_t dataSize, uint32_t bufferStride, uint32_t numElements, DXGI_FORMAT format);
+		RWBufferId CreateRWBuffer(const void* initialData, size_t dataSize, uint32_t bufferStride, uint32_t numElements, DXGI_FORMAT format, bool addCounter);
 
 		void CreateSwapChainBuffers(IDXGISwapChain4* swapChain, uint32_t buffersCount);
 
