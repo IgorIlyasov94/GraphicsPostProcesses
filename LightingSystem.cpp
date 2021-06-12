@@ -17,12 +17,12 @@ Graphics::PointLightId Graphics::LightingSystem::CreatePointLight(PointLight&& p
 	return PointLightId(pointLights.size() - 1);
 }
 
-Graphics::RWBufferId Graphics::LightingSystem::GetLightBufferId()
+Graphics::RWBufferId Graphics::LightingSystem::GetLightBufferId() const
 {
 	return pointLightBufferId;
 }
 
-Graphics::RWTextureId Graphics::LightingSystem::GetLightClusterId()
+Graphics::RWTextureId Graphics::LightingSystem::GetLightClusterId() const
 {
 	return pointLightClusterId;
 }
@@ -33,10 +33,9 @@ void Graphics::LightingSystem::ComposeLightBuffer(ID3D12Device* device, ID3D12Gr
 		return;
 
 	{
-		float4 zero4{};
-		std::vector<float4> initialClusterData(CLUSTER_SIZE * 2, zero4);
+		std::vector<float4> initialClusterData(CLUSTER_SIZE * 2, float4());
 
-		clusterDataBufferId = resourceManager.CreateRWBuffer(initialClusterData.data(), CLUSTER_SIZE * sizeof(float4) * 2, sizeof(float4) * 2, CLUSTER_SIZE, DXGI_FORMAT_UNKNOWN);
+		clusterDataBufferId = resourceManager.CreateRWBuffer(initialClusterData.data(), initialClusterData.size() * sizeof(float4), sizeof(float4) * 2, CLUSTER_SIZE, DXGI_FORMAT_UNKNOWN, false);
 
 		std::vector<PointLightBufferElement> pointLightBufferData(pointLights.size());
 
@@ -49,7 +48,7 @@ void Graphics::LightingSystem::ComposeLightBuffer(ID3D12Device* device, ID3D12Gr
 		}
 
 		pointLightBufferId = resourceManager.CreateRWBuffer(pointLightBufferData.data(), pointLightBufferData.size() * sizeof(PointLightBufferElement), sizeof(PointLightBufferElement),
-			pointLightBufferData.size(), DXGI_FORMAT_UNKNOWN);
+			pointLightBufferData.size(), DXGI_FORMAT_UNKNOWN, false);
 
 		TextureInfo pointLightClusterInfo{};
 		pointLightClusterInfo.width = CLUSTER_SIZE_X * CLUSTER_LIGHTS_PER_CELL + 1;
@@ -127,7 +126,7 @@ void Graphics::LightingSystem::UpdateCluster(ID3D12GraphicsCommandList* commandL
 	calculateClusterCoordinatesCO->UpdateConstantBuffer(clusterDataConstBufferId, &calculateClusterConstBuffer, sizeof(calculateClusterConstBuffer));
 
 	calculateClusterCoordinatesCO->Present(commandList);
-
+	
 	SetUAVBarrier(commandList, resourceManager.GetRWBuffer(pointLightBufferId).bufferAllocation.bufferResource);
 	SetUAVBarrier(commandList, resourceManager.GetRWBuffer(clusterDataBufferId).bufferAllocation.bufferResource);
 

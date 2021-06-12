@@ -42,8 +42,8 @@ namespace Graphics
 		PointLightId CreatePointLight(float3 position, float3 color, float radius, float intensity, bool isShadowCaster);
 		PointLightId CreatePointLight(PointLight&& pointLight);
 
-		RWBufferId GetLightBufferId();
-		RWTextureId GetLightClusterId();
+		RWBufferId GetLightBufferId() const;
+		RWTextureId GetLightClusterId() const;
 
 		void ComposeLightBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 

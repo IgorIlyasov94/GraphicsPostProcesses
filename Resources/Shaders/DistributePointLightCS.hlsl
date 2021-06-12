@@ -26,7 +26,7 @@ static const uint CLUSTER_SIZE_X = 8;
 static const uint CLUSTER_SIZE_Y = 6;
 static const uint CLUSTER_SIZE_Z = 6;
 static const uint CLUSTER_SIZE = CLUSTER_SIZE_X * CLUSTER_SIZE_Y * CLUSTER_SIZE_Z;
-static const uint CLUSTER_LIGHTS_PER_CELL = 256;
+static const uint CLUSTER_LIGHTS_PER_CELL = 128;
 
 bool IntersectionSphereAndBoundingBox(Sphere sphere, BoundingBox boundingBox)
 {
