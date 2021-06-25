@@ -21,21 +21,21 @@ EXIT /b 1
 ECHO DXC Path: %dxcCmd%
 ECHO Start compiling shaders...
 ECHO ON
-%dxcCmd% /Zi /E"main" /Vn"quadVertexShader" /Tvs_6_0 /Fh"ScreenQuad.vsh.h" /nologo ScreenQuad.vsh
+%dxcCmd% /Zi /E"main" /Vn"screenQuadVS" /Tvs_6_0 /Fh"ScreenQuadVS.hlsl.h" /nologo ScreenQuadVS.hlsl
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
-%dxcCmd% /Zi /E"main" /Vn"antiAliasingPixelShader" /Tps_6_0 /Fh"AntiAliasing.psh.h" /nologo AntiAliasing.psh
+%dxcCmd% /Zi /E"main" /Vn"antiAliasingPS" /Tps_6_0 /Fh"AntiAliasingPS.hlsl.h" /nologo AntiAliasingPS.hlsl
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
-%dxcCmd% /Zi /E"main" /Vn"gaussianBlurXPixelShader" /Tps_6_0 /Fh"GaussianBlurX.psh.h" /nologo GaussianBlurX.psh
+%dxcCmd% /Zi /E"main" /Vn"gaussianBlurXPS" /Tps_6_0 /Fh"GaussianBlurXPS.hlsl.h" /nologo GaussianBlurXPS.hlsl
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
-%dxcCmd% /Zi /E"main" /Vn"gaussianBlurYPixelShader" /Tps_6_0 /Fh"GaussianBlurY.psh.h" /nologo GaussianBlurY.psh
+%dxcCmd% /Zi /E"main" /Vn"gaussianBlurYPS" /Tps_6_0 /Fh"GaussianBlurYPS.hlsl.h" /nologo GaussianBlurYPS.hlsl
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
-%dxcCmd% /Zi /E"main" /Vn"toneMappingPixelShader" /Tps_6_0 /Fh"HDRToneMapping.psh.h" /nologo HDRToneMapping.psh
+%dxcCmd% /Zi /E"main" /Vn"toneMappingPS" /Tps_6_0 /Fh"HDRToneMappingPS.hlsl.h" /nologo HDRToneMappingPS.hlsl
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
-%dxcCmd% /Zi /E"main" /Vn"brightPassPixelShader" /Tps_6_0 /Fh"HDRBrightPass.psh.h" /nologo HDRBrightPass.psh
+%dxcCmd% /Zi /E"main" /Vn"brightPassPS" /Tps_6_0 /Fh"HDRBrightPassPS.hlsl.h" /nologo HDRBrightPassPS.hlsl
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
-%dxcCmd% /Zi /E"main" /Vn"meshStandardVertexShader" /Tvs_6_0 /Fh"MeshStandard.vsh.h" /nologo MeshStandard.vsh
+%dxcCmd% /Zi /E"main" /Vn"meshStandardVS" /Tvs_6_0 /Fh"MeshStandardVS.hlsl.h" /nologo MeshStandardVS.hlsl
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
-%dxcCmd% /Zi /E"main" /Vn"meshStandardPixelShader" /Tps_6_0 /Fh"MeshStandard.psh.h" /nologo MeshStandard.psh
+%dxcCmd% /Zi /E"main" /Vn"meshStandardPS" /Tps_6_0 /Fh"MeshStandardPS.hlsl.h" /nologo MeshStandardPS.hlsl
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
 %dxcCmd% /Zi /E"main" /Vn"setPointLightCS" /Tcs_6_0 /Fh"SetPointLightCS.hlsl.h" /nologo SetPointLightCS.hlsl
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)

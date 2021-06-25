@@ -1,7 +1,25 @@
-cbuffer CB : register(b0)
+cbuffer ImmutableGlobalConstBuffer : register(b0)
+{
+	float4x4 projection;
+	float4x4 invProjection;
+	float zNear;
+	float zFar;
+	float2 zLinearizeCoeff;
+};
+
+cbuffer GlobalConstBuffer : register(b1)
+{
+	float4x4 view;
+	float4x4 invView;
+	float4x4 viewProjection;
+	float4x4 invViewProjection;
+	float3 cameraPosition;
+	float padding;
+};
+
+cbuffer LocalConstBuffer : register(b2)
 {
 	float4x4 world;
-	float4x4 worldView;
 	float4x4 worldViewProj;
 };
 
@@ -29,7 +47,7 @@ Output main(Input input, uint vertexId : SV_VertexID)
 	output.normal = normalize(mul((float3x3) world, input.normal).xyz);
 	output.texCoord = input.texCoord;
 	output.clipCoord = output.position;
-	output.viewCoord = mul(worldView, float4(input.position, 1.0f));
+	output.worldCoord = mul(world, float4(input.position, 1.0f));
 	
 	return output;
 }

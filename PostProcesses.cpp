@@ -1,10 +1,10 @@
 #include "PostProcesses.h"
-#include "Resources/Shaders/ScreenQuad.vsh.h"
-#include "Resources/Shaders/AntiAliasing.psh.h"
-#include "Resources/Shaders/GaussianBlurX.psh.h"
-#include "Resources/Shaders/GaussianBlurY.psh.h"
-#include "Resources/Shaders/HDRBrightPass.psh.h"
-#include "Resources/Shaders/HDRToneMapping.psh.h"
+#include "Resources/Shaders/ScreenQuadVS.hlsl.h"
+#include "Resources/Shaders/AntiAliasingPS.hlsl.h"
+#include "Resources/Shaders/GaussianBlurXPS.hlsl.h"
+#include "Resources/Shaders/GaussianBlurYPS.hlsl.h"
+#include "Resources/Shaders/HDRBrightPassPS.hlsl.h"
+#include "Resources/Shaders/HDRToneMappingPS.hlsl.h"
 
 Graphics::PostProcesses::PostProcesses()
 	: sceneViewport{}, isAAEnabled{}, isHDREnabled{}, isComposed{}, aaConstantBuffer{}, hdrConstantBuffer{}
@@ -130,8 +130,8 @@ void Graphics::PostProcesses::Compose(ID3D12Device* device, ID3D12GraphicsComman
 		antiAliasingMaterial->AssignRenderTexture(0, srcRenderTarget);
 		antiAliasingMaterial->AssignRenderTexture(1, normalRenderTargetId);
 		antiAliasingMaterial->AssignDepthTexture(2, sceneDepthStencilId);
-		antiAliasingMaterial->SetVertexShader({ quadVertexShader, sizeof(quadVertexShader) });
-		antiAliasingMaterial->SetPixelShader({ antiAliasingPixelShader, sizeof(antiAliasingPixelShader) });
+		antiAliasingMaterial->SetVertexShader({ screenQuadVS, sizeof(screenQuadVS) });
+		antiAliasingMaterial->SetPixelShader({ antiAliasingPS, sizeof(antiAliasingPS) });
 		antiAliasingMaterial->SetRenderTargetFormat(0, (isHDREnabled) ? DXGI_FORMAT_R16G16B16A16_FLOAT : DXGI_FORMAT_R8G8B8A8_UNORM);
 		antiAliasingMaterial->SetConstantBuffer(0, &aaConstantBuffer, sizeof(AAConstantBuffer));
 		antiAliasingMaterial->SetSampler(0, D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
@@ -155,8 +155,8 @@ void Graphics::PostProcesses::Compose(ID3D12Device* device, ID3D12GraphicsComman
 			brightPassMaterial = std::make_shared<Material>();
 			brightPassMaterial->SetVertexFormat(VertexFormat::POSITION_TEXCOORD);
 			brightPassMaterial->AssignRenderTexture(0, srcRenderTarget);
-			brightPassMaterial->SetVertexShader({ quadVertexShader, sizeof(quadVertexShader) });
-			brightPassMaterial->SetPixelShader({ brightPassPixelShader, sizeof(brightPassPixelShader) });
+			brightPassMaterial->SetVertexShader({ screenQuadVS, sizeof(screenQuadVS) });
+			brightPassMaterial->SetPixelShader({ brightPassPS, sizeof(brightPassPS) });
 			brightPassMaterial->SetRenderTargetFormat(0, DXGI_FORMAT_R8G8B8A8_UNORM);
 
 			hdrConstantBufferId = brightPassMaterial->SetConstantBuffer(0, &hdrConstantBuffer, sizeof(HDRConstantBuffer));
@@ -172,8 +172,8 @@ void Graphics::PostProcesses::Compose(ID3D12Device* device, ID3D12GraphicsComman
 			gaussianBlurXMaterial = std::make_shared<Material>();
 			gaussianBlurXMaterial->SetVertexFormat(VertexFormat::POSITION_TEXCOORD);
 			gaussianBlurXMaterial->AssignRenderTexture(0, intermediate8bQuartTargetId[0]);
-			gaussianBlurXMaterial->SetVertexShader({ quadVertexShader, sizeof(quadVertexShader) });
-			gaussianBlurXMaterial->SetPixelShader({ gaussianBlurXPixelShader, sizeof(gaussianBlurXPixelShader) });
+			gaussianBlurXMaterial->SetVertexShader({ screenQuadVS, sizeof(screenQuadVS) });
+			gaussianBlurXMaterial->SetPixelShader({ gaussianBlurXPS, sizeof(gaussianBlurXPS) });
 			gaussianBlurXMaterial->SetRenderTargetFormat(0, DXGI_FORMAT_R8G8B8A8_UNORM);
 
 			gaussianBlurXMaterial->Compose(device);
@@ -187,8 +187,8 @@ void Graphics::PostProcesses::Compose(ID3D12Device* device, ID3D12GraphicsComman
 			gaussianBlurYMaterial = std::make_shared<Material>();
 			gaussianBlurYMaterial->SetVertexFormat(VertexFormat::POSITION_TEXCOORD);
 			gaussianBlurYMaterial->AssignRenderTexture(0, intermediate8bQuartTargetId[1]);
-			gaussianBlurYMaterial->SetVertexShader({ quadVertexShader, sizeof(quadVertexShader) });
-			gaussianBlurYMaterial->SetPixelShader({ gaussianBlurYPixelShader, sizeof(gaussianBlurYPixelShader) });
+			gaussianBlurYMaterial->SetVertexShader({ screenQuadVS, sizeof(screenQuadVS) });
+			gaussianBlurYMaterial->SetPixelShader({ gaussianBlurYPS, sizeof(gaussianBlurYPS) });
 			gaussianBlurYMaterial->SetRenderTargetFormat(0, DXGI_FORMAT_R8G8B8A8_UNORM);
 
 			gaussianBlurYMaterial->Compose(device);
@@ -203,8 +203,8 @@ void Graphics::PostProcesses::Compose(ID3D12Device* device, ID3D12GraphicsComman
 			toneMappingMaterial->SetVertexFormat(VertexFormat::POSITION_TEXCOORD);
 			toneMappingMaterial->AssignRenderTexture(0, srcRenderTarget);
 			toneMappingMaterial->AssignRenderTexture(1, intermediate8bQuartTargetId[0]);
-			toneMappingMaterial->SetVertexShader({ quadVertexShader, sizeof(quadVertexShader) });
-			toneMappingMaterial->SetPixelShader({ toneMappingPixelShader, sizeof(toneMappingPixelShader) });
+			toneMappingMaterial->SetVertexShader({ screenQuadVS, sizeof(screenQuadVS) });
+			toneMappingMaterial->SetPixelShader({ toneMappingPS, sizeof(toneMappingPS) });
 			toneMappingMaterial->SetRenderTargetFormat(0, DXGI_FORMAT_R8G8B8A8_UNORM);
 			toneMappingMaterial->AssignConstantBuffer(0, hdrConstantBufferId);
 			toneMappingMaterial->SetSampler(0, D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
