@@ -141,6 +141,9 @@
     <ClCompile Include="ComputeObject.cpp">
       <Filter>Исходные файлы\GraphicsSceneManagement\GraphicsObjects</Filter>
     </ClCompile>
+    <ClCompile Include="ParticleSystemManager.cpp">
+      <Filter>Исходные файлы\GraphicsSceneManagement\GraphicsObjects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -219,6 +222,9 @@
       <Filter>Файлы заголовков\GraphicsCore\GraphicsLightingSystem</Filter>
     </ClInclude>
     <ClInclude Include="ComputeObject.h">
+      <Filter>Файлы заголовков\GraphicsSceneManagement\GraphicsObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="ParticleSystemManager.h">
       <Filter>Файлы заголовков\GraphicsSceneManagement\GraphicsObjects</Filter>
     </ClInclude>
   </ItemGroup>

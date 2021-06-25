@@ -7,31 +7,7 @@
 
 namespace Graphics
 {
-	template<uint8_t Category>
-	class LightId
-	{
-	public:
-		LightId()
-			: value(0), category(Category)
-		{
-
-		}
-
-		LightId(uint32_t resourceId)
-			: value(resourceId), category(Category)
-		{
-
-		}
-
-		uint32_t value;
-
-	private:
-		friend class LightingSystem;
-
-		uint8_t category;
-	};
-
-	using PointLightId = typename LightId<0>;
+	using PointLightId = typename ResourceId<20>;
 
 	class LightingSystem
 	{
