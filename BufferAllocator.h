@@ -11,6 +11,7 @@ namespace Graphics
 		static BufferAllocator& GetInstance();
 
 		void Allocate(ID3D12Device* device, size_t size, size_t alignment, D3D12_HEAP_TYPE heapType, BufferAllocation& allocation);
+		void AllocateCustomBuffer(ID3D12Device* device, size_t size, size_t alignment, BufferAllocation& allocation);
 		void AllocateUnorderedAccess(ID3D12Device* device, size_t size, size_t alignment, BufferAllocation& allocation);
 		void AllocateTemporaryUpload(ID3D12Device* device, size_t size, BufferAllocation& allocation);
 
@@ -27,7 +28,7 @@ namespace Graphics
 
 		using BufferAllocationPagePool = std::deque<std::shared_ptr<BufferAllocationPage>>;
 
-		void Allocate(ID3D12Device* device, size_t size, size_t alignment, D3D12_HEAP_TYPE heapType, bool unorderedAccess, BufferAllocationPagePool& emptyPagePool,
+		void Allocate(ID3D12Device* device, size_t size, size_t alignment, D3D12_HEAP_TYPE heapType, bool unorderedAccess, bool isUniqueBuffer, BufferAllocationPagePool& emptyPagePool,
 			BufferAllocationPagePool& usedPagePool, std::shared_ptr<BufferAllocationPage>& currentPage, BufferAllocation& allocation);
 
 		void SetNewPageAsCurrent(ID3D12Device* device, D3D12_HEAP_TYPE heapType, bool unorderedAccess, BufferAllocationPagePool& emptyPagePool,
@@ -35,14 +36,17 @@ namespace Graphics
 
 		BufferAllocationPagePool usedDefaultPages;
 		BufferAllocationPagePool usedUploadPages;
+		BufferAllocationPagePool usedCustomPages;
 		BufferAllocationPagePool usedUnorderedPages;
 
 		BufferAllocationPagePool emptyDefaultPages;
 		BufferAllocationPagePool emptyUploadPages;
+		BufferAllocationPagePool emptyCustomPages;
 		BufferAllocationPagePool emptyUnorderedPages;
 
 		std::shared_ptr<BufferAllocationPage> currentDefaultPage;
 		std::shared_ptr<BufferAllocationPage> currentUploadPage;
+		std::shared_ptr<BufferAllocationPage> currentCustomPage;
 		std::shared_ptr<BufferAllocationPage> currentUnorderedPage;
 
 		BufferAllocationPagePool tempUploadPages;

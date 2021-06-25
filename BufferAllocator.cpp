@@ -14,27 +14,35 @@ void Graphics::BufferAllocator::Allocate(ID3D12Device* device, size_t size, size
 
 	if (heapType == D3D12_HEAP_TYPE_DEFAULT)
 	{
-		Allocate(device, size, alignment, heapType, false, emptyDefaultPages, usedDefaultPages, currentDefaultPage, allocation);
+		Allocate(device, size, alignment, heapType, false, false, emptyDefaultPages, usedDefaultPages, currentDefaultPage, allocation);
 	}
 	else if (heapType == D3D12_HEAP_TYPE_UPLOAD)
 	{
-		Allocate(device, size, alignment, heapType, false, emptyUploadPages, usedUploadPages, currentUploadPage, allocation);
+		Allocate(device, size, alignment, heapType, false, false, emptyUploadPages, usedUploadPages, currentUploadPage, allocation);
 	}
+}
+
+void Graphics::BufferAllocator::AllocateCustomBuffer(ID3D12Device* device, size_t size, size_t alignment, BufferAllocation& allocation)
+{
+	if (size > pageSize)
+		throw std::exception("BufferAllocator::AllocateCustomBuffer: Bad allocation");
+
+	Allocate(device, size, alignment, D3D12_HEAP_TYPE_DEFAULT, false, true, emptyCustomPages, usedCustomPages, currentCustomPage, allocation);
 }
 
 void Graphics::BufferAllocator::AllocateUnorderedAccess(ID3D12Device* device, size_t size, size_t alignment, BufferAllocation& allocation)
 {
 	if (size > pageSize)
-		throw std::exception("BufferAllocator::Allocate: Bad allocation");
+		throw std::exception("BufferAllocator::AllocateUnorderedAccess: Bad allocation");
 
-	Allocate(device, size, alignment, D3D12_HEAP_TYPE_DEFAULT, true, emptyUnorderedPages, usedUnorderedPages, currentUnorderedPage, allocation);
+	Allocate(device, size, alignment, D3D12_HEAP_TYPE_DEFAULT, true, true, emptyUnorderedPages, usedUnorderedPages, currentUnorderedPage, allocation);
 }
 
 void Graphics::BufferAllocator::AllocateTemporaryUpload(ID3D12Device* device, size_t size, BufferAllocation& allocation)
 {
 	tempUploadPages.push_back(std::shared_ptr<BufferAllocationPage>(new BufferAllocationPage(device, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_FLAG_NONE, size)));
 
-	tempUploadPages[tempUploadPages.size() - 1]->Allocate(size, 1, allocation);
+	tempUploadPages.back()->Allocate(size, 1, allocation);
 }
 
 void Graphics::BufferAllocator::ReleaseTemporaryBuffers()
@@ -42,10 +50,10 @@ void Graphics::BufferAllocator::ReleaseTemporaryBuffers()
 	tempUploadPages.clear();
 }
 
-void Graphics::BufferAllocator::Allocate(ID3D12Device* device, size_t size, size_t alignment, D3D12_HEAP_TYPE heapType, bool unorderedAccess,
+void Graphics::BufferAllocator::Allocate(ID3D12Device* device, size_t size, size_t alignment, D3D12_HEAP_TYPE heapType, bool unorderedAccess , bool isUniqueBuffer,
 	BufferAllocationPagePool& emptyPagePool, BufferAllocationPagePool& usedPagePool, std::shared_ptr<BufferAllocationPage>& currentPage, BufferAllocation& allocation)
 {
-	if (!currentPage || !currentPage->HasSpace(size, alignment))
+	if (!currentPage || !currentPage->HasSpace(size, alignment) || isUniqueBuffer)
 		SetNewPageAsCurrent(device, heapType, unorderedAccess, emptyPagePool, usedPagePool, currentPage);
 
 	currentPage->Allocate(size, alignment, allocation);

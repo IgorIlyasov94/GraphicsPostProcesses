@@ -201,7 +201,7 @@ Graphics::TextureId Graphics::ResourceManager::CreateTexture(const std::vector<u
 Graphics::BufferId Graphics::ResourceManager::CreateBuffer(const void* data, size_t dataSize, uint32_t bufferStride, uint32_t numElements, DXGI_FORMAT format)
 {
 	BufferAllocation bufferAllocation{};
-	bufferAllocator.Allocate(device, dataSize, 64 * _KB, D3D12_HEAP_TYPE_DEFAULT, bufferAllocation);
+	bufferAllocator.AllocateCustomBuffer(device, dataSize, 64 * _KB, bufferAllocation);
 
 	BufferAllocation uploadBufferAllocation{};
 	bufferAllocator.AllocateTemporaryUpload(device, dataSize, uploadBufferAllocation);
