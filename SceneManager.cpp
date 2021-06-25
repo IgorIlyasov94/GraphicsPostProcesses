@@ -1,6 +1,6 @@
 #include "SceneManager.h"
-#include "Resources/Shaders/MeshStandard.vsh.h"
-#include "Resources/Shaders/MeshStandard.psh.h"
+#include "Resources/Shaders/MeshStandardVS.hlsl.h"
+#include "Resources/Shaders/MeshStandardPS.hlsl.h"
 
 Graphics::SceneManager& Graphics::SceneManager::GetInstance()
 {
@@ -26,45 +26,56 @@ void Graphics::SceneManager::InitializeTestScene(ID3D12Device* device, ID3D12Gra
 	camera = std::make_shared<Camera>(fovAngleY, aspectRatio, nearZ, farZ);
 
 	camera->Move({ 0.0f, 0.0f, -10.0f });
-	camera->LookAt({ 0.0f, 3.0f, 0.0f });
+	camera->LookAt({ 0.0f, 0.5f, 0.0f });
 
 	camera->Update();
 
+	immutableGlobalConstBuffer.projection = camera->GetProjection();
+	immutableGlobalConstBuffer.invProjection = camera->GetInvProjection();
+	immutableGlobalConstBuffer.zNear = nearZ;
+	immutableGlobalConstBuffer.zFar = farZ;
+	immutableGlobalConstBuffer.zLinearizeCoeff = { (1.0f - farZ / nearZ) / farZ, 1.0f / nearZ };
+
+	immutableGlobalConstBufferId = resourceManager.CreateConstantBuffer(&immutableGlobalConstBuffer, sizeof(immutableGlobalConstBuffer));
+	globalConstBufferId = resourceManager.CreateConstantBuffer(&globalConstBuffer, sizeof(globalConstBuffer));
+
 	currentScene = CreateNewScene();
 
-	currentScene->GetLightingSystem()->CreatePointLight(float3(0.0f, 0.0f, 0.0f), float3(1.0f, 0.5f, 0.7f), 2.0f, 1.0f, false);
-	currentScene->GetLightingSystem()->CreatePointLight(float3(1.0f, 0.0f, 0.0f), float3(0.5f, 0.5f, 0.7f), 2.0f, 1.0f, false);
-	currentScene->GetLightingSystem()->CreatePointLight(float3(0.0f, 0.0f, 1.0f), float3(0.0f, 1.0f, 0.7f), 2.0f, 1.0f, false);
-
-	currentScene->GetLightingSystem()->ComposeLightBuffer(device, commandList);
-
-	goldenFrameMesh = std::shared_ptr<Mesh>(new Mesh("Resources\\Meshes\\GoldenFrame.obj", true, false, true));
+	currentScene->GetLightingSystem()->CreatePointLight(float3(0.0f, 10.0f, 0.0f), float3(0.0f, 1.0f, 0.0f), 15.0f, 1.0f, false);
+	currentScene->GetLightingSystem()->CreatePointLight(float3(4.0f, 5.0f, 0.0f), float3(1.0f, 0.0f, 0.0f), 4.0f, 1.0f, false);
+	currentScene->GetLightingSystem()->CreatePointLight(float3(-4.0f, 5.0f, 0.0f), float3(0.0f, 0.0f, 1.0f), 5.0f, 1.0f, false);
+	
+	currentScene->GetLightingSystem()->ComposeLightBuffer(device, commandList, immutableGlobalConstBufferId, globalConstBufferId);
+	
+	goldenFrameMesh = std::shared_ptr<Mesh>(new Mesh("Resources\\Meshes\\Cube.obj", true, false, false));
 	goldenFrameMaterial = std::make_shared<Material>();
 
 	goldenFrameMaterial->SetVertexFormat(goldenFrameMesh->GetVertexFormat());
-	goldenFrameMaterial->SetVertexShader({ meshStandardVertexShader, sizeof(meshStandardVertexShader) });
-	goldenFrameMaterial->SetPixelShader({ meshStandardPixelShader, sizeof(meshStandardPixelShader) });
+	goldenFrameMaterial->SetVertexShader({ meshStandardVS, sizeof(meshStandardVS) });
+	goldenFrameMaterial->SetPixelShader({ meshStandardPS, sizeof(meshStandardPS) });
 	goldenFrameMaterial->SetDepthTest(true);
 	goldenFrameMaterial->SetDepthStencilFormat(32);
 	goldenFrameMaterial->SetCullMode(D3D12_CULL_MODE_BACK);
 	goldenFrameMaterial->SetRenderTargetFormat(0, DXGI_FORMAT_R16G16B16A16_FLOAT);
 	goldenFrameMaterial->SetRenderTargetFormat(1, DXGI_FORMAT_R8G8B8A8_SNORM);
+	goldenFrameMaterial->AssignConstantBuffer(0, immutableGlobalConstBufferId);
+	goldenFrameMaterial->AssignConstantBuffer(1, globalConstBufferId);
 
 	goldenFrameConstBuffer.world = XMMatrixIdentity();
 	goldenFrameConstBuffer.wvp = camera->GetViewProjection();
 
-	goldenFrameConstBufferId = goldenFrameMaterial->SetConstantBuffer(0, &goldenFrameConstBuffer, sizeof(goldenFrameConstBuffer));
-
+	goldenFrameConstBufferId = goldenFrameMaterial->SetConstantBuffer(2, &goldenFrameConstBuffer, sizeof(goldenFrameConstBuffer));
+	
 	goldenFrameMaterial->AssignBuffer(0, currentScene->GetLightingSystem()->GetLightBufferId());
 	goldenFrameMaterial->AssignTexture(1, currentScene->GetLightingSystem()->GetLightClusterId());
-
+	
 	goldenFrameMaterial->Compose(device);
 
 	goldenFrame = std::make_shared<GraphicObject>();
 	goldenFrame->AssignMesh(goldenFrameMesh.get());
 	goldenFrame->AssignMaterial(goldenFrameMaterial.get());
 
-	/*cubeMeshSecond = std::make_shared<Mesh>("Resources\\Meshes\\CubeTest.obj");
+	/*cubeMeshSecond = std::make_shared<Mesh>("Resources\\Meshes\\Cube.obj", true, false, false);
 
 	cubeSecondMaterial = std::make_shared<Material>();
 
@@ -82,6 +93,9 @@ void Graphics::SceneManager::InitializeTestScene(ID3D12Device* device, ID3D12Gra
 
 	cubeSecondConstBufferId = cubeSecondMaterial->SetConstantBuffer(0, &cubeSecondConstBuffer, sizeof(cubeSecondConstBuffer));
 
+	cubeSecondMaterial->AssignBuffer(0, currentScene->GetLightingSystem()->GetLightBufferId());
+	cubeSecondMaterial->AssignTexture(1, currentScene->GetLightingSystem()->GetLightClusterId());
+	
 	cubeSecondMaterial->Compose(device);
 
 	cubeSecond = std::make_shared<GraphicObject>();
@@ -105,21 +119,35 @@ void Graphics::SceneManager::DrawCurrentScene(ID3D12GraphicsCommandList* command
 
 	cameraShift += 0.005f;
 
-	//camera->Move(float3(std::cos(cameraShift) * 7.0f, std::sin(cameraShift) * 7.0f, -2.0f));
-	//camera->LookAt(float3(std::cos(cameraShift) * 7.0f, std::sin(cameraShift) * 7.0f, 0.0f));
-	camera->Move(float3(std::cos(cameraShift) * 13.0f, 3.0f, std::sin(cameraShift) * 13.0f));
+	camera->Move(float3(std::cos(cameraShift) * 15.0f, 7.0f, std::sin(cameraShift) * 15.0f));
+	camera->LookAt(float3(0.0f, 3.0f, 0.0f));
+	//camera->Move(float3(std::cos(cameraShift) * 4.0f, 2.0f, -6.0f));
 	camera->Update();
+	
+	globalConstBuffer.view = camera->GetView();
+	globalConstBuffer.viewProjection = camera->GetViewProjection();
+	globalConstBuffer.invView = camera->GetInvView();
+	globalConstBuffer.invViewProjection = camera->GetInvProjection();
+	globalConstBuffer.cameraPosition = camera->GetPosition();
 
-	goldenFrameConstBuffer.wvp = camera->GetViewProjection();
+	resourceManager.UpdateConstantBuffer(globalConstBufferId, &globalConstBuffer, sizeof(globalConstBuffer));
 
-	/*float3 translation = float3(-std::cos(cameraShift) * 10.0f, -5.0f, -std::sin(cameraShift) * 10.0f);
+	float3 translation = float3(1.0f, 0.0f, 1.0f);
 	float3 rotationOrigin = float3(0.0f, 0.0f, 0.0f);
-	floatN rotation = XMQuaternionRotationRollPitchYaw(0.0f, XM_PI / 4.0f, 0.0f);
-	float3 scale = float3(5.0f, 5.0f, 5.0f);
+	floatN rotation = XMQuaternionRotationRollPitchYaw(0.0f, 0.0f, 0.0f);
+	float3 scale = float3(2.0f, 10.0f, 2.0f);
+	
+	goldenFrameConstBuffer.world = XMMatrixAffineTransformation(XMLoadFloat3(&scale), XMLoadFloat3(&rotationOrigin), rotation, XMLoadFloat3(&translation));
+	goldenFrameConstBuffer.wvp = XMMatrixMultiply(goldenFrameConstBuffer.world, camera->GetViewProjection());// XMMatrixMultiply(goldenFrameConstBuffer.world, camera->GetViewProjection());
+	
+	/*float3 translation2 = float3(0.0f, 0.0f, 30.0f);
+	float3 rotationOrigin2 = float3(0.0f, 0.0f, 0.0f);
+	floatN rotation2 = XMQuaternionRotationRollPitchYaw(0.0f, 0.0f, 0.0f);
+	float3 scale2 = float3(20.0f, 20.0f, 20.0f);
 
-	cubeSecondConstBuffer.world = XMMatrixAffineTransformation(XMLoadFloat3(&scale), XMLoadFloat3(&rotationOrigin), rotation, XMLoadFloat3(&translation));
+	cubeSecondConstBuffer.world = XMMatrixAffineTransformation(XMLoadFloat3(&scale2), XMLoadFloat3(&rotationOrigin2), rotation2, XMLoadFloat3(&translation2));
 	cubeSecondConstBuffer.wvp = XMMatrixMultiply(cubeSecondConstBuffer.world, camera->GetViewProjection());*/
-
+	
 	goldenFrameMaterial->UpdateConstantBuffer(goldenFrameConstBufferId, &goldenFrameConstBuffer, sizeof(goldenFrameConstBuffer));
 	//cubeSecondMaterial->UpdateConstantBuffer(cubeSecondConstBufferId, &cubeSecondConstBuffer, sizeof(cubeSecondConstBuffer));
 
@@ -127,7 +155,7 @@ void Graphics::SceneManager::DrawCurrentScene(ID3D12GraphicsCommandList* command
 }
 
 Graphics::SceneManager::SceneManager()
-	: currentScene(nullptr), goldenFrameConstBuffer{}, cameraShift{}
+	: currentScene(nullptr), immutableGlobalConstBuffer{}, globalConstBuffer{}, goldenFrameConstBuffer{}, cameraShift{}
 {
 	
 }

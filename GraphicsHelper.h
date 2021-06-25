@@ -103,6 +103,8 @@ namespace Graphics
 	void SetResourceBarrier(ID3D12GraphicsCommandList* commandList, ID3D12Resource* const resource, D3D12_RESOURCE_STATES resourceBarrierStateBefore,
 		D3D12_RESOURCE_STATES resourceBarrierStateAfter, D3D12_RESOURCE_BARRIER_TYPE resourceBarrierType = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION);
 
+	void SetResourceBarrier(ID3D12GraphicsCommandList* commandList, ID3D12Resource* const resource, D3D12_RESOURCE_STATES resourceBarrierStateAfter);
+
 	void SetUAVBarrier(ID3D12GraphicsCommandList* commandList, ID3D12Resource* const resource);
 
 	bool CheckBoxInBox(const BoundingBox& sourceBox, const BoundingBox& destinationBox) noexcept;

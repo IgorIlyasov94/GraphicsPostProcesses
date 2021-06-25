@@ -56,7 +56,7 @@ void Graphics::Scene::ExecuteScripts(ID3D12GraphicsCommandList* commandList)
 	for (auto& visibleObject : visibleObjectsList)
 		visibleObject->Execute(commandList);
 
-	lightingSystem->UpdateCluster(commandList, mainCamera->GetInvViewProjection());
+	lightingSystem->UpdateCluster(commandList);
 }
 
 void Graphics::Scene::Draw(ID3D12GraphicsCommandList* commandList) const

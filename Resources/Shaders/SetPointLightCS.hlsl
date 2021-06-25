@@ -5,6 +5,7 @@ cbuffer CB : register(b0)
 	float3 color;
 	float intensity;
 	uint pointLightId;
+	float3 padding;
 };
 
 struct PointLight

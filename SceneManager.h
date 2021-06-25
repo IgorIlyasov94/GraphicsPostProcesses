@@ -37,14 +37,36 @@ namespace Graphics
 		std::shared_ptr<Material> goldenFrameMaterial;
 		std::shared_ptr<Mesh> goldenFrameMesh;
 		
-		/*std::shared_ptr<GraphicObject> cubeSecond;
+		std::shared_ptr<GraphicObject> cubeSecond;
 		std::shared_ptr<Material> cubeSecondMaterial;
-		std::shared_ptr<Mesh> cubeMeshSecond;*/
+		std::shared_ptr<Mesh> cubeMeshSecond;
 
 		ConstantBufferId goldenFrameConstBufferId;
-		//ConstantBufferId cubeSecondConstBufferId;
+		ConstantBufferId cubeSecondConstBufferId;
+
+		ConstantBufferId immutableGlobalConstBufferId;
+		ConstantBufferId globalConstBufferId;
 
 		float cameraShift;
+
+		struct ImmutableGlobalConstBuffer
+		{
+			float4x4 projection;
+			float4x4 invProjection;
+			float zNear;
+			float zFar;
+			float2 zLinearizeCoeff;
+		};
+
+		struct GlobalConstBuffer
+		{
+			float4x4 view;
+			float4x4 invView;
+			float4x4 viewProjection;
+			float4x4 invViewProjection;
+			float3 cameraPosition;
+			float padding;
+		};
 
 		struct StandardMeshConstBuffer
 		{
@@ -53,7 +75,10 @@ namespace Graphics
 		};
 
 		StandardMeshConstBuffer goldenFrameConstBuffer;
-		//StandardMeshConstBuffer cubeSecondConstBuffer;
+		StandardMeshConstBuffer cubeSecondConstBuffer;
+
+		ImmutableGlobalConstBuffer immutableGlobalConstBuffer;
+		GlobalConstBuffer globalConstBuffer;
 
 		std::shared_ptr<Camera> camera;
 

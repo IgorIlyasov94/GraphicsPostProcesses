@@ -45,12 +45,14 @@ namespace Graphics
 		RWBufferId GetLightBufferId() const;
 		RWTextureId GetLightClusterId() const;
 
-		void ComposeLightBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
+		RWBufferId GetClusterId() const;
+
+		void ComposeLightBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, ConstantBufferId _immutableGlobalConstBufferId, ConstantBufferId _globalConstBufferId);
 
 		void SetPointLight(ID3D12GraphicsCommandList* commandList, const PointLightId& pointLightId, const PointLight& pointLight);
 		void SetPointLight(ID3D12GraphicsCommandList* commandList, const PointLightId& pointLightId, float3 position, float3 color, float radius, float intensity);
 		
-		void UpdateCluster(ID3D12GraphicsCommandList* commandList, const float4x4& invViewProjection);
+		void UpdateCluster(ID3D12GraphicsCommandList* commandList);
 
 		void Clear();
 
@@ -61,7 +63,10 @@ namespace Graphics
 		std::shared_ptr<ComputeObject> calculateClusterCoordinatesCO;
 		std::shared_ptr<ComputeObject> distributePointLightCO;
 
-		ConstantBufferId clusterDataConstBufferId;
+
+		ConstantBufferId immutableGlobalConstBufferId;
+		ConstantBufferId globalConstBufferId;
+
 		ConstantBufferId pointLightConstBufferId;
 		RWBufferId clusterDataBufferId;
 		RWBufferId pointLightBufferId;
@@ -76,11 +81,7 @@ namespace Graphics
 			float3 color;
 			float intensity;
 			uint32_t pointLightId;
-		};
-
-		using CalculateClusterConstBuffer = struct
-		{
-			float4x4 invViewProjection;
+			float3 padding;
 		};
 
 		using PointLightBufferElement = struct
@@ -91,7 +92,6 @@ namespace Graphics
 			float intensity;
 		};
 
-		CalculateClusterConstBuffer calculateClusterConstBuffer;
 		PointLightConstBuffer pointLightConstBuffer;
 
 		static const uint32_t CLUSTER_SIZE_X = 8;

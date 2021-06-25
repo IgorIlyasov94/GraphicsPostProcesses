@@ -27,10 +27,19 @@ Graphics::RWTextureId Graphics::LightingSystem::GetLightClusterId() const
 	return pointLightClusterId;
 }
 
-void Graphics::LightingSystem::ComposeLightBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList)
+Graphics::RWBufferId Graphics::LightingSystem::GetClusterId() const
+{
+	return clusterDataBufferId;
+}
+
+void Graphics::LightingSystem::ComposeLightBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, ConstantBufferId _immutableGlobalConstBufferId,
+	ConstantBufferId _globalConstBufferId)
 {
 	if (pointLights.empty())
 		return;
+
+	immutableGlobalConstBufferId = _immutableGlobalConstBufferId;
+	globalConstBufferId = _globalConstBufferId;
 
 	{
 		std::vector<float4> initialClusterData(CLUSTER_SIZE * 2, float4());
@@ -51,7 +60,7 @@ void Graphics::LightingSystem::ComposeLightBuffer(ID3D12Device* device, ID3D12Gr
 			pointLightBufferData.size(), DXGI_FORMAT_UNKNOWN, false);
 
 		TextureInfo pointLightClusterInfo{};
-		pointLightClusterInfo.width = CLUSTER_SIZE_X * CLUSTER_LIGHTS_PER_CELL + 1;
+		pointLightClusterInfo.width = CLUSTER_SIZE_X * CLUSTER_LIGHTS_PER_CELL;
 		pointLightClusterInfo.height = CLUSTER_SIZE_Y;
 		pointLightClusterInfo.depth = CLUSTER_SIZE_Z;
 		pointLightClusterInfo.mipLevels = 1;
@@ -75,9 +84,8 @@ void Graphics::LightingSystem::ComposeLightBuffer(ID3D12Device* device, ID3D12Gr
 		calculateClusterCoordinatesCO = std::shared_ptr<ComputeObject>(new ComputeObject());
 		calculateClusterCoordinatesCO->AssignShader({ calculateClusterCoordinatesCS, sizeof(calculateClusterCoordinatesCS) });
 		calculateClusterCoordinatesCO->AssignRWBuffer(0, clusterDataBufferId);
-
-		clusterDataConstBufferId = calculateClusterCoordinatesCO->SetConstantBuffer(0, &calculateClusterConstBuffer, sizeof(calculateClusterConstBuffer));
-
+		calculateClusterCoordinatesCO->AssignConstantBuffer(0, immutableGlobalConstBufferId);
+		calculateClusterCoordinatesCO->AssignConstantBuffer(1, globalConstBufferId);
 		calculateClusterCoordinatesCO->SetThreadGroupCount(18, 1, 1);
 		calculateClusterCoordinatesCO->Compose(device);
 
@@ -86,7 +94,9 @@ void Graphics::LightingSystem::ComposeLightBuffer(ID3D12Device* device, ID3D12Gr
 		distributePointLightCO->AssignBuffer(0, clusterDataBufferId);
 		distributePointLightCO->AssignBuffer(1, pointLightBufferId);
 		distributePointLightCO->AssignRWTexture(0, pointLightClusterId);
-		distributePointLightCO->SetThreadGroupCount(static_cast<uint32_t>(std::ceil(pointLights.size() / 16.0f)), 1, 1);
+		distributePointLightCO->AssignConstantBuffer(0, immutableGlobalConstBufferId);
+		distributePointLightCO->AssignConstantBuffer(1, globalConstBufferId);
+		distributePointLightCO->SetThreadGroupCount(pointLights.size(), 1, 1);
 		distributePointLightCO->Compose(device);
 	}
 }
@@ -117,22 +127,36 @@ void Graphics::LightingSystem::SetPointLight(ID3D12GraphicsCommandList* commandL
 	setPointLightCO->Present(commandList);
 }
 
-void Graphics::LightingSystem::UpdateCluster(ID3D12GraphicsCommandList* commandList, const float4x4& invViewProjection)
+void Graphics::LightingSystem::UpdateCluster(ID3D12GraphicsCommandList* commandList)
 {
 	if (pointLights.empty())
 		return;
 
-	calculateClusterConstBuffer.invViewProjection = invViewProjection;
-	calculateClusterCoordinatesCO->UpdateConstantBuffer(clusterDataConstBufferId, &calculateClusterConstBuffer, sizeof(calculateClusterConstBuffer));
+	SetResourceBarrier(commandList, resourceManager.GetRWBuffer(pointLightBufferId).bufferAllocation.bufferResource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 	calculateClusterCoordinatesCO->Present(commandList);
 	
 	SetUAVBarrier(commandList, resourceManager.GetRWBuffer(pointLightBufferId).bufferAllocation.bufferResource);
 	SetUAVBarrier(commandList, resourceManager.GetRWBuffer(clusterDataBufferId).bufferAllocation.bufferResource);
 
+	SetResourceBarrier(commandList, resourceManager.GetRWTexture(pointLightClusterId).textureAllocation.textureResource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+	uint32_t clearValue[4]{};
+
+	commandList->ClearUnorderedAccessViewUint(resourceManager.GetRWTexture(pointLightClusterId).unorderedAccessDescriptorAllocation.gpuDescriptorBase,
+		resourceManager.GetRWTexture(pointLightClusterId).shaderNonVisibleDescriptorAllocation.descriptorBase,
+		resourceManager.GetRWTexture(pointLightClusterId).textureAllocation.textureResource, clearValue, 0, nullptr);
+
 	distributePointLightCO->Present(commandList);
 
 	SetUAVBarrier(commandList, resourceManager.GetRWTexture(pointLightClusterId).textureAllocation.textureResource);
+	SetResourceBarrier(commandList, resourceManager.GetRWTexture(pointLightClusterId).textureAllocation.textureResource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+	SetResourceBarrier(commandList, resourceManager.GetRWBuffer(pointLightBufferId).bufferAllocation.bufferResource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 }
 
 void Graphics::LightingSystem::Clear()
@@ -141,7 +165,7 @@ void Graphics::LightingSystem::Clear()
 }
 
 Graphics::LightingSystem::LightingSystem()
-	: calculateClusterConstBuffer{}, pointLightConstBuffer{}
+	: pointLightConstBuffer{}
 {
 	
 }

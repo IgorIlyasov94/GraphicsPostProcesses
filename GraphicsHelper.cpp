@@ -274,6 +274,18 @@ void Graphics::SetResourceBarrier(ID3D12GraphicsCommandList* commandList, ID3D12
 	commandList->ResourceBarrier(1, &resourceBarrier);
 }
 
+void Graphics::SetResourceBarrier(ID3D12GraphicsCommandList* commandList, ID3D12Resource* const resource, D3D12_RESOURCE_STATES resourceBarrierStateAfter)
+{
+	D3D12_RESOURCE_BARRIER resourceBarrier{};
+	resourceBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	resourceBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_END_ONLY;
+	resourceBarrier.Transition.pResource = resource;
+	resourceBarrier.Transition.StateAfter = resourceBarrierStateAfter;
+	resourceBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+
+	commandList->ResourceBarrier(1, &resourceBarrier);
+}
+
 void Graphics::SetUAVBarrier(ID3D12GraphicsCommandList* commandList, ID3D12Resource* const resource)
 {
 	D3D12_RESOURCE_BARRIER resourceBarrier{};
