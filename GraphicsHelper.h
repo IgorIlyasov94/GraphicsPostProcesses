@@ -115,7 +115,7 @@ namespace Graphics
 	float BoundingBoxVolume(const BoundingBox& boundingBox);
 	void BoundingBoxVertices(const BoundingBox& boundingBox, std::array<floatN, 8>& vertices);
 	
-	constexpr uint32_t GetVertexStride(VertexFormat vertexFormat) noexcept
+	constexpr size_t GetVertexStride(VertexFormat vertexFormat) noexcept
 	{
 		if (vertexFormat == VertexFormat::POSITION)
 			return 12;

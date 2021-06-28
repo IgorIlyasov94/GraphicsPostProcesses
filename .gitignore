@@ -20,3 +20,5 @@
 /Resources/Shaders/HDRBrightPassPS.hlsl.h
 /Resources/Shaders/GaussianBlurYPS.hlsl.h
 /Resources/Shaders/GaussianBlurXPS.hlsl.h
+/Resources/Shaders/UpdateParticleSystemCS.hlsl.h
+/Resources/Shaders/SortParticleSystemCS.hlsl.h

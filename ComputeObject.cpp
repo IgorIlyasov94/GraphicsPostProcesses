@@ -29,13 +29,10 @@ void Graphics::ComputeObject::AssignConstantBuffer(size_t registerIndex, Constan
 	constantBufferAddresses.push_back(resourceManager.GetConstantBuffer(constantBufferId).constantBufferViewDesc.BufferLocation);
 }
 
-void Graphics::ComputeObject::AssignTexture(ID3D12GraphicsCommandList* commandList, size_t registerIndex, TextureId textureId)
+void Graphics::ComputeObject::AssignTexture(size_t registerIndex, TextureId textureId)
 {
 	registerSet.textureRegisterIndices.push_back(registerIndex);
 	indexSet.textureIndices.push_back(textureId);
-
-	SetResourceBarrier(commandList, resourceManager.GetTexture(textureId).textureAllocation.textureResource, D3D12_RESOURCE_STATE_COMMON,
-		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 }
 
 void Graphics::ComputeObject::AssignTexture(size_t registerIndex, RWTextureId rwTextureId)

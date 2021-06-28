@@ -13,7 +13,7 @@ namespace Graphics
 		ConstantBufferId SetConstantBuffer(size_t registerIndex, void* bufferData, size_t bufferSize);
 		
 		void AssignConstantBuffer(size_t registerIndex, ConstantBufferId constantBufferId);
-		void AssignTexture(ID3D12GraphicsCommandList* commandList, size_t registerIndex, TextureId textureId);
+		void AssignTexture(size_t registerIndex, TextureId textureId);
 		void AssignTexture(size_t registerIndex, RWTextureId rwTextureId);
 		void AssignRenderTexture(size_t registerIndex, RenderTargetId renderTargetId);
 		void AssignDepthTexture(size_t registerIndex, DepthStencilId depthStencilId);

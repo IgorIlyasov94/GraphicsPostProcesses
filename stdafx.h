@@ -25,6 +25,8 @@
 
 #include <wrl/client.h>
 
+#include <numeric>
+#include <variant>
 #include <cstdint>
 #include <sstream>
 #include <fstream>

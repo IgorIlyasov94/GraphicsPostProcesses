@@ -43,4 +43,8 @@ ECHO ON
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
 %dxcCmd% /Zi /E"main" /Vn"calculateClusterCoordinatesCS" /Tcs_6_0 /Fh"CalculateClusterCoordinatesCS.hlsl.h" /nologo CalculateClusterCoordinatesCS.hlsl
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
+%dxcCmd% /Zi /E"main" /Vn"updateParticleSystemCS" /Tcs_6_0 /Fh"UpdateParticleSystemCS.hlsl.h" /nologo UpdateParticleSystemCS.hlsl
+@IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
+%dxcCmd% /Zi /E"main" /Vn"sortParticleSystemCS" /Tcs_6_0 /Fh"SortParticleSystemCS.hlsl.h" /nologo SortParticleSystemCS.hlsl
+@IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
 ECHO Done.

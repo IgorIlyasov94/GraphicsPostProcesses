@@ -21,7 +21,7 @@ namespace Graphics
 	private:
 		Mesh() = delete;
 
-		void FindBoundingBox(const void* verticesData, size_t verticesDataSize, VertexFormat _vertexFormat, BoundingBox& result);
+		void CalculateBoundingBox(const void* verticesData, size_t verticesDataSize, VertexFormat _vertexFormat, BoundingBox& result);
 
 		VertexBufferId vertexBufferId;
 		IndexBufferId indexBufferId;

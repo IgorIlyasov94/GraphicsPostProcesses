@@ -167,7 +167,7 @@
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="OBJLoader.cpp" />
     <ClCompile Include="GraphicsHelper.cpp" />
-    <ClCompile Include="ParticleSystemManager.cpp" />
+    <ClCompile Include="ParticleSystem.cpp" />
     <ClCompile Include="PointLight.cpp" />
     <ClCompile Include="PostProcesses.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
@@ -196,7 +196,7 @@
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="OBJLoader.h" />
     <ClInclude Include="GraphicsHelper.h" />
-    <ClInclude Include="ParticleSystemManager.h" />
+    <ClInclude Include="ParticleSystem.h" />
     <ClInclude Include="PointLight.h" />
     <ClInclude Include="PostProcesses.h" />
     <ClInclude Include="ResourceManager.h" />

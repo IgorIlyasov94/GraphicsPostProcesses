@@ -8,7 +8,7 @@ Graphics::Mesh::Mesh(std::filesystem::path filePath, bool calculateNormals, bool
 	
 	Graphics::OBJLoader::Load(filePath, calculateNormals, calculateTangents, smoothNormals, vertexFormat, verticesData, indicesData);
 
-	FindBoundingBox(verticesData.data(), verticesData.size(), vertexFormat, boundingBox);
+	CalculateBoundingBox(verticesData.data(), verticesData.size(), vertexFormat, boundingBox);
 	
 	auto vertexStride = GetVertexStride(vertexFormat);
 	vertexBufferId = resourceManager.CreateVertexBuffer(verticesData.data(), verticesData.size(), vertexStride);
@@ -23,7 +23,7 @@ Graphics::Mesh::Mesh(std::filesystem::path filePath, bool calculateNormals, bool
 Graphics::Mesh::Mesh(VertexFormat _vertexFormat, const void* verticesData, size_t verticesDataSize, const void* indicesData, size_t indicesDataSize)
 	: indicesCount(0), vertexFormat(_vertexFormat), boundingBox{}, vertexBufferView{}, indexBufferView{}
 {
-	FindBoundingBox(verticesData, verticesDataSize, vertexFormat, boundingBox);
+	CalculateBoundingBox(verticesData, verticesDataSize, vertexFormat, boundingBox);
 
 	auto vertexStride = GetVertexStride(vertexFormat);
 	vertexBufferId = resourceManager.CreateVertexBuffer(verticesData, verticesDataSize, vertexStride);
@@ -62,15 +62,15 @@ void Graphics::Mesh::Present(ID3D12GraphicsCommandList* commandList) const
 	commandList->IASetIndexBuffer(&indexBufferView);
 }
 
-void Graphics::Mesh::FindBoundingBox(const void* verticesData, size_t verticesDataSize, VertexFormat _vertexFormat, BoundingBox& result)
+void Graphics::Mesh::CalculateBoundingBox(const void* verticesData, size_t verticesDataSize, VertexFormat _vertexFormat, BoundingBox& result)
 {
-	uint32_t vertexStride = GetVertexStride(_vertexFormat);
+	auto vertexStride = GetVertexStride(_vertexFormat);
 
 	result = { *reinterpret_cast<const float3*>(verticesData), *reinterpret_cast<const float3*>(verticesData) };
 
-	uint32_t verticesCount = verticesDataSize / vertexStride;
+	size_t verticesCount = verticesDataSize / vertexStride;
 
-	for (uint32_t vertexId = 0; vertexId < verticesCount; vertexId++)
+	for (size_t vertexId = 0; vertexId < verticesCount; vertexId++)
 	{
 		const float3& position = *(reinterpret_cast<const float3*>(reinterpret_cast<const uint8_t*>(verticesData) + vertexId * vertexStride));
 

@@ -23,6 +23,18 @@ void Graphics::GraphicObject::AssignMesh(const Mesh* newMesh)
 	}
 }
 
+void Graphics::GraphicObject::AssignParticleSystem(const ParticleSystem* newParticleSystem)
+{
+	particleSystem = newParticleSystem;
+
+	if (particleSystem != nullptr)
+	{
+		boundingBox = particleSystem->GetBoundingBox();
+
+
+	}
+}
+
 void Graphics::GraphicObject::AssignMaterial(const Material* newMaterial)
 {
 	if (newMaterial != nullptr)
@@ -72,4 +84,14 @@ void Graphics::GraphicObject::DrawMesh(ID3D12GraphicsCommandList* commandList) c
 	mesh->Present(commandList);
 
 	commandList->DrawIndexedInstanced(mesh->GetIndicesCount(), 1, 0, 0, 0);
+}
+
+void Graphics::GraphicObject::DrawParticleSystem(ID3D12GraphicsCommandList* commandList) const
+{
+	if (particleSystem == nullptr)
+		return;
+
+	particleSystem->Present(commandList);
+
+	commandList->DrawIndexedInstanced(particleSystem->GetParticleMaxCount(), 1, 0, 0, 0);
 }

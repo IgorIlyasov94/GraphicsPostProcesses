@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Mesh.h"
+#include "ParticleSystem.h"
 #include "Material.h"
 #include "ComputeObject.h"
 
@@ -13,6 +14,7 @@ namespace Graphics
 		~GraphicObject();
 
 		void AssignMesh(const Mesh* newMesh);
+		void AssignParticleSystem(const ParticleSystem* newParticleSystem);
 		void AssignMaterial(const Material* newMaterial);
 		void AssignComputeObject(const ComputeObject* newComputeObject);
 
@@ -23,6 +25,7 @@ namespace Graphics
 
 	private:
 		void DrawMesh(ID3D12GraphicsCommandList* commandList) const;
+		void DrawParticleSystem(ID3D12GraphicsCommandList* commandList) const;
 
 		using DrawFunction = void (Graphics::GraphicObject::*)(ID3D12GraphicsCommandList*) const;
 
@@ -31,6 +34,7 @@ namespace Graphics
 		BoundingBox boundingBox;
 
 		const Mesh* mesh;
+		const ParticleSystem* particleSystem;
 		const Material* material;
 		const ComputeObject* computeObject;
 	};
