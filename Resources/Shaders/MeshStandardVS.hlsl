@@ -14,7 +14,8 @@ cbuffer GlobalConstBuffer : register(b1)
 	float4x4 viewProjection;
 	float4x4 invViewProjection;
 	float3 cameraPosition;
-	float padding;
+	float elapsedTime;
+	float4 randomValues;
 };
 
 cbuffer LocalConstBuffer : register(b2)

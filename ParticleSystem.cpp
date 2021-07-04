@@ -59,11 +59,11 @@ void Graphics::ParticleSystem::SetSize(float2 sizeStart, float2 sizeEnd, Particl
 	sizeGradientId = _sizeGradientId;
 }
 
-void Graphics::ParticleSystem::SetVelocity(float3 velocityStart, float3 velocityEnd, float scatteringAngle, ParticleAnimationType velocityAlterationType, TextureId _velocityGradientId)
+void Graphics::ParticleSystem::SetVelocity(float3 velocityStart, float3 velocityEnd, float scatteringValue, ParticleAnimationType velocityAlterationType, TextureId _velocityGradientId)
 {
 	particleSystemData.velocityStart = velocityStart;
 	particleSystemData.velocityEnd = velocityEnd;
-	particleSystemData.scatteringAngle = scatteringAngle;
+	particleSystemData.scatteringValue = scatteringValue;
 
 	if (velocityAlterationType != ParticleAnimationType::ANIMATION_NONE)
 		particleSystemData.velocityAlterationType = (velocityAlterationType == ParticleAnimationType::ANIMATION_LERP) ? 1 : 2;
@@ -102,6 +102,7 @@ void Graphics::ParticleSystem::Compose(ID3D12Device* device, ID3D12GraphicsComma
 		tempData.size(), DXGI_FORMAT_UNKNOWN, false);
 
 	ParticleBufferState particleBufferStateData{};
+	particleBufferStateData.particleGenerationTimer = 1.0f;
 	particleBufferStateData.particleGenerationRate = particleSystemData.burstPerSecond / 60.0f;
 
 	particleBufferStateId = resourceManager.CreateRWBuffer(&particleBufferStateData, sizeof(particleBufferStateData), sizeof(particleBufferStateData),
@@ -121,7 +122,8 @@ void Graphics::ParticleSystem::Compose(ID3D12Device* device, ID3D12GraphicsComma
 
 	updateParticleSystemCO = std::shared_ptr<ComputeObject>(new ComputeObject());
 	updateParticleSystemCO->AssignShader({ updateParticleSystemCS, sizeof(updateParticleSystemCS) });
-	updateParticleSystemCO->AssignConstantBuffer(0, particleSystemConstBufferId);
+	updateParticleSystemCO->AssignConstantBuffer(0, globalConstBufferId);
+	updateParticleSystemCO->AssignConstantBuffer(1, particleSystemConstBufferId);
 	updateParticleSystemCO->AssignTexture(0, sizeGradientId);
 	updateParticleSystemCO->AssignTexture(1, velocityGradientId);
 	updateParticleSystemCO->AssignTexture(2, colorGradientId);
@@ -186,7 +188,7 @@ void Graphics::ParticleSystem::Update(ID3D12GraphicsCommandList* commandList) co
 
 	commandList->ResourceBarrier(resourceBarriers.size(), resourceBarriers.data());
 
-	sortParticleSystemCO->Present(commandList);
+	//sortParticleSystemCO->Present(commandList);
 	updateParticleSystemCO->Present(commandList);
 }
 

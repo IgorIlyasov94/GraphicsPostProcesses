@@ -5,7 +5,8 @@ cbuffer GlobalConstBuffer : register(b0)
 	float4x4 viewProjection;
 	float4x4 invViewProjection;
 	float3 cameraPosition;
-	float padding;
+	float elapsedTime;
+	float4 randomValues;
 };
 
 struct Particle
@@ -18,7 +19,8 @@ struct Particle
 	float3 velocity;
 	uint life;
 	uint currentLife;
-	float3 padding;
+	float angleSpeed;
+	float2 padding;
 };
 
 StructuredBuffer<Particle> particleSystem : register(t0);

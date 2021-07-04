@@ -29,7 +29,7 @@ namespace Graphics
 		void SetEmitter(float3 position, float burstPerSecond, uint32_t burstCount, ParticleEmitterShape shape, std::variant<BoundingBox, BoundingSphere> volume);
 		void SetAngularMotion(float angleMin, float angleMax, float angleSpeedMin, float angleSpeedMax);
 		void SetSize(float2 sizeStart, float2 sizeEnd, ParticleAnimationType sizeAlterationType, TextureId _sizeGradientId);
-		void SetVelocity(float3 velocityStart, float3 velocityEnd, float scatteringAngle, ParticleAnimationType velocityAlterationType, TextureId _velocityGradientId);
+		void SetVelocity(float3 velocityStart, float3 velocityEnd, float scatteringValue, ParticleAnimationType velocityAlterationType, TextureId _velocityGradientId);
 		void SetColor(float4 colorStart, float4 colorEnd, ParticleAnimationType colorAlterationType, TextureId _colorGradientId);
 		void SetFrames(uint32_t atlasRowNumber, uint32_t atlasColumnNumber, uint32_t frameRowId, uint32_t frameColumnId, uint32_t animationFramesCount);
 
@@ -57,7 +57,8 @@ namespace Graphics
 			float3 velocity;
 			uint32_t life;
 			uint32_t currentLife;
-			float3 padding;
+			float angleSpeed;
+			float2 padding;
 		};
 
 		using ParticleBufferState = struct
@@ -92,7 +93,7 @@ namespace Graphics
 			uint32_t sizeAlterationType;
 			
 			float3 velocityEnd;
-			float scatteringAngle;
+			float scatteringValue;
 
 			uint32_t velocityAlterationType;
 			uint32_t colorAlterationType;
