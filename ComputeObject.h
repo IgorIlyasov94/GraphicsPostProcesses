@@ -11,6 +11,8 @@ namespace Graphics
 		~ComputeObject();
 
 		ConstantBufferId SetConstantBuffer(size_t registerIndex, void* bufferData, size_t bufferSize);
+		void SetSampler(size_t registerIndex, D3D12_FILTER filter, D3D12_TEXTURE_ADDRESS_MODE addressU, D3D12_TEXTURE_ADDRESS_MODE addressV,
+			D3D12_TEXTURE_ADDRESS_MODE addressW, uint32_t maxAnisotropy);
 		
 		void AssignConstantBuffer(size_t registerIndex, ConstantBufferId constantBufferId);
 		void AssignTexture(size_t registerIndex, TextureId textureId);
@@ -67,7 +69,8 @@ namespace Graphics
 		void CreateRootParameters(const RegisterSet& _registerSet, const std::vector<D3D12_ROOT_DESCRIPTOR_TABLE>& rootDescriptorTables,
 			std::vector<D3D12_ROOT_PARAMETER>& rootParameters);
 
-		void CreateRootSignature(ID3D12Device* device, const std::vector<D3D12_ROOT_PARAMETER>& rootParameters, ID3D12RootSignature** rootSignature);
+		void CreateRootSignature(ID3D12Device* device, const std::vector<D3D12_ROOT_PARAMETER>& rootParameters, const std::vector<D3D12_STATIC_SAMPLER_DESC>& samplerDescs,
+			ID3D12RootSignature** rootSignature);
 
 		void CreateGraphicsPipelineState(ID3D12Device* device, ID3D12RootSignature* rootSignature, D3D12_SHADER_BYTECODE _computeShader, ID3D12PipelineState** pipelineState);
 
@@ -77,6 +80,7 @@ namespace Graphics
 		IndexSet indexSet;
 
 		std::vector<D3D12_GPU_VIRTUAL_ADDRESS> constantBufferAddresses;
+		std::vector<D3D12_STATIC_SAMPLER_DESC> samplerDescs;
 		
 		std::vector<D3D12_GPU_DESCRIPTOR_HANDLE> firstResourceDescriptorBases;
 		

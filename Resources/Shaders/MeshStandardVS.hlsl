@@ -40,7 +40,7 @@ struct Output
 	float4 worldCoord : TEXCOORD2;
 };
 
-Output main(Input input, uint vertexId : SV_VertexID)
+Output main(Input input)
 {
 	Output output = (Output)0;
 	

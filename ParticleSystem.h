@@ -26,7 +26,8 @@ namespace Graphics
 		ParticleSystem(uint32_t particlesMaxCount, uint32_t lifeMin, uint32_t lifeMax);
 		~ParticleSystem();
 
-		void SetEmitter(float3 position, float burstPerSecond, uint32_t burstCount, ParticleEmitterShape shape, std::variant<BoundingBox, BoundingSphere> volume);
+		void SetEmitter(float3 position, float burstPerSecond, uint32_t burstCount, bool particlesEmitterRelativeCoord, ParticleEmitterShape shape,
+			std::variant<BoundingBox, BoundingSphere> volume);
 		void SetAngularMotion(float angleMin, float angleMax, float angleSpeedMin, float angleSpeedMax);
 		void SetSize(float2 sizeStart, float2 sizeEnd, ParticleAnimationType sizeAlterationType, TextureId _sizeGradientId);
 		void SetVelocity(float3 velocityStart, float3 velocityEnd, float scatteringValue, ParticleAnimationType velocityAlterationType, TextureId _velocityGradientId);
@@ -76,7 +77,8 @@ namespace Graphics
 
 			floatN emitterVolume0;
 
-			floatN emitterVolume1;
+			float3 emitterVolume1;
+			bool isEmitterRelative;
 
 			float burstPerSecond;
 			uint32_t burstCount;

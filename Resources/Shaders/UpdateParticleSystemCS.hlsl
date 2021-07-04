@@ -15,7 +15,8 @@ cbuffer LocalConstBuffer : register(b1)
 	uint emitterShape;
 
 	float4 emitterVolume0;
-	float4 emitterVolume1;
+	float3 emitterVolume1;
+	bool isEmitterRelative;
 	
 	float burstPerSecond;
 	uint burstCount;
@@ -178,7 +179,7 @@ Particle GenerateNewParticle()
 	particle.position = emitterPosition;
 	
 	if (emitterShape == 1)
-		particle.position += RandomPointInBox(emitterVolume0.xyz, emitterVolume1.xyz, randomValues.xyz);
+		particle.position += RandomPointInBox(emitterVolume0.xyz, emitterVolume1, randomValues.xyz);
 	else if (emitterShape == 2)
 		particle.position += RandomPointInSphere(emitterVolume0.xyz, emitterVolume0.w, randomValues);
 	

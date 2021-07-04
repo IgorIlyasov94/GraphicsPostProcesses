@@ -47,4 +47,10 @@ ECHO ON
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
 %dxcCmd% /Zi /E"main" /Vn"sortParticleSystemCS" /Tcs_6_0 /Fh"SortParticleSystemCS.hlsl.h" /nologo SortParticleSystemCS.hlsl
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
+%dxcCmd% /Zi /E"main" /Vn"particleStandardVS" /Tvs_6_0 /Fh"ParticleStandardVS.hlsl.h" /nologo ParticleStandardVS.hlsl
+@IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
+%dxcCmd% /Zi /E"main" /Vn"particleStandardGS" /Tgs_6_0 /Fh"ParticleStandardGS.hlsl.h" /nologo ParticleStandardGS.hlsl
+@IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
+%dxcCmd% /Zi /E"main" /Vn"particleStandardPS" /Tps_6_0 /Fh"ParticleStandardPS.hlsl.h" /nologo ParticleStandardPS.hlsl
+@IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
 ECHO Done.

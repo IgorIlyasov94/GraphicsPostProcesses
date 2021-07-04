@@ -21,6 +21,21 @@ Graphics::ConstantBufferId Graphics::ComputeObject::SetConstantBuffer(size_t reg
 	return indexSet.constantBufferIndices.back();
 }
 
+void Graphics::ComputeObject::SetSampler(size_t registerIndex, D3D12_FILTER filter, D3D12_TEXTURE_ADDRESS_MODE addressU, D3D12_TEXTURE_ADDRESS_MODE addressV, D3D12_TEXTURE_ADDRESS_MODE addressW, uint32_t maxAnisotropy)
+{
+	D3D12_STATIC_SAMPLER_DESC samplerDesc{};
+	samplerDesc.Filter = filter;
+	samplerDesc.AddressU = addressU;
+	samplerDesc.AddressV = addressV;
+	samplerDesc.AddressW = addressW;
+	samplerDesc.MaxAnisotropy = maxAnisotropy;
+	samplerDesc.MinLOD = 0;
+	samplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
+	samplerDesc.ShaderRegister = registerIndex;
+
+	samplerDescs.push_back(samplerDesc);
+}
+
 void Graphics::ComputeObject::AssignConstantBuffer(size_t registerIndex, ConstantBufferId constantBufferId)
 {
 	registerSet.constantBufferRegisterIndices.push_back(registerIndex);
@@ -105,7 +120,7 @@ void Graphics::ComputeObject::Compose(ID3D12Device* device)
 	std::vector<D3D12_ROOT_PARAMETER> rootParameters;
 	CreateRootParameters(registerSet, textureRootDescTables, rootParameters);
 
-	CreateRootSignature(device, rootParameters, &rootSignature);
+	CreateRootSignature(device, rootParameters, samplerDescs, &rootSignature);
 
 	CreateGraphicsPipelineState(device, rootSignature.Get(), computeShader, &pipelineState);
 
@@ -259,7 +274,8 @@ void Graphics::ComputeObject::CreateRootParameters(const RegisterSet& _registerS
 	}
 }
 
-void Graphics::ComputeObject::CreateRootSignature(ID3D12Device* device, const std::vector<D3D12_ROOT_PARAMETER>& rootParameters, ID3D12RootSignature** rootSignature)
+void Graphics::ComputeObject::CreateRootSignature(ID3D12Device* device, const std::vector<D3D12_ROOT_PARAMETER>& rootParameters, const std::vector<D3D12_STATIC_SAMPLER_DESC>& samplerDescs,
+	ID3D12RootSignature** rootSignature)
 {
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc{};
 	rootSignatureDesc.NumParameters = rootParameters.size();
@@ -267,8 +283,10 @@ void Graphics::ComputeObject::CreateRootSignature(ID3D12Device* device, const st
 	if (rootSignatureDesc.NumParameters > 0)
 		rootSignatureDesc.pParameters = rootParameters.data();
 
-	rootSignatureDesc.NumStaticSamplers = 0;
-	rootSignatureDesc.pStaticSamplers = nullptr;
+	rootSignatureDesc.NumStaticSamplers = samplerDescs.size();
+
+	if (rootSignatureDesc.NumStaticSamplers > 0)
+		rootSignatureDesc.pStaticSamplers = samplerDescs.data();
 
 	rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
 

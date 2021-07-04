@@ -22,3 +22,6 @@
 /Resources/Shaders/GaussianBlurXPS.hlsl.h
 /Resources/Shaders/UpdateParticleSystemCS.hlsl.h
 /Resources/Shaders/SortParticleSystemCS.hlsl.h
+/Resources/Shaders/ParticleStandardVS.hlsl.h
+/Resources/Shaders/ParticleStandardPS.hlsl.h
+/Resources/Shaders/ParticleStandardGS.hlsl.h

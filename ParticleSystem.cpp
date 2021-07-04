@@ -18,7 +18,8 @@ Graphics::ParticleSystem::~ParticleSystem()
 
 }
 
-void Graphics::ParticleSystem::SetEmitter(float3 position, float burstPerSecond, uint32_t burstCount, ParticleEmitterShape shape, std::variant<BoundingBox, BoundingSphere> volume)
+void Graphics::ParticleSystem::SetEmitter(float3 position, float burstPerSecond, uint32_t burstCount, bool particlesEmitterRelativeCoord, ParticleEmitterShape shape,
+	std::variant<BoundingBox, BoundingSphere> volume)
 {
 	particleSystemData.emitterPosition = position;
 	particleSystemData.burstPerSecond = burstPerSecond;
@@ -30,7 +31,7 @@ void Graphics::ParticleSystem::SetEmitter(float3 position, float burstPerSecond,
 
 		auto& emitterVolume = std::get<BoundingBox>(volume);
 		particleSystemData.emitterVolume0 = XMLoadFloat3(&emitterVolume.minCornerPoint);
-		particleSystemData.emitterVolume1 = XMLoadFloat3(&emitterVolume.maxCornerPoint);
+		particleSystemData.emitterVolume1 = emitterVolume.maxCornerPoint;
 	}
 	else if (shape == ParticleEmitterShape::EMITTER_SPHERE)
 	{
@@ -40,6 +41,8 @@ void Graphics::ParticleSystem::SetEmitter(float3 position, float burstPerSecond,
 		particleSystemData.emitterVolume0 = XMLoadFloat3(&emitterVolume.center);
 		particleSystemData.emitterVolume0.m128_f32[3] = emitterVolume.radius;
 	}
+
+	particleSystemData.isEmitterRelative = particlesEmitterRelativeCoord;
 }
 
 void Graphics::ParticleSystem::SetAngularMotion(float angleMin, float angleMax, float angleSpeedMin, float angleSpeedMax)
@@ -127,6 +130,8 @@ void Graphics::ParticleSystem::Compose(ID3D12Device* device, ID3D12GraphicsComma
 	updateParticleSystemCO->AssignTexture(0, sizeGradientId);
 	updateParticleSystemCO->AssignTexture(1, velocityGradientId);
 	updateParticleSystemCO->AssignTexture(2, colorGradientId);
+	updateParticleSystemCO->SetSampler(0, D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
+		D3D12_TEXTURE_ADDRESS_MODE_CLAMP, 1);
 	updateParticleSystemCO->AssignRWBuffer(0, particleBufferId);
 	updateParticleSystemCO->AssignRWBuffer(1, particleBufferStateId);
 	updateParticleSystemCO->SetThreadGroupCount(particleSystemData.particleMaxCount, 1, 1);
