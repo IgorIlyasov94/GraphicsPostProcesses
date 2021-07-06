@@ -106,7 +106,7 @@ void Graphics::ParticleSystem::Compose(ID3D12Device* device, ID3D12GraphicsComma
 
 	ParticleBufferState particleBufferStateData{};
 	particleBufferStateData.particleGenerationTimer = 1.0f;
-	particleBufferStateData.particleGenerationRate = particleSystemData.burstPerSecond / 60.0f;
+	particleBufferStateData.particleGenerationRate = particleSystemData.burstPerSecond / Graphics::GraphicsSettings::GetFramesPerSecond();
 
 	particleBufferStateId = resourceManager.CreateRWBuffer(&particleBufferStateData, sizeof(particleBufferStateData), sizeof(particleBufferStateData),
 		1, DXGI_FORMAT_UNKNOWN, false);
@@ -224,5 +224,46 @@ void Graphics::ParticleSystem::Present(ID3D12GraphicsCommandList* commandList) c
 
 void Graphics::ParticleSystem::CalculateBoundingBox(const ParticleSystemData& _particleSystemData, BoundingBox& result)
 {
-	
+	floatN minPoint = { -100000.0f, -100000.0f, -100000.0f, 0.0f };
+	floatN maxPoint = { 100000.0f, 100000.0f, 100000.0f, 0.0f };
+
+	if (_particleSystemData.isEmitterRelative)
+	{
+		floatN velocityStart = XMLoadFloat3(&_particleSystemData.velocityStart);
+		floatN velocityEnd = XMLoadFloat3(&_particleSystemData.velocityEnd);
+
+		float sizeXMax = std::max(_particleSystemData.sizeStart.x, _particleSystemData.sizeEnd.x);
+		float sizeYMax = std::max(_particleSystemData.sizeStart.y, _particleSystemData.sizeEnd.y);
+		float sizeRadius = std::sqrt(sizeXMax * sizeXMax + sizeYMax * sizeYMax) / 2.0f;
+
+		for (size_t coordId = 0; coordId < 3; coordId++)
+		{
+			minPoint.m128_f32[coordId] = std::min(velocityStart.m128_f32[coordId], velocityEnd.m128_f32[coordId]);
+			minPoint.m128_f32[coordId] *= _particleSystemData.lifeMax / static_cast<float>(Graphics::GraphicsSettings::GetFramesPerSecond());
+			minPoint.m128_f32[coordId] -= sizeRadius;
+		}
+
+		for (size_t coordId = 0; coordId < 3; coordId++)
+		{
+			maxPoint.m128_f32[coordId] = std::max(velocityStart.m128_f32[coordId], velocityEnd.m128_f32[coordId]);
+			maxPoint.m128_f32[coordId] *= _particleSystemData.lifeMax / static_cast<float>(Graphics::GraphicsSettings::GetFramesPerSecond());
+			maxPoint.m128_f32[coordId] += sizeRadius;
+		}
+
+		if (_particleSystemData.emitterShape == static_cast<uint32_t>(ParticleEmitterShape::EMITTER_BOX))
+		{
+			minPoint += _particleSystemData.emitterVolume0;
+			maxPoint += XMLoadFloat3(&_particleSystemData.emitterVolume1);
+		}
+		else if (_particleSystemData.emitterShape == static_cast<uint32_t>(ParticleEmitterShape::EMITTER_SPHERE))
+		{
+			minPoint += floatN({ -1.0f, -1.0f, -1.0f, 0.0f }) * _particleSystemData.emitterVolume0.m128_f32[3];
+			maxPoint += floatN({ 1.0f, 1.0f, 1.0f, 0.0f }) * _particleSystemData.emitterVolume0.m128_f32[3];
+		}
+
+		//<- HERE POTENTIALLY PHYSICS WILL HAVE AN IMPACT
+	}
+
+	XMStoreFloat3(&result.minCornerPoint, minPoint);
+	XMStoreFloat3(&result.maxCornerPoint, maxPoint);
 }

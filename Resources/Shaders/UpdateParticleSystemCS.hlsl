@@ -176,7 +176,7 @@ float2 RandomSize(float2 minSize, float2 maxSize, float2 randomValue)
 Particle GenerateNewParticle()
 {
 	Particle particle = (Particle) 0;
-	particle.position = emitterPosition;
+	particle.position = (isEmitterRelative) ? 0.0f.xxx : emitterPosition;
 	
 	if (emitterShape == 1)
 		particle.position += RandomPointInBox(emitterVolume0.xyz, emitterVolume1, randomValues.xyz);
