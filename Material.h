@@ -31,6 +31,7 @@ namespace Graphics
 		void SetPixelShader(D3D12_SHADER_BYTECODE shaderBytecode);
 
 		void SetVertexFormat(VertexFormat format);
+		void SetPrimitiveTopologyType(D3D12_PRIMITIVE_TOPOLOGY_TYPE type);
 		void SetRenderTargetFormat(size_t renderTargetIndex, DXGI_FORMAT format);
 		void SetDepthStencilFormat(uint32_t depthBit);
 
@@ -99,6 +100,7 @@ namespace Graphics
 		std::vector<D3D12_GPU_DESCRIPTOR_HANDLE> firstResourceDescriptorBases;
 
 		VertexFormat vertexFormat;
+		D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType;
 
 		std::array<DXGI_FORMAT, 8> renderTargetFormat;
 		DXGI_FORMAT depthStencilFormat;

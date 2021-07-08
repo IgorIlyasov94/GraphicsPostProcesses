@@ -1,8 +1,8 @@
 #include "Material.h"
 
 Graphics::Material::Material()
-	: shaderList{}, vertexFormat{}, renderTargetFormat{}, depthStencilFormat{}, cullMode(D3D12_CULL_MODE_NONE), blendDesc{},
-	useDepthBuffer(false), isComposed(false)
+	: shaderList{}, vertexFormat{}, primitiveTopologyType(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE), renderTargetFormat{}, depthStencilFormat{},
+	cullMode(D3D12_CULL_MODE_NONE), blendDesc{}, useDepthBuffer(false), isComposed(false)
 {
 	SetupBlendDesc(blendDesc);
 }
@@ -127,6 +127,11 @@ void Graphics::Material::SetVertexFormat(VertexFormat format)
 	vertexFormat = format;
 }
 
+void Graphics::Material::SetPrimitiveTopologyType(D3D12_PRIMITIVE_TOPOLOGY_TYPE type)
+{
+	primitiveTopologyType = type;
+}
+
 void Graphics::Material::SetRenderTargetFormat(size_t renderTargetIndex, DXGI_FORMAT format)
 {
 	if (renderTargetIndex > 7)
@@ -242,7 +247,8 @@ void Graphics::Material::Present(ID3D12GraphicsCommandList* commandList) const
 
 void Graphics::Material::CreateInputElementDescs(VertexFormat format, std::vector<D3D12_INPUT_ELEMENT_DESC>& inputElementDescs) const noexcept
 {
-	inputElementDescs.push_back({ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
+	if (format != VertexFormat::UNDEFINED)
+		inputElementDescs.push_back({ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
 
 	if (format == VertexFormat::POSITION_NORMAL || format == VertexFormat::POSITION_NORMAL_TEXCOORD)
 		inputElementDescs.push_back({ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
@@ -404,7 +410,7 @@ void Graphics::Material::CreateGraphicsPipelineState(ID3D12Device* device, const
 	pipelineStateDesc.DepthStencilState = depthStencilDesc;
 	pipelineStateDesc.DSVFormat = dsvFormat;
 	pipelineStateDesc.SampleMask = UINT_MAX;
-	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	pipelineStateDesc.PrimitiveTopologyType = primitiveTopologyType;
 	pipelineStateDesc.NumRenderTargets = 0;
 
 	for (uint32_t formatId = 0; formatId < rtvFormat.size(); formatId++)
