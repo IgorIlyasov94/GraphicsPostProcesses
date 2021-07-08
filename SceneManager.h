@@ -41,6 +41,10 @@ namespace Graphics
 		std::shared_ptr<Material> cubeSecondMaterial;
 		std::shared_ptr<Mesh> cubeMeshSecond;
 
+		std::shared_ptr<GraphicObject> testEffect;
+		std::shared_ptr<Material> testEffectMaterial;
+		std::shared_ptr<ParticleSystem> testEffectParticleSystem;
+
 		ConstantBufferId goldenFrameConstBufferId;
 		ConstantBufferId cubeSecondConstBufferId;
 
@@ -82,6 +86,8 @@ namespace Graphics
 		GlobalConstBuffer globalConstBuffer;
 
 		std::shared_ptr<Camera> camera;
+
+		std::shared_ptr<std::default_random_engine> randomEngine;
 
 		ResourceManager& resourceManager = ResourceManager::GetInstance();
 	};
