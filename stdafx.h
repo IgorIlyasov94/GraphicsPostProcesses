@@ -44,6 +44,7 @@
 #include <algorithm>
 #include <regex>
 #include <set>
+#include <random>
 
 inline void ThrowIfFailed(HRESULT hResult, const char* errorMessage)
 {
@@ -54,4 +55,9 @@ inline void ThrowIfFailed(HRESULT hResult, const char* errorMessage)
         
         throw std::runtime_error(fullMessage.str());
     }
+}
+
+inline float Random01(std::default_random_engine* const randomEngine)
+{
+    return (randomEngine->operator()() - randomEngine->min()) / static_cast<float>(randomEngine->max() - randomEngine->min());
 }
