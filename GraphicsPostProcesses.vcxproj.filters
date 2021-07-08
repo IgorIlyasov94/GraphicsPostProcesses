@@ -61,6 +61,12 @@
     <Filter Include="Исходные файлы\GraphicsCore\GraphicsLightingSystem">
       <UniqueIdentifier>{17645696-f055-4027-99fe-2dfaf0ef7913}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Исходные файлы\GraphicsCore\GraphicsUIManagement">
+      <UniqueIdentifier>{758d57d3-898c-440c-a459-dc57a997e448}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Файлы заголовков\GraphicsCore\GraphicsUIManagement">
+      <UniqueIdentifier>{645bdcd1-57ae-4096-af11-33216772c479}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -144,6 +150,12 @@
     <ClCompile Include="ParticleSystem.cpp">
       <Filter>Исходные файлы\GraphicsSceneManagement\GraphicsObjects</Filter>
     </ClCompile>
+    <ClCompile Include="SpriteUI.cpp">
+      <Filter>Исходные файлы\GraphicsCore\GraphicsUIManagement</Filter>
+    </ClCompile>
+    <ClCompile Include="UISystem.cpp">
+      <Filter>Исходные файлы\GraphicsCore\GraphicsUIManagement</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -226,6 +238,12 @@
     </ClInclude>
     <ClInclude Include="ParticleSystem.h">
       <Filter>Файлы заголовков\GraphicsSceneManagement\GraphicsObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="SpriteUI.h">
+      <Filter>Файлы заголовков\GraphicsCore\GraphicsUIManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="UISystem.h">
+      <Filter>Файлы заголовков\GraphicsCore\GraphicsUIManagement</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

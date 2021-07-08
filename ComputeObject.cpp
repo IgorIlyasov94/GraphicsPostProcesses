@@ -151,7 +151,7 @@ void Graphics::ComputeObject::Compose(ID3D12Device* device)
 	isComposed = true;
 }
 
-bool Graphics::ComputeObject::IsComposed() const noexcept
+const bool& Graphics::ComputeObject::IsComposed() const noexcept
 {
 	return isComposed;
 }

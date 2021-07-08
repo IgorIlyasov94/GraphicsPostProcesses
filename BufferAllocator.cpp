@@ -38,9 +38,9 @@ void Graphics::BufferAllocator::AllocateUnorderedAccess(ID3D12Device* device, si
 	Allocate(device, size, alignment, D3D12_HEAP_TYPE_DEFAULT, true, true, emptyUnorderedPages, usedUnorderedPages, currentUnorderedPage, allocation);
 }
 
-void Graphics::BufferAllocator::AllocateTemporaryUpload(ID3D12Device* device, size_t size, BufferAllocation& allocation)
+void Graphics::BufferAllocator::AllocateTemporary(ID3D12Device* device, size_t size, D3D12_HEAP_TYPE heapType, BufferAllocation& allocation)
 {
-	tempUploadPages.push_back(std::shared_ptr<BufferAllocationPage>(new BufferAllocationPage(device, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_FLAG_NONE, size)));
+	tempUploadPages.push_back(std::shared_ptr<BufferAllocationPage>(new BufferAllocationPage(device, heapType, D3D12_RESOURCE_FLAG_NONE, size)));
 
 	tempUploadPages.back()->Allocate(size, 1, allocation);
 }

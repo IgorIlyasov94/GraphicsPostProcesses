@@ -30,7 +30,7 @@ namespace Graphics
 
 		void Compose(ID3D12Device* device);
 
-		bool IsComposed() const noexcept;
+		const bool& IsComposed() const noexcept;
 
 		void SetThreadGroupCount(uint32_t xCount, uint32_t yCount, uint32_t zCount);
 

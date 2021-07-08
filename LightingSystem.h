@@ -39,7 +39,6 @@ namespace Graphics
 		std::shared_ptr<ComputeObject> calculateClusterCoordinatesCO;
 		std::shared_ptr<ComputeObject> distributePointLightCO;
 
-
 		ConstantBufferId immutableGlobalConstBufferId;
 		ConstantBufferId globalConstBufferId;
 

@@ -29,6 +29,11 @@ namespace Graphics
 		CommonHandler& operator=(const CommonHandler&) = delete;
 		CommonHandler& operator=(CommonHandler&&) = delete;
 
+		HWND windowHandlerPtr;
+
+		size_t mouseX;
+		size_t mouseY;
+
 		bool inFocus;
 
 		RendererDirectX12& renderer = RendererDirectX12::GetInstance();

@@ -64,7 +64,7 @@ void Graphics::RendererDirectX12::Initialize(HWND& windowHandler)
 	ThrowIfFailed(device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator[bufferIndex].Get(), nullptr, IID_PPV_ARGS(&commandList)),
 		"RendererDirectX12::Initialize: Command List creating error!");
 
-	resourceManager.Initialize(device.Get(), commandList.Get());
+	resourceManager.Initialize(device.Get());
 	resourceManager.CreateSwapChainBuffers(swapChain.Get(), SWAP_CHAIN_BUFFER_COUNT);
 
 	sceneRenderTargetId[0] = resourceManager.CreateRenderTarget(GraphicsSettings::GetResolutionX(), GraphicsSettings::GetResolutionY(), DXGI_FORMAT_R16G16B16A16_FLOAT);
@@ -161,6 +161,8 @@ void Graphics::RendererDirectX12::FrameRender()
 	sceneManager.DrawCurrentScene(commandList.Get());
 
 	postProcesses.PresentProcessChain(commandList.Get(), &resourceManager.GetSwapChainDescriptorBase(bufferIndex));
+
+	sceneManager.DrawUI(commandList.Get());
 
 	SetResourceBarrier(commandList.Get(), resourceManager.GetSwapChainBuffer(bufferIndex), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 

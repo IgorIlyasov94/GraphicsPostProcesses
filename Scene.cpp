@@ -9,6 +9,7 @@ Graphics::Scene::Scene()
 	octree = std::shared_ptr<Octree>(new Octree(octreeDepth, octreeBoundingBox));
 
 	lightingSystem = std::shared_ptr<LightingSystem>(new LightingSystem());
+	uiSystem = std::shared_ptr<UISystem>(new UISystem());
 }
 
 Graphics::Scene::~Scene()
@@ -19,6 +20,11 @@ Graphics::Scene::~Scene()
 Graphics::LightingSystem* Graphics::Scene::GetLightingSystem()
 {
 	return lightingSystem.get();
+}
+
+Graphics::UISystem* Graphics::Scene::GetUISystem()
+{
+	return uiSystem.get();
 }
 
 void Graphics::Scene::SetMainCamera(const Camera* camera)
@@ -42,7 +48,7 @@ void Graphics::Scene::EmplaceGraphicObject(const GraphicObject* object, bool isD
 	octree->AddObject(object, isDynamic);
 }
 
-void Graphics::Scene::ExecuteScripts(ID3D12GraphicsCommandList* commandList)
+void Graphics::Scene::ExecuteScripts(ID3D12GraphicsCommandList* commandList, size_t mouseX, size_t mouseY)
 {
 	for (auto& computeObject : computeObjects)
 		computeObject->Present(commandList);
@@ -65,6 +71,8 @@ void Graphics::Scene::ExecuteScripts(ID3D12GraphicsCommandList* commandList)
 		visibleObject->Execute(commandList);
 
 	lightingSystem->UpdateCluster(commandList);
+
+	uiSystem->ExecuteScripts(mouseX, mouseY);
 }
 
 void Graphics::Scene::Draw(ID3D12GraphicsCommandList* commandList) const
@@ -77,4 +85,9 @@ void Graphics::Scene::Draw(ID3D12GraphicsCommandList* commandList) const
 
 	for (auto& visibleObject : visibleEffectObjectsList)
 		visibleObject->Draw(commandList);
+}
+
+void Graphics::Scene::DrawUI(ID3D12GraphicsCommandList* commandList) const
+{
+	uiSystem->Draw(commandList);
 }

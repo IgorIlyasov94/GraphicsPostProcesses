@@ -14,8 +14,9 @@ namespace Graphics
 
 		void InitializeTestScene(ID3D12Device* device, ID3D12GraphicsCommandList* commandList);
 
-		void ExecuteScripts(ID3D12GraphicsCommandList* commandList);
-		void DrawCurrentScene(ID3D12GraphicsCommandList* commandList);
+		void ExecuteScripts(ID3D12GraphicsCommandList* commandList, size_t mouseX, size_t mouseY);
+		void DrawCurrentScene(ID3D12GraphicsCommandList* commandList) const;
+		void DrawUI(ID3D12GraphicsCommandList* commandList) const;
 
 	private:
 		SceneManager();
@@ -51,7 +52,7 @@ namespace Graphics
 		ConstantBufferId immutableGlobalConstBufferId;
 		ConstantBufferId globalConstBufferId;
 
-		float cameraShift;
+		mutable float cameraShift;
 
 		struct ImmutableGlobalConstBuffer
 		{
@@ -79,11 +80,11 @@ namespace Graphics
 			float4x4 wvp;
 		};
 
-		StandardMeshConstBuffer goldenFrameConstBuffer;
-		StandardMeshConstBuffer cubeSecondConstBuffer;
+		mutable StandardMeshConstBuffer goldenFrameConstBuffer;
+		mutable StandardMeshConstBuffer cubeSecondConstBuffer;
 
 		ImmutableGlobalConstBuffer immutableGlobalConstBuffer;
-		GlobalConstBuffer globalConstBuffer;
+		mutable GlobalConstBuffer globalConstBuffer;
 
 		std::shared_ptr<Camera> camera;
 

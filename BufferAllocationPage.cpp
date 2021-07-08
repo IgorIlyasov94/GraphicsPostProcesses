@@ -23,7 +23,7 @@ Graphics::BufferAllocationPage::BufferAllocationPage(ID3D12Device* device, D3D12
 
 	D3D12_RANGE range = { 0, 0 };
 
-	if (heapType == D3D12_HEAP_TYPE_UPLOAD)
+	if (heapType == D3D12_HEAP_TYPE_UPLOAD || heapType == D3D12_HEAP_TYPE_READBACK)
 		ThrowIfFailed(pageResource->Map(0, &range, reinterpret_cast<void**>(&currentCPUAddress)),
 			"BufferAllocationPage::BufferAllocationPage: Resource mapping error");
 
@@ -32,7 +32,7 @@ Graphics::BufferAllocationPage::BufferAllocationPage(ID3D12Device* device, D3D12
 
 Graphics::BufferAllocationPage::~BufferAllocationPage()
 {
-	if (heapType == D3D12_HEAP_TYPE_UPLOAD)
+	if (heapType == D3D12_HEAP_TYPE_UPLOAD || heapType == D3D12_HEAP_TYPE_READBACK)
 		pageResource->Unmap(0, nullptr);
 
 	currentCPUAddress = nullptr;

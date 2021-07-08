@@ -13,7 +13,7 @@ namespace Graphics
 		void Allocate(ID3D12Device* device, size_t size, size_t alignment, D3D12_HEAP_TYPE heapType, BufferAllocation& allocation);
 		void AllocateCustomBuffer(ID3D12Device* device, size_t size, size_t alignment, BufferAllocation& allocation);
 		void AllocateUnorderedAccess(ID3D12Device* device, size_t size, size_t alignment, BufferAllocation& allocation);
-		void AllocateTemporaryUpload(ID3D12Device* device, size_t size, BufferAllocation& allocation);
+		void AllocateTemporary(ID3D12Device* device, size_t size, D3D12_HEAP_TYPE heapType, BufferAllocation& allocation);
 
 		void ReleaseTemporaryBuffers();
 

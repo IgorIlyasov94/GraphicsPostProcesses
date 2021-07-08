@@ -1,7 +1,7 @@
 #include "CommonHandler.h"
 
 Graphics::CommonHandler::CommonHandler()
-	: inFocus(true)
+	: windowHandlerPtr(nullptr), mouseX(0), mouseY(0), inFocus(true)
 {
 
 }
@@ -15,6 +15,8 @@ Graphics::CommonHandler& Graphics::CommonHandler::GetInstance()
 
 void Graphics::CommonHandler::Initialize(HWND& windowHandler)
 {
+	windowHandlerPtr = windowHandler;
+
 	renderer.Initialize(windowHandler);
 }
 
@@ -22,7 +24,17 @@ void Graphics::CommonHandler::Update()
 {
 	renderer.FrameStart();
 
-	sceneManager.ExecuteScripts(renderer.GetCommandList());
+	POINT cursorPos;
+	if (GetCursorPos(&cursorPos))
+	{
+		if (ScreenToClient(windowHandlerPtr, &cursorPos))
+		{
+			mouseX = cursorPos.x;
+			mouseY = cursorPos.y;
+		}
+	}
+
+	sceneManager.ExecuteScripts(renderer.GetCommandList(), mouseX, mouseY);
 
 	renderer.FrameRender();
 }

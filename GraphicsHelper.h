@@ -65,6 +65,20 @@ namespace Graphics
 		POSITION_NORMAL_TANGENT_BINORMAL_TEXCOORD
 	};
 
+	enum class UIHorizontalAlign
+	{
+		UI_ALIGN_LEFT,
+		UI_ALIGN_CENTER,
+		UI_ALIGN_RIGHT
+	};
+
+	enum class UIVerticalAlign
+	{
+		UI_ALIGN_TOP,
+		UI_ALIGN_MIDDLE,
+		UI_ALIGN_BOTTOM
+	};
+
 	constexpr size_t _KB = 1024;
 	constexpr size_t _MB = 1024 * _KB;
 	constexpr size_t _GB = 1024 * _MB;
@@ -115,6 +129,28 @@ namespace Graphics
 	float BoundingBoxVolume(const BoundingBox& boundingBox);
 	void BoundingBoxVertices(const BoundingBox& boundingBox, std::array<floatN, 8>& vertices);
 	
+	void TriangulateFace(VertexFormat vertexFormat, const std::vector<float3>& positions, std::vector<uint32_t>& face);
+	float3 CalculatePolygonCenter(VertexFormat vertexFormat, const std::vector<float3>& positions, const std::vector<uint32_t>& face);
+	float3 CalculatePolygonNormal(VertexFormat vertexFormat, const std::vector<float3>& positions, const std::vector<uint32_t>& face);
+	float CalculateTriangleArea(float3 position0, float3 position1, float3 position2);
+	float3 CalculateBarycentric(float3 position0, float3 position1, float3 position2, float3 point);
+	bool CheckPointInTriangle(float3 position0, float3 position1, float3 position2, float3 point);
+	bool CheckTriangleInPolygon(float3 position0, float3 position1, float3 position2, float3 polygonNormal);
+
+	float3 CalculateNormal(float3 position0, float3 position1, float3 position2);
+	void CalculateNormals(VertexFormat vertexFormat, const std::vector<float3>& positions, std::vector<uint32_t>& faces, std::vector<float3>& normals);
+	void CalculateTangents(float3 normal, float3& tangent, float3& binormal);
+	void CalculateTangents(const std::vector<float3>& normals, std::vector<float3>& tangents, std::vector<float3>& binormals);
+	void SmoothNormals(VertexFormat vertexFormat, const std::vector<float3>& positions, std::vector<uint32_t>& faces, std::vector<float3>& normals);
+
+	const std::vector<uint32_t> GetFaceIndicesForSamePosition(VertexFormat vertexFormat, const std::vector<float3>& positions,
+		const std::vector<uint32_t>& faces, uint32_t startFaceIndex, float3 position);
+
+	int64_t GetIndexForSameVertex(uint32_t vertex4ByteStride, const std::vector<float>& vertices, const std::vector<uint32_t>& indices,
+		float3 position, float3 normal, float2 texCoord);
+
+	uint32_t GetVertex4ByteStride(VertexFormat vertexFormat);
+
 	constexpr size_t GetVertexStride(VertexFormat vertexFormat) noexcept
 	{
 		if (vertexFormat == VertexFormat::POSITION)

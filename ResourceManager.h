@@ -129,7 +129,7 @@ namespace Graphics
 	public:
 		static ResourceManager& GetInstance();
 
-		void Initialize(ID3D12Device* _device, ID3D12GraphicsCommandList* _commandList);
+		void Initialize(ID3D12Device* _device);
 
 		VertexBufferId CreateVertexBuffer(const void* data, size_t dataSize, uint32_t vertexStride);
 		IndexBufferId CreateIndexBuffer(const void* data, size_t dataSize, uint32_t indexStride);
@@ -168,12 +168,14 @@ namespace Graphics
 
 		ID3D12DescriptorHeap* GetShaderResourceViewDescriptorHeap();
 
+		void GetTextureDataFromGPU(TextureId textureId, std::vector<float4>& textureRawData);
+
 		void UpdateConstantBuffer(const ConstantBufferId& resourceId, const void* data, size_t dataSize);
 
 		void ReleaseTemporaryUploadBuffers();
 
 	private:
-		ResourceManager() : device(nullptr), commandList(nullptr) {};
+		ResourceManager() : device(nullptr), fenceEvent{}, fenceValue(0) {};
 		~ResourceManager() {};
 
 		ResourceManager(const ResourceManager&) = delete;
@@ -186,8 +188,15 @@ namespace Graphics
 		void CopyRawDataToSubresource(const TextureInfo& srcTextureInfo, uint32_t numRows, uint16_t numSlices, uint64_t destRowPitch, uint64_t destSlicePitch,
 			uint64_t rowSizeInBytes, const uint8_t* srcAddress, uint8_t* destAddress);
 
+		void ExecuteGPUCommands();
+
 		ID3D12Device* device;
-		ID3D12GraphicsCommandList* commandList;
+		ComPtr<ID3D12GraphicsCommandList> commandList;
+		ComPtr<ID3D12CommandAllocator> commandAllocator;
+		ComPtr<ID3D12CommandQueue> commandQueue;
+		ComPtr<ID3D12Fence> fence;
+		HANDLE fenceEvent;
+		uint64_t fenceValue;
 
 		std::vector<VertexBuffer> vertexBufferPool;
 		std::vector<IndexBuffer> indexBufferPool;

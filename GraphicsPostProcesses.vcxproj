@@ -173,11 +173,13 @@
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="SceneManager.cpp" />
+    <ClCompile Include="SpriteUI.cpp" />
     <ClCompile Include="TextureAllocationPage.cpp" />
     <ClCompile Include="TextureAllocator.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="RendererDirecX12.cpp" />
     <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="UISystem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
@@ -202,11 +204,13 @@
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="SceneManager.h" />
+    <ClInclude Include="SpriteUI.h" />
     <ClInclude Include="TextureAllocationPage.h" />
     <ClInclude Include="TextureAllocator.h" />
     <ClInclude Include="Main.h" />
     <ClInclude Include="RendererDirectX12.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="UISystem.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

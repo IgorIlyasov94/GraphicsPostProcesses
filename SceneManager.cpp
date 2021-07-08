@@ -109,11 +109,11 @@ void Graphics::SceneManager::InitializeTestScene(ID3D12Device* device, ID3D12Gra
 	cubeSecond->AssignMaterial(cubeSecondMaterial.get());*/
 
 	testEffectParticleSystem = std::shared_ptr<ParticleSystem>(new ParticleSystem(100, 30, 600, paddingDefaultTextureId));
-	testEffectParticleSystem->SetEmitter({ 0.0f, 2.0f, 0.0f }, 10.0f, 10, false, ParticleEmitterShape::EMITTER_BOX,
+	testEffectParticleSystem->SetEmitter({ 0.0f, 2.0f, 0.0f }, 10.0f, 1, false, ParticleEmitterShape::EMITTER_POINT,
 		BoundingBox({ { -3.0f, -3.0f, -3.0f }, { 3.0f, 3.0f, 3.0f } }));
 	testEffectParticleSystem->SetSize({ 1.0f, 1.0f }, { 1.0f, 1.0f }, ParticleAnimationType::ANIMATION_NONE, {});
-	testEffectParticleSystem->SetVelocity({ -1.0f, -1.0f, -1.0f }, { 1.0f, 1.0f, 1.0f }, 0.0f, ParticleAnimationType::ANIMATION_NONE, {});
-	testEffectParticleSystem->SetColor({ 10.0f, 1.0f, 1.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 1.0f }, ParticleAnimationType::ANIMATION_LERP, {});
+	testEffectParticleSystem->SetVelocity({ 0.0f, 1.0f, 0.0f }, { 0.0f, 5.0f, 0.0f }, 1.0f, ParticleAnimationType::ANIMATION_LERP, {});
+	testEffectParticleSystem->SetColor({ 10.0f, 10.0f, 10.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 1.0f }, ParticleAnimationType::ANIMATION_LERP, {});
 	testEffectParticleSystem->SetAngularMotion(0.0f, XM_2PI, 0.0f, 5.0f);
 	testEffectParticleSystem->SetFrames(2, 2, 0, 0, 4);
 	testEffectParticleSystem->Compose(device, commandList, globalConstBufferId);
@@ -149,12 +149,12 @@ void Graphics::SceneManager::InitializeTestScene(ID3D12Device* device, ID3D12Gra
 	currentScene->EmplaceGraphicObject(testEffect.get(), false);
 }
 
-void Graphics::SceneManager::ExecuteScripts(ID3D12GraphicsCommandList* commandList)
+void Graphics::SceneManager::ExecuteScripts(ID3D12GraphicsCommandList* commandList, size_t mouseX, size_t mouseY)
 {
-	currentScene->ExecuteScripts(commandList);
+	currentScene->ExecuteScripts(commandList, mouseX, mouseY);
 }
 
-void Graphics::SceneManager::DrawCurrentScene(ID3D12GraphicsCommandList* commandList)
+void Graphics::SceneManager::DrawCurrentScene(ID3D12GraphicsCommandList* commandList) const
 {
 	if (currentScene == nullptr)
 		return;
@@ -196,6 +196,11 @@ void Graphics::SceneManager::DrawCurrentScene(ID3D12GraphicsCommandList* command
 	//cubeSecondMaterial->UpdateConstantBuffer(cubeSecondConstBufferId, &cubeSecondConstBuffer, sizeof(cubeSecondConstBuffer));
 
 	currentScene->Draw(commandList);
+}
+
+void Graphics::SceneManager::DrawUI(ID3D12GraphicsCommandList* commandList) const
+{
+	currentScene->DrawUI(commandList);
 }
 
 Graphics::SceneManager::SceneManager()

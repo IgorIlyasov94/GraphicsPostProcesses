@@ -7,10 +7,24 @@ Graphics::ResourceManager& Graphics::ResourceManager::GetInstance()
 	return thisInstance;
 }
 
-void Graphics::ResourceManager::Initialize(ID3D12Device* _device, ID3D12GraphicsCommandList* _commandList)
+void Graphics::ResourceManager::Initialize(ID3D12Device* _device)
 {
 	device = _device;
-	commandList = _commandList;
+	
+	CreateCommandQueue(device, &commandQueue);
+
+	ThrowIfFailed(device->CreateFence(fenceValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)), "ResourceManager::Initialize: Fence creating error!");
+	fenceValue++;
+
+	fenceEvent = CreateEvent(nullptr, false, false, nullptr);
+	if (fenceEvent == nullptr)
+		ThrowIfFailed(HRESULT_FROM_WIN32(GetLastError()), "ResourceManager::Initialize: Fence Event creating error!");
+
+	ThrowIfFailed(device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator)),
+		"ResourceManager::Initialize: Command Allocator creating error!");
+
+	ThrowIfFailed(device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)),
+		"ResourceManager::Initialize: Command List creating error!");
 }
 
 Graphics::VertexBufferId Graphics::ResourceManager::CreateVertexBuffer(const void* data, size_t dataSize, uint32_t vertexStride)
@@ -19,7 +33,7 @@ Graphics::VertexBufferId Graphics::ResourceManager::CreateVertexBuffer(const voi
 	bufferAllocator.Allocate(device, dataSize, 64 * _KB, D3D12_HEAP_TYPE_DEFAULT, vertexBufferAllocation);
 
 	BufferAllocation uploadBufferAllocation{};
-	bufferAllocator.AllocateTemporaryUpload(device, dataSize, uploadBufferAllocation);
+	bufferAllocator.AllocateTemporary(device, dataSize, D3D12_HEAP_TYPE_UPLOAD, uploadBufferAllocation);
 
 	if (vertexBufferAllocation.bufferResource == nullptr)
 		throw std::exception("ResourceManager::CreateVertexBuffer: Vertex Buffer Resource is null!");
@@ -32,7 +46,9 @@ Graphics::VertexBufferId Graphics::ResourceManager::CreateVertexBuffer(const voi
 	commandList->CopyBufferRegion(vertexBufferAllocation.bufferResource, vertexBufferAllocation.gpuPageOffset, uploadBufferAllocation.bufferResource,
 		0, uploadBufferAllocation.bufferResource->GetDesc().Width);
 
-	SetResourceBarrier(commandList, vertexBufferAllocation.bufferResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	SetResourceBarrier(commandList.Get(), vertexBufferAllocation.bufferResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+
+	ExecuteGPUCommands();
 
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
 	vertexBufferView.BufferLocation = vertexBufferAllocation.gpuAddress;
@@ -54,7 +70,7 @@ Graphics::IndexBufferId Graphics::ResourceManager::CreateIndexBuffer(const void*
 	bufferAllocator.Allocate(device, dataSize, 64 * _KB, D3D12_HEAP_TYPE_DEFAULT, indexBufferAllocation);
 	
 	BufferAllocation uploadBufferAllocation{};
-	bufferAllocator.AllocateTemporaryUpload(device, dataSize, uploadBufferAllocation);
+	bufferAllocator.AllocateTemporary(device, dataSize, D3D12_HEAP_TYPE_UPLOAD, uploadBufferAllocation);
 
 	if (indexBufferAllocation.bufferResource == nullptr)
 		throw std::exception("ResourceManager::CreateIndexBuffer: Index Buffer Resource is null!");
@@ -72,7 +88,9 @@ Graphics::IndexBufferId Graphics::ResourceManager::CreateIndexBuffer(const void*
 	commandList->CopyBufferRegion(indexBufferAllocation.bufferResource, indexBufferAllocation.gpuPageOffset, uploadBufferAllocation.bufferResource,
 		0, uploadBufferAllocation.bufferResource->GetDesc().Width);
 
-	SetResourceBarrier(commandList, indexBufferAllocation.bufferResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+	SetResourceBarrier(commandList.Get(), indexBufferAllocation.bufferResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+
+	ExecuteGPUCommands();
 
 	IndexBuffer indexBuffer{};
 	indexBuffer.indicesCount = dataSize / indexStride;
@@ -177,11 +195,13 @@ Graphics::TextureId Graphics::ResourceManager::CreateTexture(const std::vector<u
 	if (uploadTextureAllocation.textureResource == nullptr)
 		throw std::exception("ResourceManager::CreateTexture: Upload Texture Resource is null!");
 
-	SetResourceBarrier(commandList, textureAllocation.textureResource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+	SetResourceBarrier(commandList.Get(), textureAllocation.textureResource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
 
 	UploadTexture(uploadTextureAllocation.textureResource, textureAllocation.textureResource, textureInfo, data, uploadTextureAllocation.cpuAddress);
 
-	SetResourceBarrier(commandList, textureAllocation.textureResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COMMON);
+	SetResourceBarrier(commandList.Get(), textureAllocation.textureResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COMMON);
+
+	ExecuteGPUCommands();
 
 	DescriptorAllocation shaderResourceDescriptorAllocation{};
 	descriptorAllocator.Allocate(device, false, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, shaderResourceDescriptorAllocation);
@@ -204,7 +224,7 @@ Graphics::BufferId Graphics::ResourceManager::CreateBuffer(const void* data, siz
 	bufferAllocator.AllocateCustomBuffer(device, dataSize, 64 * _KB, bufferAllocation);
 
 	BufferAllocation uploadBufferAllocation{};
-	bufferAllocator.AllocateTemporaryUpload(device, dataSize, uploadBufferAllocation);
+	bufferAllocator.AllocateTemporary(device, dataSize, D3D12_HEAP_TYPE_UPLOAD, uploadBufferAllocation);
 
 	if (bufferAllocation.bufferResource == nullptr)
 		throw std::exception("ResourceManager::CreateBuffer: Buffer Resource is null!");
@@ -216,6 +236,8 @@ Graphics::BufferId Graphics::ResourceManager::CreateBuffer(const void* data, siz
 
 	commandList->CopyBufferRegion(bufferAllocation.bufferResource, bufferAllocation.gpuPageOffset, uploadBufferAllocation.bufferResource,
 		0, uploadBufferAllocation.bufferResource->GetDesc().Width);
+
+	ExecuteGPUCommands();
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc{};
 	shaderResourceViewDesc.Format = (bufferStride == 0) ? format : (bufferStride == 1) ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_UNKNOWN;
@@ -294,7 +316,9 @@ Graphics::RenderTargetId Graphics::ResourceManager::CreateRenderTarget(uint64_t 
 
 	device->CreateRenderTargetView(textureAllocation.textureResource, &renderTargetViewDesc, renderTargetDescriptorAllocation.descriptorBase);
 
-	SetResourceBarrier(commandList, textureAllocation.textureResource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	SetResourceBarrier(commandList.Get(), textureAllocation.textureResource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+	ExecuteGPUCommands();
 
 	RenderTarget renderTarget{};
 	renderTarget.shaderResourceViewDesc = shaderResourceViewDesc;
@@ -349,7 +373,9 @@ Graphics::DepthStencilId Graphics::ResourceManager::CreateDepthStencil(uint64_t 
 	descriptorAllocator.Allocate(device, false, 1, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, depthStencilDescriptorAllocation);
 	device->CreateDepthStencilView(textureAllocation.textureResource, &depthStencilViewDesc, depthStencilDescriptorAllocation.descriptorBase);
 
-	SetResourceBarrier(commandList, textureAllocation.textureResource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	SetResourceBarrier(commandList.Get(), textureAllocation.textureResource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+
+	ExecuteGPUCommands();
 
 	DepthStencil depthStencil{};
 	depthStencil.shaderResourceViewDesc = shaderResourceViewDesc;
@@ -423,7 +449,9 @@ Graphics::RWTextureId Graphics::ResourceManager::CreateRWTexture(const TextureIn
 	descriptorAllocator.Allocate(device, true, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, shaderNonVisibleDescriptorAllocation);
 	device->CreateUnorderedAccessView(textureAllocation.textureResource, nullptr, &unorderedAccessViewDesc, shaderNonVisibleDescriptorAllocation.descriptorBase);
 
-	SetResourceBarrier(commandList, textureAllocation.textureResource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	SetResourceBarrier(commandList.Get(), textureAllocation.textureResource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+	ExecuteGPUCommands();
 
 	RWTexture rwTexture{};
 	rwTexture.shaderResourceViewDesc = shaderResourceViewDesc;
@@ -446,7 +474,7 @@ Graphics::RWBufferId Graphics::ResourceManager::CreateRWBuffer(const void* initi
 	bufferAllocator.AllocateUnorderedAccess(device, dataSize, 64 * _KB, bufferAllocation);
 
 	BufferAllocation uploadBufferAllocation{};
-	bufferAllocator.AllocateTemporaryUpload(device, dataSize, uploadBufferAllocation);
+	bufferAllocator.AllocateTemporary(device, dataSize, D3D12_HEAP_TYPE_UPLOAD, uploadBufferAllocation);
 
 	if (bufferAllocation.bufferResource == nullptr)
 		throw std::exception("ResourceManager::CreateRWBuffer: RWBuffer Resource is null!");
@@ -456,12 +484,14 @@ Graphics::RWBufferId Graphics::ResourceManager::CreateRWBuffer(const void* initi
 
 	std::copy(reinterpret_cast<const uint8_t*>(initialData), reinterpret_cast<const uint8_t*>(initialData) + dataSize, uploadBufferAllocation.cpuAddress);
 
-	SetResourceBarrier(commandList, bufferAllocation.bufferResource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_DEST);
+	SetResourceBarrier(commandList.Get(), bufferAllocation.bufferResource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_DEST);
 
 	commandList->CopyBufferRegion(bufferAllocation.bufferResource, bufferAllocation.gpuPageOffset, uploadBufferAllocation.bufferResource,
 		0, uploadBufferAllocation.bufferResource->GetDesc().Width);
 
-	SetResourceBarrier(commandList, bufferAllocation.bufferResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	SetResourceBarrier(commandList.Get(), bufferAllocation.bufferResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+	ExecuteGPUCommands();
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc{};
 	shaderResourceViewDesc.Format = (bufferStride == 0) ? format : (bufferStride == 1) ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_UNKNOWN;
@@ -645,6 +675,68 @@ ID3D12DescriptorHeap* Graphics::ResourceManager::GetShaderResourceViewDescriptor
 	return texturePool.front().shaderResourceDescriptorAllocation.descriptorHeap;
 }
 
+void Graphics::ResourceManager::GetTextureDataFromGPU(TextureId textureId, std::vector<float4>& textureRawData)
+{
+	auto textureInfo = texturePool[textureId.value].info;
+
+	uint32_t numSubresources = textureInfo.depth * textureInfo.mipLevels;
+
+	std::vector<uint8_t> srcLayouts((sizeof(D3D12_PLACED_SUBRESOURCE_FOOTPRINT) + sizeof(uint32_t) + sizeof(uint64_t)) * numSubresources);
+
+	auto sourceTextureDesc = texturePool[textureId.value].textureAllocation.textureResource->GetDesc();
+	std::vector<uint32_t> numRows(numSubresources);
+	std::vector<uint64_t> rowSizesPerByte(numSubresources);
+	uint64_t requiredSize;
+
+	device->GetCopyableFootprints(&sourceTextureDesc, 0, numSubresources, 0, reinterpret_cast<D3D12_PLACED_SUBRESOURCE_FOOTPRINT*>(srcLayouts.data()), numRows.data(),
+		rowSizesPerByte.data(), &requiredSize);
+
+	BufferAllocation readbackTextureAllocation{};
+	bufferAllocator.AllocateTemporary(device, requiredSize, D3D12_HEAP_TYPE_READBACK, readbackTextureAllocation);
+
+	SetResourceBarrier(commandList.Get(), texturePool[textureId.value].textureAllocation.textureResource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_SOURCE);
+
+	for (uint32_t subresourceIndex = 0; subresourceIndex < numSubresources; subresourceIndex++)
+	{
+		D3D12_TEXTURE_COPY_LOCATION srcLocation{};
+		srcLocation.pResource = texturePool[textureId.value].textureAllocation.textureResource;
+		srcLocation.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+		srcLocation.SubresourceIndex = subresourceIndex;
+
+		D3D12_TEXTURE_COPY_LOCATION destLocation{};
+		destLocation.pResource = readbackTextureAllocation.bufferResource;
+		destLocation.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+		destLocation.PlacedFootprint = reinterpret_cast<D3D12_PLACED_SUBRESOURCE_FOOTPRINT*>(&srcLayouts[0])[subresourceIndex];
+
+		commandList->CopyTextureRegion(&destLocation, 0, 0, 0, &srcLocation, nullptr);
+	}
+
+	SetResourceBarrier(commandList.Get(), texturePool[textureId.value].textureAllocation.textureResource, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COMMON);
+
+	ExecuteGPUCommands();
+
+	auto rawData = readbackTextureAllocation.cpuAddress;
+
+	if (rawData == nullptr)
+		throw std::exception("ResourceManager::GetTextureDataFromGPU: Getting the texture is failed");
+
+	textureRawData.clear();
+
+	for (size_t pixelId = 0; pixelId < requiredSize / 4; pixelId++)
+	{
+		if (pixelId * 4 / textureInfo.height < textureInfo.rowPitch)
+		{
+			float4 texel{};
+			texel.x = rawData[pixelId * 4] / 255.0f;
+			texel.y = rawData[pixelId * 4 + 1] / 255.0f;
+			texel.z = rawData[pixelId * 4 + 2] / 255.0f;
+			texel.w = rawData[pixelId * 4 + 3] / 255.0f;
+
+			textureRawData.push_back(texel);
+		}
+	}
+}
+
 void Graphics::ResourceManager::UpdateConstantBuffer(const ConstantBufferId& resourceId, const void* data, size_t dataSize)
 {
 	std::copy(reinterpret_cast<const uint8_t*>(data), reinterpret_cast<const uint8_t*>(data) + dataSize,
@@ -710,4 +802,23 @@ void Graphics::ResourceManager::CopyRawDataToSubresource(const TextureInfo& srcT
 			std::copy(srcBeginAddress, srcEndAddress, destBeginAddress);
 		}
 	}
+}
+
+void Graphics::ResourceManager::ExecuteGPUCommands()
+{
+	ThrowIfFailed(commandList->Close(), "ResourceManager::ExecuteGPUCommands: Command List closing error!");
+
+	ID3D12CommandList* commandLists[] = { commandList.Get() };
+
+	commandQueue->ExecuteCommandLists(_countof(commandLists), commandLists);
+
+	ThrowIfFailed(commandQueue->Signal(fence.Get(), fenceValue), "ResourceManager::ExecuteGPUCommands: Signal error!");
+	ThrowIfFailed(fence->SetEventOnCompletion(fenceValue, fenceEvent), "ResourceManager::ExecuteGPUCommands: Fence error!");
+
+	WaitForSingleObjectEx(fenceEvent, INFINITE, false);
+
+	fenceValue++;
+
+	ThrowIfFailed(commandAllocator->Reset(), "ResourceManager::ExecuteGPUCommands: Command Allocator resetting error!");
+	ThrowIfFailed(commandList->Reset(commandAllocator.Get(), nullptr), "ResourceManager::ExecuteGPUCommands: Command List resetting error!");
 }
