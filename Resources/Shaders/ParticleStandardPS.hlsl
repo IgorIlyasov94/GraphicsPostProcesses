@@ -1,4 +1,4 @@
-Texture2D<float4> textureAtlas : register(t0);
+Texture2D<float4> textureAtlas : register(t1);
 
 SamplerState sLinear : register(s0);
 

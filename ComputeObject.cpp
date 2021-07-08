@@ -147,7 +147,7 @@ void Graphics::ComputeObject::Compose(ID3D12Device* device)
 
 	for (auto& rwBufferIndex : indexSet.rwBufferIndices)
 		firstResourceDescriptorBases.push_back(resourceManager.GetRWBuffer(rwBufferIndex).unorderedAccessDescriptorAllocation.gpuDescriptorBase);
-
+	
 	isComposed = true;
 }
 
@@ -287,7 +287,7 @@ void Graphics::ComputeObject::CreateRootSignature(ID3D12Device* device, const st
 
 	if (rootSignatureDesc.NumStaticSamplers > 0)
 		rootSignatureDesc.pStaticSamplers = samplerDescs.data();
-
+	
 	rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
 
 	ComPtr<ID3DBlob> signature;

@@ -62,8 +62,8 @@ struct Particle
 
 struct ParticleBufferState
 {
-	uint particlesTotalCount;
-	uint particlesPerBurstLeft;
+	int particlesTotalCount;
+	int particlesPerBurstLeft;
 	float particleGenerationRate;
 	float particleGenerationTimer;
 };
@@ -103,7 +103,8 @@ float3 ParticleVelocity(float3 startVelocity, float3 endVelocity, float3 velocit
 		float3 divergencedDirection = resultDirection + velocityDivergence;
 		float divergencedSpeed = length(divergencedDirection);
 		
-		resultDirection = normalize((divergencedSpeed < 0.00001f) ? resultDirection : divergencedDirection);
+		if (speed > 0.0f)
+			resultDirection = normalize((divergencedSpeed < 0.00001f) ? resultDirection : divergencedDirection);
 		
 		resultVelocity = speed * resultDirection;
 	}
@@ -126,8 +127,10 @@ float2 ParticleSize(float2 startSize, float2 endSize, float2 currentSize, Textur
 
 float2 ParticleCoordOffset(uint2 startFrame, uint2 atlasCellsCount, uint animationFramesCount, float timeMoment)
 {
-	uint currentFrameX = (startFrame.x + (uint) ceil(animationFramesCount * timeMoment)) % atlasCellsCount.x;
+	uint currentFrameX = startFrame.x + (uint) floor(animationFramesCount * timeMoment);
 	uint currentFrameY = startFrame.y + currentFrameX / atlasCellsCount.x;
+	currentFrameX %= atlasCellsCount.x;
+	
 	float2 resultOffset = uint2(currentFrameX, currentFrameY) / (float2) atlasCellsCount;
 	
 	return resultOffset;
@@ -173,25 +176,25 @@ float2 RandomSize(float2 minSize, float2 maxSize, float2 randomValue)
 	return result;
 }
 
-Particle GenerateNewParticle()
+Particle GenerateNewParticle(float4 randomModifier)
 {
 	Particle particle = (Particle) 0;
 	particle.position = (isEmitterRelative) ? 0.0f.xxx : emitterPosition;
 	
 	if (emitterShape == 1)
-		particle.position += RandomPointInBox(emitterVolume0.xyz, emitterVolume1, randomValues.xyz);
+		particle.position += RandomPointInBox(emitterVolume0.xyz, emitterVolume1, frac(randomValues.xyz + randomModifier.xyz));
 	else if (emitterShape == 2)
-		particle.position += RandomPointInSphere(emitterVolume0.xyz, emitterVolume0.w, randomValues);
+		particle.position += RandomPointInSphere(emitterVolume0.xyz, emitterVolume0.w, frac(randomValues + randomModifier));
 	
-	particle.angle = lerp(angleStart.x, angleStart.y, randomValues.x);
-	particle.size = ParticleSize(sizeStart, sizeEnd, RandomSize(sizeStart, sizeEnd, randomValues.yz), sizeGradient, sLinear, 0.0f, sizeAlterationType);
+	particle.angle = lerp(angleStart.x, angleStart.y, frac(randomValues.x + randomModifier.x));
+	particle.size = ParticleSize(sizeStart, sizeEnd, RandomSize(sizeStart, sizeEnd, frac(randomValues.yz + randomModifier.xy)), sizeGradient, sLinear, 0.0f, sizeAlterationType);
 	particle.textureCoordOffset = ParticleCoordOffset(frameXY, atlasSize, framesCount, 0.0f);
-	particle.color = ParticleColor(colorStart, colorEnd, lerp(colorStart, colorEnd, randomValues.w), colorGradient, sLinear, 0.0f, colorAlterationType);
-	particle.velocity = (velocityAlterationType == 0) ? RandomPointInBox(velocityStart, velocityEnd, randomValues.zwy) :
-		RandomPointInSphere(0.0f.xxx, scatteringValue, randomValues);
-	particle.life = lerp(life.x, life.y, randomValues.w);
+	particle.color = ParticleColor(colorStart, colorEnd, lerp(colorStart, colorEnd, frac(randomValues.w + randomModifier.x)), colorGradient, sLinear, 0.0f, colorAlterationType);
+	particle.velocity = (velocityAlterationType == 0) ? RandomPointInBox(velocityStart, velocityEnd, frac(randomValues.zwy + randomModifier.xyz)) :
+		RandomPointInSphere(0.0f.xxx, scatteringValue, frac(randomValues + randomModifier));
+	particle.life = lerp(life.x, life.y, frac(randomValues.w + randomModifier.x));
 	particle.currentLife = particle.life;
-	particle.angleSpeed = lerp(angleSpeed.x, angleSpeed.y, randomValues.y);
+	particle.angleSpeed = lerp(angleSpeed.x, angleSpeed.y, frac(randomValues.y + randomModifier.x));
 	
 	return particle;
 }
@@ -231,18 +234,23 @@ void main(uint3 groupId : SV_GroupId)
 		}
 		else
 		{
-			particleSystemState[0].particlesTotalCount--;
+			InterlockedAdd(particleSystemState[0].particlesTotalCount, -1);
 			particleSystem[groupId.x].currentLife = 0;
 		}
 	}
 	else
 	{
-		if (particleSystemState[0].particlesPerBurstLeft > 0 && particleSystemState[0].particlesTotalCount < particleMaxCount)
+		//if (particleSystemState[0].particlesPerBurstLeft > 0/* && particleSystemState[0].particlesTotalCount < particleMaxCount*/)
 		{
-			particleSystemState[0].particlesPerBurstLeft--;
-			particleSystemState[0].particlesTotalCount++;
+			int particlesPerBurstLeft;
+			InterlockedAdd(particleSystemState[0].particlesPerBurstLeft, -1, particlesPerBurstLeft);
 			
-			particleSystem[groupId.x] = GenerateNewParticle();
+			if (particlesPerBurstLeft > 0)
+			{
+				InterlockedAdd(particleSystemState[0].particlesTotalCount, 1u);
+				
+				particleSystem[groupId.x] = GenerateNewParticle(uint4(groupId.x % 2, groupId.x % 3, groupId.x % 4, groupId.x % 5) * randomValues.z * 2.0f - 1.0f.xxxx);
+			}
 		}
 	}
 }

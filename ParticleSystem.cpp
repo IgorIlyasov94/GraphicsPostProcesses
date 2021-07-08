@@ -2,7 +2,7 @@
 #include "Resources/Shaders/UpdateParticleSystemCS.hlsl.h"
 #include "Resources/Shaders/SortParticleSystemCS.hlsl.h"
 
-Graphics::ParticleSystem::ParticleSystem(uint32_t particlesMaxCount, uint32_t lifeMin, uint32_t lifeMax)
+Graphics::ParticleSystem::ParticleSystem(uint32_t particlesMaxCount, uint32_t lifeMin, uint32_t lifeMax, TextureId paddingDefaultTexture)
 	: particleSystemData{}, boundingBox{}, indexBufferView{}, isComposed(false)
 {
 	particleSystemData.particleMaxCount = particlesMaxCount;
@@ -11,6 +11,10 @@ Graphics::ParticleSystem::ParticleSystem(uint32_t particlesMaxCount, uint32_t li
 	particleSystemData.atlasSizeX = 1;
 	particleSystemData.atlasSizeY = 1;
 	particleSystemData.framesCount = 1;
+	
+	sizeGradientId = paddingDefaultTexture;
+	velocityGradientId = paddingDefaultTexture;
+	colorGradientId = paddingDefaultTexture;
 }
 
 Graphics::ParticleSystem::~ParticleSystem()
@@ -100,10 +104,10 @@ void Graphics::ParticleSystem::Compose(ID3D12Device* device, ID3D12GraphicsComma
 
 	std::vector<ParticleBuffer> tempData(particleSystemData.particleMaxCount);
 	std::fill(tempData.begin(), tempData.end(), ParticleBuffer{});
-
+	
 	particleBufferId = resourceManager.CreateRWBuffer(tempData.data(), tempData.size() * sizeof(ParticleBuffer), sizeof(ParticleBuffer),
 		tempData.size(), DXGI_FORMAT_UNKNOWN, false);
-
+	
 	ParticleBufferState particleBufferStateData{};
 	particleBufferStateData.particleGenerationTimer = 1.0f;
 	particleBufferStateData.particleGenerationRate = particleSystemData.burstPerSecond / Graphics::GraphicsSettings::GetFramesPerSecond();
@@ -113,9 +117,9 @@ void Graphics::ParticleSystem::Compose(ID3D12Device* device, ID3D12GraphicsComma
 
 	std::vector<uint32_t> indexData(particleSystemData.particleMaxCount);
 	std::iota(indexData.begin(), indexData.end(), 0);
-
+	
 	indexBufferId = resourceManager.CreateRWBuffer(indexData.data(), indexData.size() * sizeof(uint32_t), 0, indexData.size(), DXGI_FORMAT_R32_UINT, false);
-
+	
 	indexBufferView.BufferLocation = resourceManager.GetRWBuffer(indexBufferId).bufferAllocation.gpuAddress;
 	indexBufferView.SizeInBytes = indexData.size() * sizeof(uint32_t);
 	indexBufferView.Format = DXGI_FORMAT_R32_UINT;
@@ -136,7 +140,7 @@ void Graphics::ParticleSystem::Compose(ID3D12Device* device, ID3D12GraphicsComma
 	updateParticleSystemCO->AssignRWBuffer(1, particleBufferStateId);
 	updateParticleSystemCO->SetThreadGroupCount(particleSystemData.particleMaxCount, 1, 1);
 	updateParticleSystemCO->Compose(device);
-
+	
 	sortParticleSystemCO = std::shared_ptr<ComputeObject>(new ComputeObject());
 	sortParticleSystemCO->AssignShader({ sortParticleSystemCS, sizeof(sortParticleSystemCS) });
 	sortParticleSystemCO->AssignConstantBuffer(0, globalConstBufferId);
@@ -158,6 +162,14 @@ Graphics::RWBufferId Graphics::ParticleSystem::GetParticleBufferId() const
 	return particleBufferId;
 }
 
+Graphics::ConstantBufferId Graphics::ParticleSystem::GetParticleSystemConstBufferId() const
+{
+	if (!isComposed)
+		throw std::exception("Graphics::ParticleSystem::GetParticleSystemConstBufferId: Particle System is not composed");
+
+	return particleSystemConstBufferId;
+}
+
 const Graphics::BoundingBox& Graphics::ParticleSystem::GetBoundingBox() const noexcept
 {
 	return boundingBox;
@@ -175,11 +187,6 @@ const bool& Graphics::ParticleSystem::IsComposed() const noexcept
 
 void Graphics::ParticleSystem::Update(ID3D12GraphicsCommandList* commandList) const
 {
-	SetResourceBarrier(commandList, resourceManager.GetRWBuffer(indexBufferId).bufferAllocation.bufferResource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-	SetResourceBarrier(commandList, resourceManager.GetRWBuffer(particleBufferId).bufferAllocation.bufferResource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-
 	std::array<D3D12_RESOURCE_BARRIER, 2> resourceBarriers{};
 	resourceBarriers[0].Transition.pResource = resourceManager.GetRWBuffer(indexBufferId).bufferAllocation.bufferResource;
 	resourceBarriers[0].Transition.StateBefore = D3D12_RESOURCE_STATE_INDEX_BUFFER;

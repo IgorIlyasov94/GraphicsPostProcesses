@@ -24,7 +24,7 @@ namespace Graphics
 	class ParticleSystem
 	{
 	public:
-		ParticleSystem(uint32_t particlesMaxCount, uint32_t lifeMin, uint32_t lifeMax);
+		ParticleSystem(uint32_t particlesMaxCount, uint32_t lifeMin, uint32_t lifeMax, TextureId paddingDefaultTexture);
 		~ParticleSystem();
 
 		void SetEmitter(float3 position, float burstPerSecond, uint32_t burstCount, bool particlesEmitterRelativeCoord, ParticleEmitterShape shape,
@@ -38,6 +38,7 @@ namespace Graphics
 		void Compose(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, ConstantBufferId globalConstBufferId);
 
 		RWBufferId GetParticleBufferId() const;
+		ConstantBufferId GetParticleSystemConstBufferId() const;
 		const BoundingBox& GetBoundingBox() const noexcept;
 		const uint32_t& GetParticleMaxCount() const noexcept;
 

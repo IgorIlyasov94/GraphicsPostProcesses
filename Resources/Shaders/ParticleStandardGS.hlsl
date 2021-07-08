@@ -92,16 +92,17 @@ static const float2 texCoords[4] =
 
 float2 RotateVertex(float2 position, float angle)
 {
-	float2 resultPosition = position;
-	
 	float sinAngle;
 	float cosAngle;
 	sincos(angle, sinAngle, cosAngle);
 	
-	resultPosition.x = resultPosition.x * cosAngle - resultPosition.y * sinAngle;
-	resultPosition.y = resultPosition.x * sinAngle + resultPosition.y * cosAngle;
+	float2x2 rotationMatrix =
+	{
+		cosAngle, -sinAngle,
+		sinAngle, cosAngle
+	};
 	
-	return resultPosition;
+	return mul(rotationMatrix, position);
 }
 
 [maxvertexcount(4)]
