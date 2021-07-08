@@ -51,9 +51,17 @@ void Graphics::Scene::ExecuteScripts(ID3D12GraphicsCommandList* commandList)
 		return;
 
 	visibleObjectsList.clear();
-	octree->PrepareVisibleObjectsList(*mainCamera, visibleObjectsList);
+	visibleTransparentObjectsList.clear();
+	visibleEffectObjectsList.clear();
+	octree->PrepareVisibleObjectsList(*mainCamera, visibleObjectsList, visibleTransparentObjectsList, visibleEffectObjectsList);
 
 	for (auto& visibleObject : visibleObjectsList)
+		visibleObject->Execute(commandList);
+
+	for (auto& visibleObject : visibleTransparentObjectsList)
+		visibleObject->Execute(commandList);
+
+	for (auto& visibleObject : visibleEffectObjectsList)
 		visibleObject->Execute(commandList);
 
 	lightingSystem->UpdateCluster(commandList);
@@ -62,5 +70,11 @@ void Graphics::Scene::ExecuteScripts(ID3D12GraphicsCommandList* commandList)
 void Graphics::Scene::Draw(ID3D12GraphicsCommandList* commandList) const
 {
 	for (auto& visibleObject : visibleObjectsList)
+		visibleObject->Draw(commandList);
+
+	for (auto& visibleObject : visibleTransparentObjectsList)
+		visibleObject->Draw(commandList);
+
+	for (auto& visibleObject : visibleEffectObjectsList)
 		visibleObject->Draw(commandList);
 }

@@ -7,6 +7,13 @@
 
 namespace Graphics
 {
+	enum class RenderingLayer
+	{
+		RENDERING_LAYER_OPAQUE,
+		RENDERING_LAYER_TRANSPARENT,
+		RENDERING_LAYER_EFFECT
+	};
+
 	class GraphicObject
 	{
 	public:
@@ -18,7 +25,10 @@ namespace Graphics
 		void AssignMaterial(const Material* newMaterial);
 		void AssignComputeObject(const ComputeObject* newComputeObject);
 
+		void SetRenderingLayer(RenderingLayer renderingLayer);
+
 		const BoundingBox& GetBoundingBox() const noexcept;
+		const RenderingLayer& GetRenderingLayer() const noexcept;
 
 		void Execute(ID3D12GraphicsCommandList* commandList) const;
 		void Draw(ID3D12GraphicsCommandList* commandList) const;
@@ -32,6 +42,8 @@ namespace Graphics
 		DrawFunction drawFunction;
 
 		BoundingBox boundingBox;
+
+		RenderingLayer layer;
 
 		const Mesh* mesh;
 		const ParticleSystem* particleSystem;

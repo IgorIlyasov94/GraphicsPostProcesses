@@ -5,6 +5,8 @@
 
 namespace Graphics
 {
+	using ObjectPtrPool = std::vector<const GraphicObject*>;
+
 	struct Octree
 	{
 	public:
@@ -12,12 +14,11 @@ namespace Graphics
 		~Octree();
 
 		void AddObject(const GraphicObject* newObject, bool isDynamic);
-		void PrepareVisibleObjectsList(const Camera& targetCamera, std::vector<const GraphicObject*>& visibleObjectsList);
+		void PrepareVisibleObjectsList(const Camera& targetCamera, ObjectPtrPool& visibleObjectsList, ObjectPtrPool& visibleTransparentObjectsList,
+			ObjectPtrPool& visibleEffectObjectsList);
 		
 	private:
 		Octree() = delete;
-
-		using ObjectPtrPool = std::list<const GraphicObject*>;
 
 		struct Node
 		{
@@ -34,7 +35,8 @@ namespace Graphics
 		void AddObject(Node* currentNode, const GraphicObject* newObject, bool isDynamic);
 		void PushObjectToNode(Node* node, const GraphicObject* newObject, bool isDynamic);
 
-		void PrepareVisibleObjectsList(const Node* currentNode, const Camera& targetCamera, std::vector<const GraphicObject*>& visibleObjectsList);
+		void PrepareVisibleObjectsList(const Node* currentNode, const Camera& targetCamera, ObjectPtrPool& visibleObjectsList,
+			ObjectPtrPool& visibleTransparentObjectsList, ObjectPtrPool& visibleEffectObjectsList);
 
 		Node root;
 

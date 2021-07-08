@@ -28,18 +28,29 @@ void Graphics::Octree::AddObject(const GraphicObject* newObject, bool isDynamic)
 	PushObjectToNode(&root, newObject, isDynamic);
 }
 
-void Graphics::Octree::PrepareVisibleObjectsList(const Camera& targetCamera, std::vector<const GraphicObject*>& visibleObjectsList)
+void Graphics::Octree::PrepareVisibleObjectsList(const Camera& targetCamera, ObjectPtrPool& visibleObjectsList,
+	ObjectPtrPool& visibleTransparentObjectsList, ObjectPtrPool& visibleEffectObjectsList)
 {
 	for (auto& currentObject : root.objects)
 		if (targetCamera.BoundingBoxInScope(currentObject->GetBoundingBox()))
-			visibleObjectsList.push_back(currentObject);
+			if (currentObject->GetRenderingLayer() == RenderingLayer::RENDERING_LAYER_OPAQUE)
+				visibleObjectsList.push_back(currentObject);
+			else if (currentObject->GetRenderingLayer() == RenderingLayer::RENDERING_LAYER_TRANSPARENT)
+				visibleTransparentObjectsList.push_back(currentObject);
+			else
+				visibleEffectObjectsList.push_back(currentObject);
 
 	for (auto& currentObject : root.dynamicObjects)
 		if (targetCamera.BoundingBoxInScope(currentObject->GetBoundingBox()))
-			visibleObjectsList.push_back(currentObject);
+			if (currentObject->GetRenderingLayer() == RenderingLayer::RENDERING_LAYER_OPAQUE)
+				visibleObjectsList.push_back(currentObject);
+			else if (currentObject->GetRenderingLayer() == RenderingLayer::RENDERING_LAYER_TRANSPARENT)
+				visibleTransparentObjectsList.push_back(currentObject);
+			else
+				visibleEffectObjectsList.push_back(currentObject);
 
 	for (auto& nextNode : root.nextNodes)
-		PrepareVisibleObjectsList(nextNode.get(), targetCamera, visibleObjectsList);
+		PrepareVisibleObjectsList(nextNode.get(), targetCamera, visibleObjectsList, visibleTransparentObjectsList, visibleEffectObjectsList);
 }
 
 void Graphics::Octree::CreateNodeChain(uint32_t currentDepth, Node* currentNode)
@@ -107,19 +118,30 @@ void Graphics::Octree::PushObjectToNode(Node* node, const GraphicObject* newObje
 		node->objects.push_back(newObject);
 }
 
-void Graphics::Octree::PrepareVisibleObjectsList(const Node* currentNode, const Camera& targetCamera, std::vector<const GraphicObject*>& visibleObjectsList)
+void Graphics::Octree::PrepareVisibleObjectsList(const Node* currentNode, const Camera& targetCamera, ObjectPtrPool& visibleObjectsList,
+	ObjectPtrPool& visibleTransparentObjectsList, ObjectPtrPool& visibleEffectObjectsList)
 {
 	if (currentNode == nullptr)
 		return;
 
 	for (auto& currentObject : currentNode->objects)
 		if (targetCamera.BoundingBoxInScope(currentObject->GetBoundingBox()))
-			visibleObjectsList.push_back(currentObject);
+			if (currentObject->GetRenderingLayer() == RenderingLayer::RENDERING_LAYER_OPAQUE)
+				visibleObjectsList.push_back(currentObject);
+			else if (currentObject->GetRenderingLayer() == RenderingLayer::RENDERING_LAYER_TRANSPARENT)
+				visibleTransparentObjectsList.push_back(currentObject);
+			else
+				visibleEffectObjectsList.push_back(currentObject);
 
 	for (auto& currentObject : currentNode->dynamicObjects)
 		if (targetCamera.BoundingBoxInScope(currentObject->GetBoundingBox()))
-			visibleObjectsList.push_back(currentObject);
+			if (currentObject->GetRenderingLayer() == RenderingLayer::RENDERING_LAYER_OPAQUE)
+				visibleObjectsList.push_back(currentObject);
+			else if (currentObject->GetRenderingLayer() == RenderingLayer::RENDERING_LAYER_TRANSPARENT)
+				visibleTransparentObjectsList.push_back(currentObject);
+			else
+				visibleEffectObjectsList.push_back(currentObject);
 
 	for (auto& nextNode : currentNode->nextNodes)
-		PrepareVisibleObjectsList(nextNode.get(), targetCamera, visibleObjectsList);
+		PrepareVisibleObjectsList(nextNode.get(), targetCamera, visibleObjectsList, visibleTransparentObjectsList, visibleEffectObjectsList);
 }

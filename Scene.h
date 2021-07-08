@@ -27,7 +27,9 @@ namespace Graphics
 	private:
 		const Camera* mainCamera;
 
-		std::vector<const GraphicObject*> visibleObjectsList;
+		ObjectPtrPool visibleObjectsList;
+		ObjectPtrPool visibleTransparentObjectsList;
+		ObjectPtrPool visibleEffectObjectsList;
 		std::vector<const ComputeObject*> computeObjects;
 
 		std::shared_ptr<Octree> octree;

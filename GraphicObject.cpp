@@ -1,7 +1,8 @@
 #include "GraphicObject.h"
 
 Graphics::GraphicObject::GraphicObject()
-	: drawFunction(nullptr), boundingBox{}, mesh(nullptr), material(nullptr), computeObject(nullptr)
+	: drawFunction(nullptr), boundingBox{}, layer(RenderingLayer::RENDERING_LAYER_OPAQUE), mesh(nullptr), particleSystem(nullptr), material(nullptr),
+	computeObject(nullptr)
 {
 
 }
@@ -31,7 +32,7 @@ void Graphics::GraphicObject::AssignParticleSystem(const ParticleSystem* newPart
 	{
 		boundingBox = particleSystem->GetBoundingBox();
 
-
+		drawFunction = &Graphics::GraphicObject::DrawParticleSystem;
 	}
 }
 
@@ -53,17 +54,28 @@ void Graphics::GraphicObject::AssignComputeObject(const ComputeObject* newComput
 	computeObject = newComputeObject;
 }
 
+void Graphics::GraphicObject::SetRenderingLayer(RenderingLayer renderingLayer)
+{
+	layer = renderingLayer;
+}
+
 const Graphics::BoundingBox& Graphics::GraphicObject::GetBoundingBox() const noexcept
 {
 	return boundingBox;
 }
 
+const Graphics::RenderingLayer& Graphics::GraphicObject::GetRenderingLayer() const noexcept
+{
+	return layer;
+}
+
 void Graphics::GraphicObject::Execute(ID3D12GraphicsCommandList* commandList) const
 {
-	if (computeObject == nullptr)
-		return;
+	if (particleSystem != nullptr)
+		particleSystem->Update(commandList);
 
-	computeObject->Present(commandList);
+	if (computeObject != nullptr)
+		computeObject->Present(commandList);
 }
 
 void Graphics::GraphicObject::Draw(ID3D12GraphicsCommandList* commandList) const
