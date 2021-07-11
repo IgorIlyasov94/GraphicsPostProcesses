@@ -53,4 +53,8 @@ ECHO ON
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
 %dxcCmd% /Zi /E"main" /Vn"particleStandardPS" /Tps_6_0 /Fh"ParticleStandardPS.hlsl.h" /nologo ParticleStandardPS.hlsl
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
+%dxcCmd% /Zi /E"main" /Vn"uiSpriteStandardVS" /Tvs_6_0 /Fh"UISpriteStandardVS.hlsl.h" /nologo UISpriteStandardVS.hlsl
+@IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
+%dxcCmd% /Zi /E"main" /Vn"uiSpriteStandardPS" /Tps_6_0 /Fh"UISpriteStandardPS.hlsl.h" /nologo UISpriteStandardPS.hlsl
+@IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
 ECHO Done.

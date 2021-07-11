@@ -1,6 +1,6 @@
 #include "SpriteUI.h"
 
-Graphics::SpriteUI::SpriteUI(int32_t relativePositionX, int32_t relativePositionY, float2 scale, float4 color, TextureId spriteMainTextureId, const Material* _material,
+Graphics::SpriteUI::SpriteUI(int32_t relativePositionX, int32_t relativePositionY, float2 scale, float4 color, TextureId spriteMainTextureId,
 	bool preciseSpriteMesh, float2 spriteOrigin, UIHorizontalAlign horizontalAlign, UIVerticalAlign verticalAlign)
 	: localConstBuffer{}, order(0), isActive(true), material(nullptr)
 {
@@ -11,21 +11,17 @@ Graphics::SpriteUI::SpriteUI(int32_t relativePositionX, int32_t relativePosition
 
 	auto textureInfo = resourceManager.GetTexture(spriteMainTextureId).info;
 
-	localConstBuffer.scale.x = 2.0f * textureInfo.width / static_cast<float>(GraphicsSettings::GetResolutionX());
-	localConstBuffer.scale.y = 2.0f * textureInfo.height / static_cast<float>(GraphicsSettings::GetResolutionY());
+	localConstBuffer.scale.x = 2.0f * textureInfo.width * scale.x / static_cast<float>(GraphicsSettings::GetResolutionX());
+	localConstBuffer.scale.y = -2.0f * textureInfo.height * scale.y / static_cast<float>(GraphicsSettings::GetResolutionY());
 	localConstBuffer.screenCoordOffset.x = 2.0f * (coordOriginX + relativePositionX) / static_cast<float>(GraphicsSettings::GetResolutionX()) - 1.0f;
 	localConstBuffer.screenCoordOffset.x -= spriteOrigin.x * localConstBuffer.scale.x;
 	localConstBuffer.screenCoordOffset.y = 1.0f - 2.0f * (coordOriginY + relativePositionY) / static_cast<float>(GraphicsSettings::GetResolutionY());
-	localConstBuffer.screenCoordOffset.y += spriteOrigin.y * localConstBuffer.scale.y;
+	localConstBuffer.screenCoordOffset.y -= spriteOrigin.y * localConstBuffer.scale.y;
 	localConstBuffer.color = color;
 
 	localConstBufferId = resourceManager.CreateConstantBuffer(&localConstBuffer, sizeof(localConstBuffer));
 
 	spriteTextureId = spriteMainTextureId;
-
-	if (_material != nullptr)
-		if (_material->IsComposed())
-			material = _material;
 
 	size_t gridDensityX = (preciseSpriteMesh) ? textureInfo.width : 4;
 	size_t gridDensityY = (preciseSpriteMesh) ? textureInfo.height : 4;
@@ -39,6 +35,13 @@ Graphics::SpriteUI::SpriteUI(int32_t relativePositionX, int32_t relativePosition
 Graphics::SpriteUI::~SpriteUI()
 {
 
+}
+
+void Graphics::SpriteUI::SetMaterial(const Material* _material) noexcept
+{
+	if (_material != nullptr)
+		if (_material->IsComposed())
+			material = _material;
 }
 
 void Graphics::SpriteUI::SetOrder(int64_t newOrder) noexcept
@@ -113,11 +116,8 @@ void Graphics::SpriteUI::GenerateMeshFromTexture(TextureId textureId, size_t gri
 
 	resultVertices.clear();
 	
-	FindFirstAlphaNonZeroPoints(1, 1, gridDensityX, gridDensityY, textureInfo.width, textureInfo.height, true, textureData, resultVertices);
-	FindFirstAlphaNonZeroPoints(1, -1, gridDensityX, gridDensityY, textureInfo.width, textureInfo.height, true, textureData, resultVertices);
-	FindFirstAlphaNonZeroPoints(1, 1, gridDensityX, gridDensityY, textureInfo.width, textureInfo.height, false, textureData, resultVertices);
-	FindFirstAlphaNonZeroPoints(-1, 1, gridDensityX, gridDensityY, textureInfo.width, textureInfo.height, false, textureData, resultVertices);
-	
+	FindSpriteSilhouetteVertices(textureInfo.width, textureInfo.height, textureData, resultVertices);
+
 	resultIndices.clear();
 	resultIndices.resize(resultVertices.size());
 	std::iota(resultIndices.begin(), resultIndices.end(), 0);
@@ -128,36 +128,84 @@ void Graphics::SpriteUI::GenerateMeshFromTexture(TextureId textureId, size_t gri
 	resultIndexBufferId = resourceManager.CreateIndexBuffer(resultIndices.data(), resultIndices.size() * sizeof(uint32_t), sizeof(uint32_t));
 }
 
-void Graphics::SpriteUI::FindFirstAlphaNonZeroPoints(int32_t directionX, int32_t directionY, size_t gridDensityX, size_t gridDensityY, size_t textureWidth,
-	size_t textureHeight, bool isVertical, const std::vector<float4>& textureData, std::vector<float3>& resultVertices)
+void Graphics::SpriteUI::FindSpriteSilhouetteVertices(size_t textureWidth, size_t textureHeight, const std::vector<float4>& textureData, std::vector<float3>& resultVertices)
 {
-	if (!isVertical)
-		std::swap(directionX, directionY);
+	float3 point{};
 
-	auto normalizedDirectionX = (directionX < 0) ? -1 : 1;
-	auto normalizedDirectionY = (directionY < 0) ? -1 : 1;
-	auto columnStart = (directionX < 0) ? gridDensityX - 1 : 0;
-	auto rowStart = (directionY < 0) ? gridDensityY - 1 : 0;
-
-	for (int64_t columnId = columnStart; (directionX < 0) ? columnId >= 0 : columnId < gridDensityX; columnId += normalizedDirectionX)
+	for (size_t startPixelId = 0; startPixelId < textureWidth; startPixelId++)
 	{
-		for (int64_t rowId = rowStart; (directionY < 0) ? rowId >= 0 : rowId < gridDensityY; rowId += normalizedDirectionY)
+		if (FindFirstAlphaNonZeroPoint(startPixelId, 0, textureWidth, textureHeight, textureData, point))
 		{
-			float2 coord = { columnId / static_cast<float>(gridDensityX), rowId / static_cast<float>(gridDensityY) };
+			auto predicateVectorEquality = [point](float3 vertex) { return XMVector3Equal(XMLoadFloat3(&vertex), XMLoadFloat3(&point)); };
 
-			if (!isVertical)
-				std::swap(coord.x, coord.y);
-
-			auto index = static_cast<size_t>(std::floor(coord.x * textureHeight));
-			index *= textureWidth;
-			index += static_cast<size_t>(std::floor(coord.y * textureWidth));
-
-			if (textureData[index].w > 0.0f)
-			{
-				resultVertices.push_back({ coord.x, coord.y, 0.0f });
-
-				break;
-			}
+			if (std::find_if(resultVertices.begin(), resultVertices.end(), predicateVectorEquality) == resultVertices.end())
+				resultVertices.push_back(point);
 		}
 	}
+
+	for (size_t startPixelId = 1; startPixelId < textureHeight; startPixelId++)
+	{
+		if (FindFirstAlphaNonZeroPoint(textureWidth - 1, startPixelId, textureWidth, textureHeight, textureData, point))
+		{
+			auto predicateVectorEquality = [point](float3 vertex) { return XMVector3Equal(XMLoadFloat3(&vertex), XMLoadFloat3(&point)); };
+
+			if (std::find_if(resultVertices.begin(), resultVertices.end(), predicateVectorEquality) == resultVertices.end())
+				resultVertices.push_back(point);
+		}
+	}
+
+	for (int64_t startPixelId = textureWidth - 2; startPixelId >= 0; startPixelId--)
+	{
+		if (FindFirstAlphaNonZeroPoint(startPixelId, textureHeight - 1, textureWidth, textureHeight, textureData, point))
+		{
+			auto predicateVectorEquality = [point](float3 vertex) { return XMVector3Equal(XMLoadFloat3(&vertex), XMLoadFloat3(&point)); };
+
+			if (std::find_if(resultVertices.begin(), resultVertices.end(), predicateVectorEquality) == resultVertices.end())
+				resultVertices.push_back(point);
+		}
+	}
+
+	for (int64_t startPixelId = textureHeight - 2; startPixelId > 0; startPixelId--)
+	{
+		if (FindFirstAlphaNonZeroPoint(0, startPixelId, textureWidth, textureHeight, textureData, point))
+		{
+			auto predicateVectorEquality = [point](float3 vertex) { return XMVector3Equal(XMLoadFloat3(&vertex), XMLoadFloat3(&point)); };
+
+			if (std::find_if(resultVertices.begin(), resultVertices.end(), predicateVectorEquality) == resultVertices.end())
+				resultVertices.push_back(point);
+		}
+	}
+}
+
+bool Graphics::SpriteUI::FindFirstAlphaNonZeroPoint(size_t startPixelColumn, size_t startPixelRow, size_t textureWidth, size_t textureHeight,
+	const std::vector<float4>& textureData, float3& resultPoint)
+{
+	int64_t endPixelColumn = textureWidth - startPixelColumn - 1;
+	int64_t endPixelRow = textureHeight - startPixelRow - 1;
+	int64_t columnDistance = endPixelColumn - startPixelColumn;
+	int64_t rowDistance = endPixelRow - startPixelRow;
+	float length = std::sqrt(static_cast<float>(columnDistance * columnDistance + rowDistance * rowDistance));
+	float pixelMomentIncrementor = 1.0f / length;
+	float2 currentPixel = { std::lerp(startPixelColumn, endPixelColumn, 0.0f),  std::lerp(startPixelRow, endPixelRow, 0.0f) };
+	float2 previousPixel = { std::lerp(startPixelColumn, endPixelColumn, -pixelMomentIncrementor),
+		std::lerp(startPixelRow, endPixelRow, -pixelMomentIncrementor) };
+
+	for (float currentPixelMoment = 0.0f; currentPixelMoment <= 1.0f; currentPixelMoment += pixelMomentIncrementor)
+	{
+		currentPixel = { std::lerp(startPixelColumn, endPixelColumn, currentPixelMoment),  std::lerp(startPixelRow, endPixelRow, currentPixelMoment) };
+		size_t pixelIndex = static_cast<int64_t>(currentPixel.y) * textureWidth + static_cast<int64_t>(currentPixel.x);
+
+		if (textureData[pixelIndex].w > 0.0f)
+		{
+			resultPoint.x = static_cast<int64_t>(previousPixel.x) / static_cast<float>(textureWidth - 1);
+			resultPoint.y = static_cast<int64_t>(previousPixel.y) / static_cast<float>(textureHeight - 1);
+			resultPoint.z = 0.0f;
+
+			return true;
+		}
+
+		previousPixel = currentPixel;
+	}
+
+	return false;
 }

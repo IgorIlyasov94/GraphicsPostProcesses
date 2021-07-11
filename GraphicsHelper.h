@@ -1,6 +1,7 @@
 #pragma once
 
 #include "stdafx.h"
+#include "RingBuffer.h"
 
 using namespace Microsoft::WRL;
 using namespace DirectX;
@@ -150,6 +151,22 @@ namespace Graphics
 		float3 position, float3 normal, float2 texCoord);
 
 	uint32_t GetVertex4ByteStride(VertexFormat vertexFormat);
+
+	constexpr size_t GetVertexAttributeCount(VertexFormat vertexFormat) noexcept
+	{
+		if (vertexFormat == VertexFormat::POSITION)
+			return 1;
+		else if (vertexFormat == VertexFormat::POSITION_TEXCOORD || vertexFormat == VertexFormat::POSITION_NORMAL)
+			return 2;
+		else if (vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD)
+			return 3;
+		else if (vertexFormat == VertexFormat::POSITION_NORMAL_TANGENT_BINORMAL)
+			return 4;
+		else if (vertexFormat == VertexFormat::POSITION_NORMAL_TANGENT_BINORMAL_TEXCOORD)
+			return 5;
+
+		return 0;
+	}
 
 	constexpr size_t GetVertexStride(VertexFormat vertexFormat) noexcept
 	{

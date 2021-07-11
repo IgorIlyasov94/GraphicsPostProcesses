@@ -724,7 +724,7 @@ void Graphics::ResourceManager::GetTextureDataFromGPU(TextureId textureId, std::
 
 	for (size_t pixelId = 0; pixelId < requiredSize / 4; pixelId++)
 	{
-		if (pixelId * 4 / textureInfo.height < textureInfo.rowPitch)
+		if (pixelId % textureInfo.rowPitch < textureInfo.width)
 		{
 			float4 texel{};
 			texel.x = rawData[pixelId * 4] / 255.0f;

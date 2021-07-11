@@ -389,67 +389,88 @@ void Graphics::TriangulateFace(VertexFormat vertexFormat, const std::vector<floa
 		return;
 	}
 
-	std::list<uint32_t> freeVertices;
+	RingBufferVector<uint32_t> freeVertices(verticesCount);
+	std::iota(freeVertices.GetNative().begin(), freeVertices.GetNative().end(), 0);
 
-	for (uint32_t vertexId = 0; vertexId < verticesCount; vertexId++)
-		freeVertices.push_back(vertexId);
+	int64_t vertexItShift = -1;
+
+	while (freeVertices.Size() > 2)
+	{
+		const float3& positionPrevious = positions[face[freeVertices[vertexItShift] * faceStride]];
+		const float3& positionCurrent = positions[face[freeVertices[vertexItShift + 1] * faceStride]];
+		const float3& positionNext = positions[face[freeVertices[vertexItShift + 2] * faceStride]];
+
+		if (!(CalculateTriangleArea(positionPrevious, positionCurrent, positionNext) > 0.0f))
+		{
+			freeVertices.RemoveElement(vertexItShift + 1);
+			vertexItShift = 0;
+		}
+
+		if (vertexItShift == freeVertices.Size() - 2)
+			break;
+
+		vertexItShift++;
+	}
 
 	float3 faceNormal = CalculatePolygonNormal(vertexFormat, positions, face);
-	size_t vertexItShift = 0;
+	vertexItShift = 0;
 
-	while (freeVertices.size() > 2)
+	while (freeVertices.Size() > 2)
 	{
-		auto vertexItPrevious = freeVertices.begin();
-		auto vertexItCurrent = freeVertices.begin();
-		auto vertexItNext = freeVertices.begin();
+		int64_t freeVertexPreviousIndex;
+		int64_t freeVertexCurrentIndex;
+		int64_t freeVertexNextIndex;
 
-		if ((vertexItShift + 2) < freeVertices.size())
+		if (vertexItShift + 2 < freeVertices.Size())
 		{
-			std::advance(vertexItPrevious, vertexItShift);
-			std::advance(vertexItCurrent, vertexItShift + 1);
-			std::advance(vertexItNext, vertexItShift + 2);
+			freeVertexPreviousIndex = freeVertices[vertexItShift];
+			freeVertexCurrentIndex = freeVertices[vertexItShift + 1];
+			freeVertexNextIndex = freeVertices[vertexItShift + 2];
 		}
 		else
 		{
-			std::advance(vertexItCurrent, 2);
-			vertexItNext++;
+			freeVertexPreviousIndex = freeVertices[0];
+			freeVertexCurrentIndex = freeVertices[2];
+			freeVertexNextIndex = freeVertices[1];
 		}
 
-		bool triangleIsIncorrect = false;
+		const float3& positionPrevious = positions[face[freeVertexPreviousIndex * faceStride]];
+		const float3& positionCurrent = positions[face[freeVertexCurrentIndex * faceStride]];
+		const float3& positionNext = positions[face[freeVertexNextIndex * faceStride]];
 
-		const float3& positionPrevious = positions[face[*vertexItPrevious * faceStride]];
-		const float3& positionCurrent = positions[face[*vertexItCurrent * faceStride]];
-		const float3& positionNext = positions[face[*vertexItNext * faceStride]];
+		bool triangleIsIncorrect = !(CalculateTriangleArea(positionPrevious, positionCurrent, positionNext) > 0.0f);
 
-		for (auto& vertexId : freeVertices)
-			if (vertexId != *vertexItPrevious && vertexId != *vertexItCurrent && vertexId != *vertexItNext)
-				if (CheckPointInTriangle(positionPrevious, positionCurrent, positionNext, positions[face[vertexId * faceStride]]))
-				{
-					triangleIsIncorrect = true;
+		if (!triangleIsIncorrect)
+		{
+			for (auto& vertexId : freeVertices.GetNative())
+				if (vertexId != freeVertexPreviousIndex && vertexId != freeVertexCurrentIndex && vertexId != freeVertexNextIndex)
+					if (CheckPointInTriangle(positionPrevious, positionCurrent, positionNext, positions[face[vertexId * faceStride]]))
+					{
+						triangleIsIncorrect = true;
 
-					break;
-				}
+						break;
+					}
+		}
 
 		if (!triangleIsIncorrect)
 			if (!CheckTriangleInPolygon(positionPrevious, positionCurrent, positionNext, faceNormal))
 				triangleIsIncorrect = true;
 
 		if (triangleIsIncorrect)
-			vertexItShift++;
+			vertexItShift = ((vertexItShift + 2) >= freeVertices.Size()) ? 0 : ++vertexItShift;
 		else
 		{
 			for (uint32_t faceAttributeId = 0; faceAttributeId < faceStride; faceAttributeId++)
-				newFace.push_back(face[*vertexItPrevious * faceStride + faceAttributeId]);
+				newFace.push_back(face[freeVertexPreviousIndex * faceStride + faceAttributeId]);
 			for (uint32_t faceAttributeId = 0; faceAttributeId < faceStride; faceAttributeId++)
-				newFace.push_back(face[*vertexItCurrent * faceStride + faceAttributeId]);
+				newFace.push_back(face[freeVertexCurrentIndex * faceStride + faceAttributeId]);
 			for (uint32_t faceAttributeId = 0; faceAttributeId < faceStride; faceAttributeId++)
-				newFace.push_back(face[*vertexItNext * faceStride + faceAttributeId]);
+				newFace.push_back(face[freeVertexNextIndex * faceStride + faceAttributeId]);
 
-			freeVertices.erase(vertexItCurrent);
-		}
+			freeVertices.RemoveElement((vertexItShift + 2 < freeVertices.Size()) ? vertexItShift + 1 : 1);
 
-		if ((vertexItShift + 1) >= freeVertices.size())
 			vertexItShift = 0;
+		}
 	}
 
 	face = newFace;

@@ -9,11 +9,12 @@ namespace Graphics
 	class SpriteUI
 	{
 	public:
-		SpriteUI(int32_t relativePositionX, int32_t relativePositionY, float2 scale, float4 color, TextureId spriteMainTextureId, const Material* _material,
-			bool preciseSpriteMesh = false, float2 spriteOrigin = { 0.5f, 0.5f }, UIHorizontalAlign horizontalAlign = UIHorizontalAlign::UI_ALIGN_LEFT,
+		SpriteUI(int32_t relativePositionX, int32_t relativePositionY, float2 scale, float4 color, TextureId spriteMainTextureId, bool preciseSpriteMesh = false,
+			float2 spriteOrigin = { 0.5f, 0.5f }, UIHorizontalAlign horizontalAlign = UIHorizontalAlign::UI_ALIGN_LEFT,
 			UIVerticalAlign verticalAlign = UIVerticalAlign::UI_ALIGN_TOP);
 		~SpriteUI();
 
+		void SetMaterial(const Material* _material) noexcept;
 		void SetOrder(int64_t newOrder) noexcept;
 		void SetActive(bool active) noexcept;
 		
@@ -32,8 +33,9 @@ namespace Graphics
 		void GenerateMeshFromTexture(TextureId textureId, size_t gridDensityX, size_t gridDensityY, VertexBufferId& resultVertexBufferId,
 			IndexBufferId& resultIndexBufferId, std::vector<float3>& resultVertices, std::vector<uint32_t>& resultIndices);
 
-		void FindFirstAlphaNonZeroPoints(int32_t directionX, int32_t directionY, size_t gridDensityX, size_t gridDensityY, size_t textureWidth, size_t textureHeight,
-			bool isVertical, const std::vector<float4>& textureData, std::vector<float3>& resultVertices);
+		void FindSpriteSilhouetteVertices(size_t textureWidth, size_t textureHeight, const std::vector<float4>& textureData, std::vector<float3>& resultVertices);
+		bool FindFirstAlphaNonZeroPoint(size_t startPixelColumn, size_t startPixelRow, size_t textureWidth, size_t textureHeight,
+			const std::vector<float4>& textureData, float3& resultPoint);
 
 		VertexBufferId vertexBufferId;
 		IndexBufferId indexBufferId;

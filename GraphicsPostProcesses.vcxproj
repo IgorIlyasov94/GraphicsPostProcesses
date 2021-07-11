@@ -171,9 +171,11 @@
     <ClCompile Include="PointLight.cpp" />
     <ClCompile Include="PostProcesses.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
+    <ClCompile Include="RingBuffer.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="SceneManager.cpp" />
     <ClCompile Include="SpriteUI.cpp" />
+    <ClCompile Include="TextUI.cpp" />
     <ClCompile Include="TextureAllocationPage.cpp" />
     <ClCompile Include="TextureAllocator.cpp" />
     <ClCompile Include="Main.cpp" />
@@ -202,9 +204,11 @@
     <ClInclude Include="PointLight.h" />
     <ClInclude Include="PostProcesses.h" />
     <ClInclude Include="ResourceManager.h" />
+    <ClInclude Include="RingBuffer.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="SceneManager.h" />
     <ClInclude Include="SpriteUI.h" />
+    <ClInclude Include="TextUI.h" />
     <ClInclude Include="TextureAllocationPage.h" />
     <ClInclude Include="TextureAllocator.h" />
     <ClInclude Include="Main.h" />

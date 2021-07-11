@@ -2,6 +2,7 @@
 
 #include "ResourceManager.h"
 #include "SpriteUI.h"
+#include "TextUI.h"
 #include "GraphicsSettings.h"
 
 namespace Graphics

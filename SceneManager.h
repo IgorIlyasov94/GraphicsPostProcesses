@@ -46,6 +46,8 @@ namespace Graphics
 		std::shared_ptr<Material> testEffectMaterial;
 		std::shared_ptr<ParticleSystem> testEffectParticleSystem;
 
+		std::shared_ptr<Material> testUISpriteMaterial;
+
 		ConstantBufferId goldenFrameConstBufferId;
 		ConstantBufferId cubeSecondConstBufferId;
 

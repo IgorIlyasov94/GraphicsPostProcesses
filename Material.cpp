@@ -386,8 +386,14 @@ void Graphics::Material::CreateRootSignature(ID3D12Device* device, const std::ve
 	ComPtr<ID3DBlob> signature;
 	ComPtr<ID3DBlob> error;
 
-	ThrowIfFailed(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, &signature, &error),
-		"Material::CreateRootSignature: Root Signature serialization failed!");
+	if (FAILED(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, &signature, &error)))
+	{
+		std::stringstream errorMessage;
+		errorMessage << "Material::CreateRootSignature: Root Signature serialization failed!\n";
+		errorMessage << reinterpret_cast<char*>(error->GetBufferPointer());
+
+		throw std::runtime_error(errorMessage.str());
+	}
 
 	ThrowIfFailed(device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(rootSignature)),
 		"Material::CreateRootSignature: Root Signature creating failed!");

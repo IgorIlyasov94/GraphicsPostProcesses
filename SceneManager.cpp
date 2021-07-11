@@ -4,6 +4,8 @@
 #include "Resources/Shaders/ParticleStandardVS.hlsl.h"
 #include "Resources/Shaders/ParticleStandardGS.hlsl.h"
 #include "Resources/Shaders/ParticleStandardPS.hlsl.h"
+#include "Resources/Shaders/UISpriteStandardVS.hlsl.h"
+#include "Resources/Shaders/UISpriteStandardPS.hlsl.h"
 
 Graphics::SceneManager& Graphics::SceneManager::GetInstance()
 {
@@ -142,6 +144,28 @@ void Graphics::SceneManager::InitializeTestScene(ID3D12Device* device, ID3D12Gra
 	testEffect->SetRenderingLayer(RenderingLayer::RENDERING_LAYER_EFFECT);
 	testEffect->AssignParticleSystem(testEffectParticleSystem.get());
 	testEffect->AssignMaterial(testEffectMaterial.get());
+
+	auto testSpriteTextureId = resourceManager.CreateTexture("Resources\\Textures\\TestSprite.dds");
+
+	SpriteUI testUISprite(200, 200, { 10.0f, 10.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }, testSpriteTextureId, false, {});
+	
+	testUISpriteMaterial = std::shared_ptr<Material>(new Material());
+	testUISpriteMaterial->SetVertexFormat(VertexFormat::POSITION);
+	testUISpriteMaterial->SetVertexShader({ uiSpriteStandardVS, sizeof(uiSpriteStandardVS) });
+	testUISpriteMaterial->SetPixelShader({ uiSpriteStandardPS, sizeof(uiSpriteStandardPS) });
+	testUISpriteMaterial->AssignConstantBuffer(0, testUISprite.GetConstantBufferId());
+	testUISpriteMaterial->AssignTexture(commandList, 0, testSpriteTextureId, true);
+	testUISpriteMaterial->SetSampler(0, D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
+		D3D12_TEXTURE_ADDRESS_MODE_CLAMP, 1);
+	testUISpriteMaterial->SetBlendMode(true, D3D12_BLEND_SRC_ALPHA, D3D12_BLEND_INV_SRC_ALPHA);
+	testUISpriteMaterial->SetDepthTest(false);
+	testUISpriteMaterial->SetRenderTargetFormat(0, DXGI_FORMAT_R8G8B8A8_UNORM);
+	testUISpriteMaterial->SetDepthStencilFormat(32);
+	testUISpriteMaterial->Compose(device);
+
+	testUISprite.SetMaterial(testUISpriteMaterial.get());
+
+	currentScene->GetUISystem()->AddSprite(testUISprite);
 
 	currentScene->SetMainCamera(camera.get());
 	currentScene->EmplaceGraphicObject(goldenFrame.get(), false);

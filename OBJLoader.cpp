@@ -177,6 +177,18 @@ void Graphics::OBJLoader::ComposeVertices(VertexFormat vertexFormat, const std::
 {
 	auto facesIterator = faces.begin();
 	uint32_t vertex4ByteStride = GetVertex4ByteStride(vertexFormat);
+	size_t vertexAttributeCount = GetVertexAttributeCount(vertexFormat);
+
+	size_t nonOptimizedVerticesCount = faces.size() / vertexAttributeCount;
+
+	vertices.clear();
+	vertices.resize(nonOptimizedVerticesCount * vertex4ByteStride);
+
+	indices.clear();
+	indices.resize(nonOptimizedVerticesCount);
+
+	size_t resultVerticesCount = 0;
+	size_t resultIndicesCount = 0;
 
 	while (facesIterator != faces.end())
 	{
@@ -210,40 +222,51 @@ void Graphics::OBJLoader::ComposeVertices(VertexFormat vertexFormat, const std::
 
 		if (newIndex == -1)
 		{
-			vertices.push_back(position.x);
-			vertices.push_back(position.y);
-			vertices.push_back(position.z);
+			vertices[resultVerticesCount * vertex4ByteStride] = position.x;
+			vertices[resultVerticesCount * vertex4ByteStride + 1] = position.y;
+			vertices[resultVerticesCount * vertex4ByteStride + 2] = position.z;
+
+			uint8_t normalStride = 0;
 
 			if (vertexFormat == VertexFormat::POSITION_NORMAL || vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD ||
 				vertexFormat == VertexFormat::POSITION_NORMAL_TANGENT_BINORMAL || vertexFormat == VertexFormat::POSITION_NORMAL_TANGENT_BINORMAL_TEXCOORD)
 			{
-				vertices.push_back(normal.x);
-				vertices.push_back(normal.y);
-				vertices.push_back(normal.z);
+				vertices[resultVerticesCount * vertex4ByteStride + 3] = normal.x;
+				vertices[resultVerticesCount * vertex4ByteStride + 4] = normal.y;
+				vertices[resultVerticesCount * vertex4ByteStride + 5] = normal.z;
+
+				normalStride = 3;
 			}
+
+			uint8_t tangentsStride = 0;
 
 			if (vertexFormat == VertexFormat::POSITION_NORMAL_TANGENT_BINORMAL || vertexFormat == VertexFormat::POSITION_NORMAL_TANGENT_BINORMAL_TEXCOORD)
 			{
-				vertices.push_back(tangent.x);
-				vertices.push_back(tangent.y);
-				vertices.push_back(tangent.z);
-				vertices.push_back(binormal.x);
-				vertices.push_back(binormal.y);
-				vertices.push_back(binormal.z);
+				vertices[resultVerticesCount * vertex4ByteStride + 6] = tangent.x;
+				vertices[resultVerticesCount * vertex4ByteStride + 7] = tangent.y;
+				vertices[resultVerticesCount * vertex4ByteStride + 8] = tangent.z;
+				vertices[resultVerticesCount * vertex4ByteStride + 9] = binormal.x;
+				vertices[resultVerticesCount * vertex4ByteStride + 10] = binormal.y;
+				vertices[resultVerticesCount * vertex4ByteStride + 11] = binormal.z;
+
+				tangentsStride = 6;
 			}
 
 			if (vertexFormat == VertexFormat::POSITION_TEXCOORD || vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD ||
 				vertexFormat == VertexFormat::POSITION_NORMAL_TANGENT_BINORMAL_TEXCOORD)
 			{
-				vertices.push_back(texCoord.x);
-				vertices.push_back(texCoord.y);
+				vertices[resultVerticesCount * vertex4ByteStride + 3 + normalStride + tangentsStride] = texCoord.x;
+				vertices[resultVerticesCount * vertex4ByteStride + 4 + normalStride + tangentsStride] = texCoord.y;
 			}
 
-			indices.push_back(vertices.size() / vertex4ByteStride - 1);
+			indices[resultIndicesCount++] = resultVerticesCount++;
 		}
 		else
 		{
-			indices.push_back(static_cast<uint32_t>(newIndex));
+			indices[resultIndicesCount++] = static_cast<uint32_t>(newIndex);
 		}
 	}
+
+	if (resultVerticesCount < nonOptimizedVerticesCount)
+		vertices.resize(resultVerticesCount * vertex4ByteStride);
 }
