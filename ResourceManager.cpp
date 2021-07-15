@@ -64,6 +64,30 @@ Graphics::VertexBufferId Graphics::ResourceManager::CreateVertexBuffer(const voi
 	return VertexBufferId(vertexBufferPool.size() - 1);
 }
 
+Graphics::VertexBufferId Graphics::ResourceManager::CreateDynamicVertexBuffer(const void* data, size_t dataSize, uint32_t vertexStride)
+{
+	BufferAllocation vertexBufferAllocation{};
+	bufferAllocator.Allocate(device, dataSize, 64 * _KB, D3D12_HEAP_TYPE_UPLOAD, vertexBufferAllocation);
+
+	if (vertexBufferAllocation.bufferResource == nullptr)
+		throw std::exception("ResourceManager::CreateDynamicVertexBuffer: Vertex Buffer Resource is null!");
+
+	std::copy(reinterpret_cast<const uint8_t*>(data), reinterpret_cast<const uint8_t*>(data) + dataSize, vertexBufferAllocation.cpuAddress);
+
+	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
+	vertexBufferView.BufferLocation = vertexBufferAllocation.gpuAddress;
+	vertexBufferView.SizeInBytes = dataSize;
+	vertexBufferView.StrideInBytes = vertexStride;
+
+	VertexBuffer vertexBuffer{};
+	vertexBuffer.vertexBufferAllocation = vertexBufferAllocation;
+	vertexBuffer.vertexBufferView = vertexBufferView;
+
+	vertexBufferPool.push_back(vertexBuffer);
+
+	return VertexBufferId(vertexBufferPool.size() - 1);
+}
+
 Graphics::IndexBufferId Graphics::ResourceManager::CreateIndexBuffer(const void* data, size_t dataSize, uint32_t indexStride)
 {
 	BufferAllocation indexBufferAllocation{};
@@ -678,39 +702,32 @@ ID3D12DescriptorHeap* Graphics::ResourceManager::GetShaderResourceViewDescriptor
 void Graphics::ResourceManager::GetTextureDataFromGPU(TextureId textureId, std::vector<float4>& textureRawData)
 {
 	auto textureInfo = texturePool[textureId.value].info;
+	uint64_t rowPitch = AlignSize(textureInfo.rowPitch, 256ui64);
 
-	uint32_t numSubresources = textureInfo.depth * textureInfo.mipLevels;
-
-	std::vector<uint8_t> srcLayouts((sizeof(D3D12_PLACED_SUBRESOURCE_FOOTPRINT) + sizeof(uint32_t) + sizeof(uint64_t)) * numSubresources);
-
-	auto sourceTextureDesc = texturePool[textureId.value].textureAllocation.textureResource->GetDesc();
-	std::vector<uint32_t> numRows(numSubresources);
-	std::vector<uint64_t> rowSizesPerByte(numSubresources);
-	uint64_t requiredSize;
-
-	device->GetCopyableFootprints(&sourceTextureDesc, 0, numSubresources, 0, reinterpret_cast<D3D12_PLACED_SUBRESOURCE_FOOTPRINT*>(srcLayouts.data()), numRows.data(),
-		rowSizesPerByte.data(), &requiredSize);
+	uint64_t requiredSize = rowPitch * textureInfo.height;
 
 	BufferAllocation readbackTextureAllocation{};
 	bufferAllocator.AllocateTemporary(device, requiredSize, D3D12_HEAP_TYPE_READBACK, readbackTextureAllocation);
 
 	SetResourceBarrier(commandList.Get(), texturePool[textureId.value].textureAllocation.textureResource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_SOURCE);
 
-	for (uint32_t subresourceIndex = 0; subresourceIndex < numSubresources; subresourceIndex++)
-	{
-		D3D12_TEXTURE_COPY_LOCATION srcLocation{};
-		srcLocation.pResource = texturePool[textureId.value].textureAllocation.textureResource;
-		srcLocation.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
-		srcLocation.SubresourceIndex = subresourceIndex;
+	D3D12_TEXTURE_COPY_LOCATION srcLocation{};
+	srcLocation.pResource = texturePool[textureId.value].textureAllocation.textureResource;
 
-		D3D12_TEXTURE_COPY_LOCATION destLocation{};
-		destLocation.pResource = readbackTextureAllocation.bufferResource;
-		destLocation.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
-		destLocation.PlacedFootprint = reinterpret_cast<D3D12_PLACED_SUBRESOURCE_FOOTPRINT*>(&srcLayouts[0])[subresourceIndex];
+	D3D12_PLACED_SUBRESOURCE_FOOTPRINT subresourceFootprint{};
+	subresourceFootprint.Footprint.Width = static_cast<uint32_t>(textureInfo.width);
+	subresourceFootprint.Footprint.Height = textureInfo.height;
+	subresourceFootprint.Footprint.RowPitch = static_cast<uint32_t>(rowPitch);
+	subresourceFootprint.Footprint.Depth = 1;
+	subresourceFootprint.Footprint.Format = textureInfo.format;
 
-		commandList->CopyTextureRegion(&destLocation, 0, 0, 0, &srcLocation, nullptr);
-	}
-
+	D3D12_TEXTURE_COPY_LOCATION destLocation{};
+	destLocation.pResource = readbackTextureAllocation.bufferResource;
+	destLocation.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+	destLocation.PlacedFootprint = subresourceFootprint;
+		
+	commandList->CopyTextureRegion(&destLocation, 0, 0, 0, &srcLocation, nullptr);
+	
 	SetResourceBarrier(commandList.Get(), texturePool[textureId.value].textureAllocation.textureResource, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COMMON);
 
 	ExecuteGPUCommands();
@@ -720,21 +737,31 @@ void Graphics::ResourceManager::GetTextureDataFromGPU(TextureId textureId, std::
 	if (rawData == nullptr)
 		throw std::exception("ResourceManager::GetTextureDataFromGPU: Getting the texture is failed");
 
-	textureRawData.clear();
+	textureRawData.resize(textureInfo.width * textureInfo.height, {});
+	size_t texelId = 0;
 
 	for (size_t pixelId = 0; pixelId < requiredSize / 4; pixelId++)
 	{
-		if (pixelId % textureInfo.rowPitch < textureInfo.width)
-		{
-			float4 texel{};
-			texel.x = rawData[pixelId * 4] / 255.0f;
-			texel.y = rawData[pixelId * 4 + 1] / 255.0f;
-			texel.z = rawData[pixelId * 4 + 2] / 255.0f;
-			texel.w = rawData[pixelId * 4 + 3] / 255.0f;
+		if (pixelId % (rowPitch / 4) >= textureInfo.rowPitch / 4)
+			pixelId += (rowPitch - textureInfo.rowPitch) / 4;
 
-			textureRawData.push_back(texel);
-		}
+		if (pixelId >= requiredSize / 4)
+			break;
+
+		float4 texel{};
+		texel.x = rawData[pixelId * 4] / 255.0f;
+		texel.y = rawData[pixelId * 4 + 1] / 255.0f;
+		texel.z = rawData[pixelId * 4 + 2] / 255.0f;
+		texel.w = rawData[pixelId * 4 + 3] / 255.0f;
+
+		textureRawData[texelId++] = texel;
 	}
+}
+
+void Graphics::ResourceManager::UpdateDynamicVertexBuffer(const VertexBufferId& resourceId, const void* data, size_t dataSize)
+{
+	std::copy(reinterpret_cast<const uint8_t*>(data), reinterpret_cast<const uint8_t*>(data) + dataSize,
+		vertexBufferPool[resourceId.value].vertexBufferAllocation.cpuAddress);
 }
 
 void Graphics::ResourceManager::UpdateConstantBuffer(const ConstantBufferId& resourceId, const void* data, size_t dataSize)

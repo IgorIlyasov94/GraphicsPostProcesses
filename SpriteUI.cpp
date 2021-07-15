@@ -9,7 +9,7 @@ Graphics::SpriteUI::SpriteUI(int32_t relativePositionX, int32_t relativePosition
 	int32_t coordOriginY = (verticalAlign == UIVerticalAlign::UI_ALIGN_TOP) ? 0 : (verticalAlign == UIVerticalAlign::UI_ALIGN_MIDDLE) ?
 		GraphicsSettings::GetResolutionY() / 2 : GraphicsSettings::GetResolutionY() - 1;
 
-	auto textureInfo = resourceManager.GetTexture(spriteMainTextureId).info;
+	auto& textureInfo = resourceManager.GetTexture(spriteMainTextureId).info;
 
 	localConstBuffer.scale.x = 2.0f * textureInfo.width * scale.x / static_cast<float>(GraphicsSettings::GetResolutionX());
 	localConstBuffer.scale.y = -2.0f * textureInfo.height * scale.y / static_cast<float>(GraphicsSettings::GetResolutionY());

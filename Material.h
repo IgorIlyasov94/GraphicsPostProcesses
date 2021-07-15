@@ -30,6 +30,9 @@ namespace Graphics
 		void SetGeometryShader(D3D12_SHADER_BYTECODE shaderBytecode);
 		void SetPixelShader(D3D12_SHADER_BYTECODE shaderBytecode);
 
+		void AddCustomInputLayoutElement(std::string semanticName, size_t semanticIndex, DXGI_FORMAT format,
+			D3D12_INPUT_CLASSIFICATION inputClassification = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, uint32_t instanceDataStepRate = 0);
+
 		void SetVertexFormat(VertexFormat format);
 		void SetPrimitiveTopologyType(D3D12_PRIMITIVE_TOPOLOGY_TYPE type);
 		void SetRenderTargetFormat(size_t renderTargetIndex, DXGI_FORMAT format);
@@ -101,6 +104,9 @@ namespace Graphics
 
 		VertexFormat vertexFormat;
 		D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType;
+
+		std::vector<D3D12_INPUT_ELEMENT_DESC> inputElementDescs;
+		std::vector<std::shared_ptr<std::string>> semanticNames;
 
 		std::array<DXGI_FORMAT, 8> renderTargetFormat;
 		DXGI_FORMAT depthStencilFormat;

@@ -6,6 +6,8 @@
 #include "Resources/Shaders/ParticleStandardPS.hlsl.h"
 #include "Resources/Shaders/UISpriteStandardVS.hlsl.h"
 #include "Resources/Shaders/UISpriteStandardPS.hlsl.h"
+#include "Resources/Shaders/UITextStandardVS.hlsl.h"
+#include "Resources/Shaders/UITextStandardPS.hlsl.h"
 
 Graphics::SceneManager& Graphics::SceneManager::GetInstance()
 {
@@ -166,6 +168,34 @@ void Graphics::SceneManager::InitializeTestScene(ID3D12Device* device, ID3D12Gra
 	testUISprite.SetMaterial(testUISpriteMaterial.get());
 
 	currentScene->GetUISystem()->AddSprite(testUISprite);
+
+	auto testFontTextureId = resourceManager.CreateTexture("Resources\\Textures\\PixelArtFont.dds");
+
+	testUIFont = std::shared_ptr<Font>(new Font(testFontTextureId, 16, 16, ' '));
+	
+	TextUI testUIText(device, 200, 500, { 1.0f, 1.0f }, 12.0f, 1.0f, 12.0f, 20, { 1.0f, 1.0f, 1.0f, 1.0f }, testUIFont.get());
+
+	testUITextMaterial = std::shared_ptr<Material>(new Material());
+	testUITextMaterial->AddCustomInputLayoutElement("POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1);
+	testUITextMaterial->AddCustomInputLayoutElement("TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1);
+	testUITextMaterial->AddCustomInputLayoutElement("TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1);
+	testUITextMaterial->AddCustomInputLayoutElement("TEXCOORD", 2, DXGI_FORMAT_R32G32_FLOAT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1);
+	testUITextMaterial->SetVertexShader({ uiTextStandardVS, sizeof(uiTextStandardVS) });
+	testUITextMaterial->SetPixelShader({ uiTextStandardPS, sizeof(uiTextStandardPS) });
+	testUITextMaterial->AssignConstantBuffer(0, testUIText.GetConstantBufferId());
+	testUITextMaterial->AssignTexture(commandList, 0, testFontTextureId, true);
+	testUITextMaterial->SetSampler(0, D3D12_FILTER_MIN_MAG_MIP_POINT, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
+		D3D12_TEXTURE_ADDRESS_MODE_CLAMP, 1);
+	testUITextMaterial->SetBlendMode(true, D3D12_BLEND_SRC_ALPHA, D3D12_BLEND_INV_SRC_ALPHA);
+	testUITextMaterial->SetDepthTest(false);
+	testUITextMaterial->SetRenderTargetFormat(0, DXGI_FORMAT_R8G8B8A8_UNORM);
+	testUITextMaterial->SetDepthStencilFormat(32);
+	testUITextMaterial->Compose(device);
+
+	testUIText.SetMaterial(testUITextMaterial.get());
+	testUIText.SetString(commandList, L"One minus 2 = *4#@");
+
+	currentScene->GetUISystem()->AddText(testUIText);
 
 	currentScene->SetMainCamera(camera.get());
 	currentScene->EmplaceGraphicObject(goldenFrame.get(), false);

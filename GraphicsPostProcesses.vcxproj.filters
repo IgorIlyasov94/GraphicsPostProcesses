@@ -168,6 +168,9 @@
     <ClCompile Include="TextUI.cpp">
       <Filter>Исходные файлы\GraphicsCore\GraphicsUIManagement</Filter>
     </ClCompile>
+    <ClCompile Include="Font.cpp">
+      <Filter>Исходные файлы\GraphicsCore\GraphicsUIManagement</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -261,6 +264,9 @@
       <Filter>Файлы заголовков\HelperClasses</Filter>
     </ClInclude>
     <ClInclude Include="TextUI.h">
+      <Filter>Файлы заголовков\GraphicsCore\GraphicsUIManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="Font.h">
       <Filter>Файлы заголовков\GraphicsCore\GraphicsUIManagement</Filter>
     </ClInclude>
   </ItemGroup>

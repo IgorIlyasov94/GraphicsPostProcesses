@@ -25,6 +25,13 @@ Graphics::UIButtonId Graphics::UISystem::AddButton(const SpriteUI& sprite/*, con
 	return UIButtonId(spriteButtons.size() - 1);
 }
 
+Graphics::UITextId Graphics::UISystem::AddText(const TextUI& text)
+{
+	texts.push_back(text);
+
+	return UITextId(texts.size() - 1);
+}
+
 void Graphics::UISystem::ExecuteScripts(size_t mouseX, size_t mouseY)
 {
 	/*float2 mousePosition = { 2.0f * mouseX / static_cast<float>(GraphicsSettings::GetResolutionX()) - 1.0f,
@@ -45,4 +52,8 @@ void Graphics::UISystem::Draw(ID3D12GraphicsCommandList* commandList) const
 	for (auto& button : spriteButtons)
 		if (button.IsActive())
 			button.Draw(commandList);
+
+	for (auto& text : texts)
+		if (text.IsActive())
+			text.Draw(commandList);
 }

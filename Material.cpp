@@ -122,6 +122,23 @@ void Graphics::Material::SetPixelShader(D3D12_SHADER_BYTECODE shaderBytecode)
 	shaderList.pixelShader = shaderBytecode;
 }
 
+void Graphics::Material::AddCustomInputLayoutElement(std::string semanticName, size_t semanticIndex, DXGI_FORMAT format, D3D12_INPUT_CLASSIFICATION inputClassification,
+	uint32_t instanceDataStepRate)
+{
+	semanticNames.push_back(std::shared_ptr<std::string>(new std::string(semanticName)));
+
+	D3D12_INPUT_ELEMENT_DESC inputElementDesc{};
+	inputElementDesc.SemanticName = semanticNames.back()->data();
+	inputElementDesc.SemanticIndex = semanticIndex;
+	inputElementDesc.Format = format;
+	inputElementDesc.InputSlot = 0;
+	inputElementDesc.AlignedByteOffset = (inputElementDescs.empty()) ? 0 : D3D12_APPEND_ALIGNED_ELEMENT;
+	inputElementDesc.InputSlotClass = inputClassification;
+	inputElementDesc.InstanceDataStepRate = instanceDataStepRate;
+
+	inputElementDescs.push_back(inputElementDesc);
+}
+
 void Graphics::Material::SetVertexFormat(VertexFormat format)
 {
 	vertexFormat = format;
@@ -176,8 +193,8 @@ void Graphics::Material::Compose(ID3D12Device* device)
 		isComposed = false;
 	}
 
-	std::vector<D3D12_INPUT_ELEMENT_DESC> inputElementDescs;
-	CreateInputElementDescs(vertexFormat, inputElementDescs);
+	if (inputElementDescs.empty())
+		CreateInputElementDescs(vertexFormat, inputElementDescs);
 
 	D3D12_RASTERIZER_DESC rasterizerDesc;
 	SetupRasterizerDesc(rasterizerDesc, cullMode);
@@ -250,10 +267,19 @@ void Graphics::Material::CreateInputElementDescs(VertexFormat format, std::vecto
 	if (format != VertexFormat::UNDEFINED)
 		inputElementDescs.push_back({ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
 
-	if (format == VertexFormat::POSITION_NORMAL || format == VertexFormat::POSITION_NORMAL_TEXCOORD)
+	if (format == VertexFormat::POSITION_NORMAL || format == VertexFormat::POSITION_NORMAL_TEXCOORD || format == VertexFormat::POSITION_NORMAL_TANGENT_BINORMAL ||
+		format == VertexFormat::POSITION_NORMAL_TANGENT_BINORMAL_TEXCOORD)
+	{
 		inputElementDescs.push_back({ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
 
-	if (format == VertexFormat::POSITION_TEXCOORD || format == VertexFormat::POSITION_NORMAL_TEXCOORD)
+		if (format == VertexFormat::POSITION_NORMAL_TANGENT_BINORMAL || format == VertexFormat::POSITION_NORMAL_TANGENT_BINORMAL_TEXCOORD)
+		{
+			inputElementDescs.push_back({ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
+			inputElementDescs.push_back({ "BINORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
+		}
+	}
+
+	if (format == VertexFormat::POSITION_TEXCOORD || format == VertexFormat::POSITION_NORMAL_TEXCOORD || format == VertexFormat::POSITION_NORMAL_TANGENT_BINORMAL_TEXCOORD)
 		inputElementDescs.push_back({ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 });
 }
 

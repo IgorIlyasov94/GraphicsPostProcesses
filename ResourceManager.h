@@ -132,6 +132,7 @@ namespace Graphics
 		void Initialize(ID3D12Device* _device);
 
 		VertexBufferId CreateVertexBuffer(const void* data, size_t dataSize, uint32_t vertexStride);
+		VertexBufferId CreateDynamicVertexBuffer(const void* data, size_t dataSize, uint32_t vertexStride);
 		IndexBufferId CreateIndexBuffer(const void* data, size_t dataSize, uint32_t indexStride);
 		ConstantBufferId CreateConstantBuffer(const void* data, size_t dataSize);
 		TextureId CreateTexture(const std::filesystem::path& fileName);
@@ -170,6 +171,7 @@ namespace Graphics
 
 		void GetTextureDataFromGPU(TextureId textureId, std::vector<float4>& textureRawData);
 
+		void UpdateDynamicVertexBuffer(const VertexBufferId& resourceId, const void* data, size_t dataSize);
 		void UpdateConstantBuffer(const ConstantBufferId& resourceId, const void* data, size_t dataSize);
 
 		void ReleaseTemporaryUploadBuffers();

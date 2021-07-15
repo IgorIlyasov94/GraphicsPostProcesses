@@ -153,6 +153,7 @@
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="ComputeObject.cpp" />
+    <ClCompile Include="Font.cpp" />
     <ClCompile Include="GraphicsSettings.cpp" />
     <ClCompile Include="LightingSystem.cpp" />
     <ClCompile Include="Octree.cpp" />
@@ -186,6 +187,7 @@
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="ComputeObject.h" />
+    <ClInclude Include="Font.h" />
     <ClInclude Include="GraphicsSettings.h" />
     <ClInclude Include="LightingSystem.h" />
     <ClInclude Include="Octree.h" />

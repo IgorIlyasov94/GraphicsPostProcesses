@@ -27,3 +27,5 @@
 /Resources/Shaders/ParticleStandardGS.hlsl.h
 /Resources/Shaders/UISpriteStandardVS.hlsl.h
 /Resources/Shaders/UISpriteStandardPS.hlsl.h
+/Resources/Shaders/UITextStandardVS.hlsl.h
+/Resources/Shaders/UITextStandardPS.hlsl.h

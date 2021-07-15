@@ -57,4 +57,8 @@ ECHO ON
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
 %dxcCmd% /Zi /E"main" /Vn"uiSpriteStandardPS" /Tps_6_0 /Fh"UISpriteStandardPS.hlsl.h" /nologo UISpriteStandardPS.hlsl
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
+%dxcCmd% /Zi /E"main" /Vn"uiTextStandardVS" /Tvs_6_0 /Fh"UITextStandardVS.hlsl.h" /nologo UITextStandardVS.hlsl
+@IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
+%dxcCmd% /Zi /E"main" /Vn"uiTextStandardPS" /Tps_6_0 /Fh"UITextStandardPS.hlsl.h" /nologo UITextStandardPS.hlsl
+@IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
 ECHO Done.
