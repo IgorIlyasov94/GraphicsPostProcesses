@@ -27,7 +27,7 @@ void Graphics::ResourceManager::Initialize(ID3D12Device* _device)
 		"ResourceManager::Initialize: Command List creating error!");
 }
 
-Graphics::VertexBufferId Graphics::ResourceManager::CreateVertexBuffer(const void* data, size_t dataSize, uint32_t vertexStride)
+Graphics::VertexBufferId Graphics::ResourceManager::CreateVertexBuffer(const void* data, size_t dataSize, size_t vertexStride)
 {
 	BufferAllocation vertexBufferAllocation{};
 	bufferAllocator.Allocate(device, dataSize, 64 * _KB, D3D12_HEAP_TYPE_DEFAULT, vertexBufferAllocation);
@@ -64,7 +64,7 @@ Graphics::VertexBufferId Graphics::ResourceManager::CreateVertexBuffer(const voi
 	return VertexBufferId(vertexBufferPool.size() - 1);
 }
 
-Graphics::VertexBufferId Graphics::ResourceManager::CreateDynamicVertexBuffer(const void* data, size_t dataSize, uint32_t vertexStride)
+Graphics::VertexBufferId Graphics::ResourceManager::CreateDynamicVertexBuffer(const void* data, size_t dataSize, size_t vertexStride)
 {
 	BufferAllocation vertexBufferAllocation{};
 	bufferAllocator.Allocate(device, dataSize, 64 * _KB, D3D12_HEAP_TYPE_UPLOAD, vertexBufferAllocation);
@@ -88,7 +88,7 @@ Graphics::VertexBufferId Graphics::ResourceManager::CreateDynamicVertexBuffer(co
 	return VertexBufferId(vertexBufferPool.size() - 1);
 }
 
-Graphics::IndexBufferId Graphics::ResourceManager::CreateIndexBuffer(const void* data, size_t dataSize, uint32_t indexStride)
+Graphics::IndexBufferId Graphics::ResourceManager::CreateIndexBuffer(const void* data, size_t dataSize, size_t indexStride)
 {
 	BufferAllocation indexBufferAllocation{};
 	bufferAllocator.Allocate(device, dataSize, 64 * _KB, D3D12_HEAP_TYPE_DEFAULT, indexBufferAllocation);
@@ -242,7 +242,7 @@ Graphics::TextureId Graphics::ResourceManager::CreateTexture(const std::vector<u
 	return TextureId(texturePool.size() - 1);
 }
 
-Graphics::BufferId Graphics::ResourceManager::CreateBuffer(const void* data, size_t dataSize, uint32_t bufferStride, uint32_t numElements, DXGI_FORMAT format)
+Graphics::BufferId Graphics::ResourceManager::CreateBuffer(const void* data, size_t dataSize, size_t bufferStride, size_t numElements, DXGI_FORMAT format)
 {
 	BufferAllocation bufferAllocation{};
 	bufferAllocator.AllocateCustomBuffer(device, dataSize, 64 * _KB, bufferAllocation);
@@ -491,7 +491,7 @@ Graphics::RWTextureId Graphics::ResourceManager::CreateRWTexture(const TextureIn
 	return RWTextureId(rwTexturePool.size() - 1);
 }
 
-Graphics::RWBufferId Graphics::ResourceManager::CreateRWBuffer(const void* initialData, size_t dataSize, uint32_t bufferStride, uint32_t numElements, DXGI_FORMAT format,
+Graphics::RWBufferId Graphics::ResourceManager::CreateRWBuffer(const void* initialData, size_t dataSize, size_t bufferStride, size_t numElements, DXGI_FORMAT format,
 	bool addCounter)
 {
 	BufferAllocation bufferAllocation{};

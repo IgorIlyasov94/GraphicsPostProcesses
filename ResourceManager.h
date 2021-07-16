@@ -131,18 +131,18 @@ namespace Graphics
 
 		void Initialize(ID3D12Device* _device);
 
-		VertexBufferId CreateVertexBuffer(const void* data, size_t dataSize, uint32_t vertexStride);
-		VertexBufferId CreateDynamicVertexBuffer(const void* data, size_t dataSize, uint32_t vertexStride);
-		IndexBufferId CreateIndexBuffer(const void* data, size_t dataSize, uint32_t indexStride);
+		VertexBufferId CreateVertexBuffer(const void* data, size_t dataSize, size_t vertexStride);
+		VertexBufferId CreateDynamicVertexBuffer(const void* data, size_t dataSize, size_t vertexStride);
+		IndexBufferId CreateIndexBuffer(const void* data, size_t dataSize, size_t indexStride);
 		ConstantBufferId CreateConstantBuffer(const void* data, size_t dataSize);
 		TextureId CreateTexture(const std::filesystem::path& fileName);
 		TextureId CreateTexture(const std::vector<uint8_t>& data, const TextureInfo& textureInfo, D3D12_RESOURCE_FLAGS resourceFlags);
-		BufferId CreateBuffer(const void* data, size_t dataSize, uint32_t bufferStride, uint32_t numElements, DXGI_FORMAT format);
+		BufferId CreateBuffer(const void* data, size_t dataSize, size_t bufferStride, size_t numElements, DXGI_FORMAT format);
 		SamplerId CreateSampler(const D3D12_SAMPLER_DESC& samplerDesc);
 		RenderTargetId CreateRenderTarget(uint64_t width, uint32_t height, DXGI_FORMAT format);
 		DepthStencilId CreateDepthStencil(uint64_t width, uint32_t height, uint32_t depthBit);
 		RWTextureId CreateRWTexture(const TextureInfo& textureInfo);
-		RWBufferId CreateRWBuffer(const void* initialData, size_t dataSize, uint32_t bufferStride, uint32_t numElements, DXGI_FORMAT format, bool addCounter);
+		RWBufferId CreateRWBuffer(const void* initialData, size_t dataSize, size_t bufferStride, size_t numElements, DXGI_FORMAT format, bool addCounter);
 
 		void CreateSwapChainBuffers(IDXGISwapChain4* swapChain, uint32_t buffersCount);
 
