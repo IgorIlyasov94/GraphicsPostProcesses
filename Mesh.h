@@ -1,11 +1,13 @@
 #pragma once
 
 #include "ResourceManager.h"
+#include "Material.h"
+#include "IRenderable.h"
 #include "OBJLoader.h"
 
 namespace Graphics
 {
-	class Mesh
+	class Mesh final : public IRenderable
 	{
 	public:
 		Mesh(std::filesystem::path filePath, bool calculateNormals,bool calculateTangents, bool smoothNormals);
@@ -14,9 +16,10 @@ namespace Graphics
 
 		uint32_t GetIndicesCount() const noexcept;
 		VertexFormat GetVertexFormat() const noexcept;
-		const BoundingBox& GetBoundingBox() const noexcept;
+		const BoundingBox& GetBoundingBox() const noexcept override;
 
-		void Present(ID3D12GraphicsCommandList* commandList) const;
+		void Update(ID3D12GraphicsCommandList* commandList) const override;
+		void Draw(ID3D12GraphicsCommandList* commandList, const Material* material) const override;
 
 	private:
 		Mesh() = delete;

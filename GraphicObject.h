@@ -4,6 +4,7 @@
 #include "ParticleSystem.h"
 #include "Material.h"
 #include "ComputeObject.h"
+#include "IRenderable.h"
 
 namespace Graphics
 {
@@ -14,16 +15,14 @@ namespace Graphics
 		RENDERING_LAYER_EFFECT
 	};
 
-	class GraphicObject
+	class GraphicObject final
 	{
 	public:
 		GraphicObject();
-		~GraphicObject();
+		virtual ~GraphicObject();
 
-		void AssignMesh(const Mesh* newMesh);
-		void AssignParticleSystem(const ParticleSystem* newParticleSystem);
+		void AssignRenderableEntity(const IRenderable* renderableEntity);
 		void AssignMaterial(const Material* newMaterial);
-		void AssignComputeObject(const ComputeObject* newComputeObject);
 
 		void SetRenderingLayer(RenderingLayer renderingLayer);
 
@@ -34,20 +33,11 @@ namespace Graphics
 		void Draw(ID3D12GraphicsCommandList* commandList) const;
 
 	private:
-		void DrawMesh(ID3D12GraphicsCommandList* commandList) const;
-		void DrawParticleSystem(ID3D12GraphicsCommandList* commandList) const;
-
-		using DrawFunction = void (Graphics::GraphicObject::*)(ID3D12GraphicsCommandList*) const;
-
-		DrawFunction drawFunction;
-
 		BoundingBox boundingBox;
 
 		RenderingLayer layer;
 
-		const Mesh* mesh;
-		const ParticleSystem* particleSystem;
 		const Material* material;
-		const ComputeObject* computeObject;
+		const IRenderable* renderable;
 	};
 }

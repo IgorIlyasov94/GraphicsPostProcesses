@@ -4,6 +4,7 @@
 #include "ResourceManager.h"
 #include "Material.h"
 #include "ComputeObject.h"
+#include "IRenderable.h"
 
 namespace Graphics
 {
@@ -21,7 +22,7 @@ namespace Graphics
 		ANIMATION_GRADIENT
 	};
 
-	class ParticleSystem
+	class ParticleSystem final : public IRenderable
 	{
 	public:
 		ParticleSystem(uint32_t particlesMaxCount, uint32_t lifeMin, uint32_t lifeMax, TextureId paddingDefaultTexture);
@@ -39,13 +40,13 @@ namespace Graphics
 
 		RWBufferId GetParticleBufferId() const;
 		ConstantBufferId GetParticleSystemConstBufferId() const;
-		const BoundingBox& GetBoundingBox() const noexcept;
+		const BoundingBox& GetBoundingBox() const noexcept override;
 		const uint32_t& GetParticleMaxCount() const noexcept;
 
 		const bool& IsComposed() const noexcept;
 
-		void Update(ID3D12GraphicsCommandList* commandList) const;
-		void Present(ID3D12GraphicsCommandList* commandList) const;
+		void Update(ID3D12GraphicsCommandList* commandList) const override;
+		void Draw(ID3D12GraphicsCommandList* commandList, const Material* material) const override;
 
 	private:
 		ParticleSystem() = delete;

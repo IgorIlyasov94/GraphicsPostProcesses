@@ -152,6 +152,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Cloth.cpp" />
     <ClCompile Include="ComputeObject.cpp" />
     <ClCompile Include="Font.cpp" />
     <ClCompile Include="GraphicsSettings.cpp" />
@@ -186,9 +187,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="Cloth.h" />
     <ClInclude Include="ComputeObject.h" />
     <ClInclude Include="Font.h" />
     <ClInclude Include="GraphicsSettings.h" />
+    <ClInclude Include="IRenderable.h" />
     <ClInclude Include="LightingSystem.h" />
     <ClInclude Include="Octree.h" />
     <ClInclude Include="BufferAllocationPage.h" />

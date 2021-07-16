@@ -141,7 +141,7 @@ void Graphics::PostProcesses::Compose(ID3D12Device* device, ID3D12GraphicsComman
 
 		antiAliasing = std::make_shared<GraphicObject>();
 		antiAliasing->AssignMaterial(antiAliasingMaterial.get());
-		antiAliasing->AssignMesh(screenQuadMesh.get());
+		antiAliasing->AssignRenderableEntity(screenQuadMesh.get());
 
 		aaSrcRenderTargetId = srcRenderTarget;
 		aaDestRenderTargetDescriptor = &intermediate16bTargetDescriptor[0];
@@ -165,7 +165,7 @@ void Graphics::PostProcesses::Compose(ID3D12Device* device, ID3D12GraphicsComman
 
 			brightPass = std::make_shared<GraphicObject>();
 			brightPass->AssignMaterial(brightPassMaterial.get());
-			brightPass->AssignMesh(screenQuadMesh.get());
+			brightPass->AssignRenderableEntity(screenQuadMesh.get());
 		}
 
 		{
@@ -180,7 +180,7 @@ void Graphics::PostProcesses::Compose(ID3D12Device* device, ID3D12GraphicsComman
 
 			gaussianBlurX = std::make_shared<GraphicObject>();
 			gaussianBlurX->AssignMaterial(gaussianBlurXMaterial.get());
-			gaussianBlurX->AssignMesh(screenQuadMesh.get());
+			gaussianBlurX->AssignRenderableEntity(screenQuadMesh.get());
 		}
 
 		{
@@ -195,7 +195,7 @@ void Graphics::PostProcesses::Compose(ID3D12Device* device, ID3D12GraphicsComman
 
 			gaussianBlurY = std::make_shared<GraphicObject>();
 			gaussianBlurY->AssignMaterial(gaussianBlurYMaterial.get());
-			gaussianBlurY->AssignMesh(screenQuadMesh.get());
+			gaussianBlurY->AssignRenderableEntity(screenQuadMesh.get());
 		}
 
 		{
@@ -215,7 +215,7 @@ void Graphics::PostProcesses::Compose(ID3D12Device* device, ID3D12GraphicsComman
 			toneMapping = std::make_shared<GraphicObject>();
 
 			toneMapping->AssignMaterial(toneMappingMaterial.get());
-			toneMapping->AssignMesh(screenQuadMesh.get());
+			toneMapping->AssignRenderableEntity(screenQuadMesh.get());
 		}
 
 		hdrSrcRenderTargetId = srcRenderTarget;

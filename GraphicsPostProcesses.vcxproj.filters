@@ -171,6 +171,9 @@
     <ClCompile Include="Font.cpp">
       <Filter>Исходные файлы\GraphicsCore\GraphicsUIManagement</Filter>
     </ClCompile>
+    <ClCompile Include="Cloth.cpp">
+      <Filter>Исходные файлы\GraphicsSceneManagement\GraphicsObjects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -268,6 +271,12 @@
     </ClInclude>
     <ClInclude Include="Font.h">
       <Filter>Файлы заголовков\GraphicsCore\GraphicsUIManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="IRenderable.h">
+      <Filter>Файлы заголовков\GraphicsSceneManagement\GraphicsObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="Cloth.h">
+      <Filter>Файлы заголовков\GraphicsSceneManagement\GraphicsObjects</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

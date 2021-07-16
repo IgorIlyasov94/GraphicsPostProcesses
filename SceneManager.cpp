@@ -82,7 +82,7 @@ void Graphics::SceneManager::InitializeTestScene(ID3D12Device* device, ID3D12Gra
 
 	goldenFrame = std::make_shared<GraphicObject>();
 	goldenFrame->SetRenderingLayer(RenderingLayer::RENDERING_LAYER_OPAQUE);
-	goldenFrame->AssignMesh(goldenFrameMesh.get());
+	goldenFrame->AssignRenderableEntity(goldenFrameMesh.get());
 	goldenFrame->AssignMaterial(goldenFrameMaterial.get());
 
 	/*cubeMeshSecond = std::make_shared<Mesh>("Resources\\Meshes\\Cube.obj", true, false, false);
@@ -144,7 +144,7 @@ void Graphics::SceneManager::InitializeTestScene(ID3D12Device* device, ID3D12Gra
 
 	testEffect = std::shared_ptr<GraphicObject>(new GraphicObject());
 	testEffect->SetRenderingLayer(RenderingLayer::RENDERING_LAYER_EFFECT);
-	testEffect->AssignParticleSystem(testEffectParticleSystem.get());
+	testEffect->AssignRenderableEntity(testEffectParticleSystem.get());
 	testEffect->AssignMaterial(testEffectMaterial.get());
 
 	auto testSpriteTextureId = resourceManager.CreateTexture("Resources\\Textures\\TestSprite.dds");
@@ -173,7 +173,7 @@ void Graphics::SceneManager::InitializeTestScene(ID3D12Device* device, ID3D12Gra
 
 	testUIFont = std::shared_ptr<Font>(new Font(testFontTextureId, 16, 16, ' '));
 	
-	TextUI testUIText(device, 200, 500, { 1.0f, 1.0f }, 12.0f, 1.0f, 12.0f, 20, { 1.0f, 1.0f, 1.0f, 1.0f }, testUIFont.get());
+	TextUI testUIText(device, 200, 500, { 1.0f, 1.0f }, 12.0f, 1.0f, 12.0f, 100, { 1.0f, 1.0f, 1.0f, 1.0f }, testUIFont.get());
 
 	testUITextMaterial = std::shared_ptr<Material>(new Material());
 	testUITextMaterial->AddCustomInputLayoutElement("POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1);
@@ -184,7 +184,7 @@ void Graphics::SceneManager::InitializeTestScene(ID3D12Device* device, ID3D12Gra
 	testUITextMaterial->SetPixelShader({ uiTextStandardPS, sizeof(uiTextStandardPS) });
 	testUITextMaterial->AssignConstantBuffer(0, testUIText.GetConstantBufferId());
 	testUITextMaterial->AssignTexture(commandList, 0, testFontTextureId, true);
-	testUITextMaterial->SetSampler(0, D3D12_FILTER_MIN_MAG_MIP_POINT, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
+	testUITextMaterial->SetSampler(0, D3D12_FILTER_MIN_LINEAR_MAG_MIP_POINT, D3D12_TEXTURE_ADDRESS_MODE_CLAMP, D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
 		D3D12_TEXTURE_ADDRESS_MODE_CLAMP, 1);
 	testUITextMaterial->SetBlendMode(true, D3D12_BLEND_SRC_ALPHA, D3D12_BLEND_INV_SRC_ALPHA);
 	testUITextMaterial->SetDepthTest(false);
@@ -193,7 +193,7 @@ void Graphics::SceneManager::InitializeTestScene(ID3D12Device* device, ID3D12Gra
 	testUITextMaterial->Compose(device);
 
 	testUIText.SetMaterial(testUITextMaterial.get());
-	testUIText.SetString(commandList, L"One minus 2 = *4#@");
+	testUIText.SetString(commandList, "Ничего себе!\nЗдесь теперь тоже есть вывод текста!");
 
 	currentScene->GetUISystem()->AddText(testUIText);
 

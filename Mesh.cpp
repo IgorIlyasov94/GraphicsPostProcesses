@@ -55,11 +55,24 @@ const Graphics::BoundingBox& Graphics::Mesh::GetBoundingBox() const noexcept
 	return boundingBox;
 }
 
-void Graphics::Mesh::Present(ID3D12GraphicsCommandList* commandList) const
+void Graphics::Mesh::Update(ID3D12GraphicsCommandList* commandList) const
 {
-	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
-	commandList->IASetIndexBuffer(&indexBufferView);
+
+}
+
+void Graphics::Mesh::Draw(ID3D12GraphicsCommandList* commandList, const Material* material) const
+{
+	if (material != nullptr)
+		if (material->IsComposed())
+		{
+			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
+			commandList->IASetIndexBuffer(&indexBufferView);
+
+			material->Present(commandList);
+
+			commandList->DrawIndexedInstanced(indicesCount, 1, 0, 0, 0);
+		}
 }
 
 void Graphics::Mesh::CalculateBoundingBox(const void* verticesData, size_t verticesDataSize, VertexFormat _vertexFormat, BoundingBox& result)

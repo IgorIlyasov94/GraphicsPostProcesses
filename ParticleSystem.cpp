@@ -121,7 +121,7 @@ void Graphics::ParticleSystem::Compose(ID3D12Device* device, ID3D12GraphicsComma
 	indexBufferId = resourceManager.CreateRWBuffer(indexData.data(), indexData.size() * sizeof(uint32_t), 0, indexData.size(), DXGI_FORMAT_R32_UINT, false);
 	
 	indexBufferView.BufferLocation = resourceManager.GetRWBuffer(indexBufferId).bufferAllocation.gpuAddress;
-	indexBufferView.SizeInBytes = indexData.size() * sizeof(uint32_t);
+	indexBufferView.SizeInBytes = static_cast<UINT>(indexData.size() * sizeof(uint32_t));
 	indexBufferView.Format = DXGI_FORMAT_R32_UINT;
 
 	SetResourceBarrier(commandList, resourceManager.GetRWBuffer(indexBufferId).bufferAllocation.bufferResource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
@@ -198,35 +198,43 @@ void Graphics::ParticleSystem::Update(ID3D12GraphicsCommandList* commandList) co
 	resourceBarriers[1].Transition.StateAfter = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	resourceBarriers[1].Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 
-	commandList->ResourceBarrier(resourceBarriers.size(), resourceBarriers.data());
+	commandList->ResourceBarrier(static_cast<UINT>(resourceBarriers.size()), resourceBarriers.data());
 
 	//sortParticleSystemCO->Present(commandList);
 	updateParticleSystemCO->Present(commandList);
 }
 
-void Graphics::ParticleSystem::Present(ID3D12GraphicsCommandList* commandList) const
+void Graphics::ParticleSystem::Draw(ID3D12GraphicsCommandList* commandList, const Material* material) const
 {
-	std::array<D3D12_RESOURCE_BARRIER, 4> resourceBarriers{};
-	resourceBarriers[0].Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-	resourceBarriers[0].UAV.pResource = resourceManager.GetRWBuffer(indexBufferId).bufferAllocation.bufferResource;
+	if (material != nullptr)
+		if (material->IsComposed())
+		{
+			std::array<D3D12_RESOURCE_BARRIER, 4> resourceBarriers{};
+			resourceBarriers[0].Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+			resourceBarriers[0].UAV.pResource = resourceManager.GetRWBuffer(indexBufferId).bufferAllocation.bufferResource;
 
-	resourceBarriers[1].Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-	resourceBarriers[1].UAV.pResource = resourceManager.GetRWBuffer(particleBufferId).bufferAllocation.bufferResource;
+			resourceBarriers[1].Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+			resourceBarriers[1].UAV.pResource = resourceManager.GetRWBuffer(particleBufferId).bufferAllocation.bufferResource;
 
-	resourceBarriers[2].Transition.pResource = resourceBarriers[0].UAV.pResource;
-	resourceBarriers[2].Transition.StateBefore = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	resourceBarriers[2].Transition.StateAfter = D3D12_RESOURCE_STATE_INDEX_BUFFER;
-	resourceBarriers[2].Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+			resourceBarriers[2].Transition.pResource = resourceBarriers[0].UAV.pResource;
+			resourceBarriers[2].Transition.StateBefore = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+			resourceBarriers[2].Transition.StateAfter = D3D12_RESOURCE_STATE_INDEX_BUFFER;
+			resourceBarriers[2].Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 
-	resourceBarriers[3].Transition.pResource = resourceBarriers[1].UAV.pResource;
-	resourceBarriers[3].Transition.StateBefore = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	resourceBarriers[3].Transition.StateAfter = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-	resourceBarriers[3].Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+			resourceBarriers[3].Transition.pResource = resourceBarriers[1].UAV.pResource;
+			resourceBarriers[3].Transition.StateBefore = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+			resourceBarriers[3].Transition.StateAfter = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+			resourceBarriers[3].Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 
-	commandList->ResourceBarrier(resourceBarriers.size(), resourceBarriers.data());
+			commandList->ResourceBarrier(static_cast<UINT>(resourceBarriers.size()), resourceBarriers.data());
 
-	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
-	commandList->IASetIndexBuffer(&indexBufferView);
+			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
+			commandList->IASetIndexBuffer(&indexBufferView);
+
+			material->Present(commandList);
+
+			commandList->DrawIndexedInstanced(particleSystemData.particleMaxCount, 1, 0, 0, 0);
+		}
 }
 
 void Graphics::ParticleSystem::CalculateBoundingBox(const ParticleSystemData& _particleSystemData, BoundingBox& result)
