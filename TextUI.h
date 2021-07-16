@@ -15,6 +15,7 @@ namespace Graphics
 			UIVerticalAlign verticalAlign = UIVerticalAlign::UI_ALIGN_TOP);
 		~TextUI();
 
+		void SetString(ID3D12GraphicsCommandList* commandList, std::string string);
 		void SetString(ID3D12GraphicsCommandList* commandList, std::wstring string);
 		void SetMaterial(const Material* _material) noexcept;
 		void SetOrder(int64_t newOrder) noexcept;

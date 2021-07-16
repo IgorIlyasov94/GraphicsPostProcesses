@@ -35,6 +35,17 @@ Graphics::TextUI::~TextUI()
 
 }
 
+void Graphics::TextUI::SetString(ID3D12GraphicsCommandList* commandList, std::string string)
+{
+	std::wstring wcharString;
+	wcharString.resize(string.size());
+
+	for (size_t charId = 0; charId < string.size(); charId++)
+		wcharString[charId] = (string[charId] + 256) % 256;
+	
+	SetString(commandList, wcharString);
+}
+
 void Graphics::TextUI::SetString(ID3D12GraphicsCommandList* commandList, std::wstring string)
 {
 	stringSize = string.size();
@@ -52,21 +63,26 @@ void Graphics::TextUI::SetString(ID3D12GraphicsCommandList* commandList, std::ws
 
 		for (auto& textChar : string)
 		{
-			charsInLine++;
-
+			int64_t charCode = static_cast<int64_t>(textChar) - charCodeStart;
+			
 			if (textChar == ' ')
 				vertex.localScreenCoordOffset.x += letterHeight + letterSpacing;
 
-			if (charsInLine > lineLength || textChar == '\n')
+			if (charsInLine > lineLength || textChar == static_cast<wchar_t>('\n'))
 			{
 				vertex.localScreenCoordOffset.x = 0.0f;
 				vertex.localScreenCoordOffset.y -= letterHeight + lineSpacing;
 				charsInLine = 0;
 			}
 
-			if (textChar != ' ' && textChar != '\n')
+			if (charCode < 0 || charCode >= glyphBuffer.size())
+				continue;
+
+			charsInLine++;
+
+			if (textChar != ' ' && textChar != static_cast<wchar_t>('\n'))
 			{
-				auto& glyphData = glyphBuffer[static_cast<size_t>(textChar) - charCodeStart];
+				auto& glyphData = glyphBuffer[charCode];
 				float localScreenCoordOffsetY = vertex.localScreenCoordOffset.y;
 				
 				vertex.localScreenCoordOffset.y -= glyphData.localOffset.y * glyphData.size.y * scaleCoeff * 4.0f;
