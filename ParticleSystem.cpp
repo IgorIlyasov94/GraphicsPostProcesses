@@ -124,8 +124,7 @@ void Graphics::ParticleSystem::Compose(ID3D12Device* device, ID3D12GraphicsComma
 	indexBufferView.SizeInBytes = static_cast<UINT>(indexData.size() * sizeof(uint32_t));
 	indexBufferView.Format = DXGI_FORMAT_R32_UINT;
 
-	SetResourceBarrier(commandList, resourceManager.GetRWBuffer(indexBufferId).bufferAllocation.bufferResource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-		D3D12_RESOURCE_STATE_INDEX_BUFFER);
+	resourceManager.SetResourceBarrier(commandList, indexBufferId, D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_INDEX_BUFFER);
 
 	updateParticleSystemCO = std::shared_ptr<ComputeObject>(new ComputeObject());
 	updateParticleSystemCO->AssignShader({ updateParticleSystemCS, sizeof(updateParticleSystemCS) });

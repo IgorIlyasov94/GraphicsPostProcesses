@@ -51,7 +51,7 @@ void Graphics::Material::AssignTexture(ID3D12GraphicsCommandList* commandList, s
 	registerSet.textureRegisterIndices.push_back(registerIndex);
 	indexSet.textureIndices.push_back(textureId);
 
-	SetResourceBarrier(commandList, resourceManager.GetTexture(textureId).textureAllocation.textureResource, D3D12_RESOURCE_STATE_COMMON,
+	resourceManager.SetResourceBarrier(commandList, textureId, D3D12_RESOURCE_BARRIER_FLAG_NONE,
 		(asPixelShaderResource) ? D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE : D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 }
 

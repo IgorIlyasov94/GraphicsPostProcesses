@@ -245,7 +245,7 @@ void Graphics::PostProcesses::PresentProcessChain(ID3D12GraphicsCommandList* com
 	if (!isComposed)
 		return;
 
-	SetResourceBarrier(commandList, resourceManager.GetDepthStencil(sceneDepthStencilId).textureAllocation.textureResource, D3D12_RESOURCE_STATE_DEPTH_WRITE,
+	resourceManager.SetResourceBarrier(commandList, sceneDepthStencilId, D3D12_RESOURCE_BARRIER_FLAG_NONE,
 		D3D12_RESOURCE_STATE_DEPTH_READ | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	*finalDestRenderTargetDescriptor = *destRenderTargetDescriptor;
@@ -256,8 +256,7 @@ void Graphics::PostProcesses::PresentProcessChain(ID3D12GraphicsCommandList* com
 	if (isHDREnabled)
 		ProcessHDR(commandList, hdrSrcRenderTargetId, hdrDestRenderTargetDescriptor);
 
-	SetResourceBarrier(commandList, resourceManager.GetDepthStencil(sceneDepthStencilId).textureAllocation.textureResource,
-		D3D12_RESOURCE_STATE_DEPTH_READ | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	resourceManager.SetResourceBarrier(commandList, sceneDepthStencilId, D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 }
 
 void Graphics::PostProcesses::ProcessAA(ID3D12GraphicsCommandList* commandList, const RenderTargetId& srcRenderTargetId, const D3D12_CPU_DESCRIPTOR_HANDLE* destRenderTargetDescriptor)
@@ -266,14 +265,13 @@ void Graphics::PostProcesses::ProcessAA(ID3D12GraphicsCommandList* commandList, 
 	commandList->RSSetScissorRects(1, &sceneScissorRect);
 
 	{
-		SetResourceBarrier(commandList, resourceManager.GetRenderTarget(srcRenderTargetId).textureAllocation.textureResource, D3D12_RESOURCE_STATE_RENDER_TARGET,
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		auto beforeResourceState = resourceManager.GetRenderTarget(srcRenderTargetId).currentResourceState;
+		resourceManager.SetResourceBarrier(commandList, srcRenderTargetId, D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 		commandList->OMSetRenderTargets(1, destRenderTargetDescriptor, false, nullptr);
 		antiAliasing->Draw(commandList);
 
-		SetResourceBarrier(commandList, resourceManager.GetRenderTarget(srcRenderTargetId).textureAllocation.textureResource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-			D3D12_RESOURCE_STATE_RENDER_TARGET);
+		resourceManager.SetResourceBarrier(commandList, srcRenderTargetId, D3D12_RESOURCE_BARRIER_FLAG_NONE, beforeResourceState);
 	}
 }
 
@@ -283,49 +281,41 @@ void Graphics::PostProcesses::ProcessHDR(ID3D12GraphicsCommandList* commandList,
 	commandList->RSSetScissorRects(1, &sceneScissorRectHalf);
 
 	{
-		SetResourceBarrier(commandList, resourceManager.GetRenderTarget(srcRenderTargetId).textureAllocation.textureResource, D3D12_RESOURCE_STATE_RENDER_TARGET,
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		resourceManager.SetResourceBarrier(commandList, srcRenderTargetId, D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 		commandList->OMSetRenderTargets(1, &intermediate8bQuartTargetDescriptor[0], false, nullptr);
 		brightPass->Draw(commandList);
 	}
 
 	{
-		SetResourceBarrier(commandList, resourceManager.GetRenderTarget(intermediate8bQuartTargetId[0]).textureAllocation.textureResource, D3D12_RESOURCE_STATE_RENDER_TARGET,
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		resourceManager.SetResourceBarrier(commandList, intermediate8bQuartTargetId[0], D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 		commandList->OMSetRenderTargets(1, &intermediate8bQuartTargetDescriptor[1], false, nullptr);
 		gaussianBlurX->Draw(commandList);
 
-		SetResourceBarrier(commandList, resourceManager.GetRenderTarget(intermediate8bQuartTargetId[0]).textureAllocation.textureResource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-			D3D12_RESOURCE_STATE_RENDER_TARGET);
+		resourceManager.SetResourceBarrier(commandList, intermediate8bQuartTargetId[0], D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	}
 
 	{
-		SetResourceBarrier(commandList, resourceManager.GetRenderTarget(intermediate8bQuartTargetId[1]).textureAllocation.textureResource, D3D12_RESOURCE_STATE_RENDER_TARGET,
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		resourceManager.SetResourceBarrier(commandList, intermediate8bQuartTargetId[1], D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 		commandList->OMSetRenderTargets(1, &intermediate8bQuartTargetDescriptor[0], false, nullptr);
 		gaussianBlurY->Draw(commandList);
 
-		SetResourceBarrier(commandList, resourceManager.GetRenderTarget(intermediate8bQuartTargetId[1]).textureAllocation.textureResource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-			D3D12_RESOURCE_STATE_RENDER_TARGET);
+		resourceManager.SetResourceBarrier(commandList, intermediate8bQuartTargetId[1], D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	}
 
 	commandList->RSSetViewports(1, &sceneViewport);
 	commandList->RSSetScissorRects(1, &sceneScissorRect);
 
 	{
-		SetResourceBarrier(commandList, resourceManager.GetRenderTarget(intermediate8bQuartTargetId[0]).textureAllocation.textureResource, D3D12_RESOURCE_STATE_RENDER_TARGET,
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		resourceManager.SetResourceBarrier(commandList, intermediate8bQuartTargetId[0], D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 		commandList->OMSetRenderTargets(1, destRenderTargetDescriptor, false, nullptr);
 		toneMapping->Draw(commandList);
 
-		SetResourceBarrier(commandList, resourceManager.GetRenderTarget(intermediate8bQuartTargetId[0]).textureAllocation.textureResource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-			D3D12_RESOURCE_STATE_RENDER_TARGET);
+		resourceManager.SetResourceBarrier(commandList, intermediate8bQuartTargetId[0], D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	}
 
-	SetResourceBarrier(commandList, resourceManager.GetRenderTarget(srcRenderTargetId).textureAllocation.textureResource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-		D3D12_RESOURCE_STATE_RENDER_TARGET);
+	resourceManager.SetResourceBarrier(commandList, srcRenderTargetId, D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_RENDER_TARGET);
 }

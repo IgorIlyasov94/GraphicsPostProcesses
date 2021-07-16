@@ -260,42 +260,6 @@ void Graphics::SetupHeapProperties(D3D12_HEAP_PROPERTIES& heapProperties, D3D12_
 	heapProperties.Type = heapType;
 }
 
-void Graphics::SetResourceBarrier(ID3D12GraphicsCommandList* commandList, ID3D12Resource* const resource, D3D12_RESOURCE_STATES resourceBarrierStateBefore,
-	D3D12_RESOURCE_STATES resourceBarrierStateAfter, D3D12_RESOURCE_BARRIER_TYPE resourceBarrierType)
-{
-	D3D12_RESOURCE_BARRIER resourceBarrier{};
-	resourceBarrier.Type = resourceBarrierType;
-	resourceBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	resourceBarrier.Transition.pResource = resource;
-	resourceBarrier.Transition.StateBefore = resourceBarrierStateBefore;
-	resourceBarrier.Transition.StateAfter = resourceBarrierStateAfter;
-	resourceBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-
-	commandList->ResourceBarrier(1, &resourceBarrier);
-}
-
-void Graphics::SetResourceBarrier(ID3D12GraphicsCommandList* commandList, ID3D12Resource* const resource, D3D12_RESOURCE_STATES resourceBarrierStateAfter)
-{
-	D3D12_RESOURCE_BARRIER resourceBarrier{};
-	resourceBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	resourceBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_END_ONLY;
-	resourceBarrier.Transition.pResource = resource;
-	resourceBarrier.Transition.StateAfter = resourceBarrierStateAfter;
-	resourceBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-
-	commandList->ResourceBarrier(1, &resourceBarrier);
-}
-
-void Graphics::SetUAVBarrier(ID3D12GraphicsCommandList* commandList, ID3D12Resource* const resource)
-{
-	D3D12_RESOURCE_BARRIER resourceBarrier{};
-	resourceBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-	resourceBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	resourceBarrier.UAV.pResource = resource;
-
-	commandList->ResourceBarrier(1, &resourceBarrier);
-}
-
 bool Graphics::CheckBoxInBox(const BoundingBox& sourceBox, const BoundingBox& destinationBox) noexcept
 {
 	if (sourceBox.maxCornerPoint.x <= destinationBox.maxCornerPoint.x &&

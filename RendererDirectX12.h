@@ -38,7 +38,7 @@ namespace Graphics
 #endif
 
 		static const int32_t SWAP_CHAIN_BUFFER_COUNT = 2;
-		static const int32_t MULTIPLY_RENDER_TARGET_COUNT = 2;
+		static const int32_t MULTIPLE_RENDER_TARGET_COUNT = 2;
 
 		ComPtr<ID3D12Device> device;
 		ComPtr<ID3D12CommandQueue> commandQueue;
@@ -50,7 +50,7 @@ namespace Graphics
 		ComPtr<IDXGIFactory4> factory;
 		ComPtr<IDXGISwapChain4> swapChain;
 		
-		RenderTargetId sceneRenderTargetId[MULTIPLY_RENDER_TARGET_COUNT];
+		RenderTargetId sceneRenderTargetId[MULTIPLE_RENDER_TARGET_COUNT];
 		DepthStencilId sceneDepthStencilId;
 
 		HANDLE fenceEvent;

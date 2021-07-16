@@ -46,6 +46,7 @@ namespace Graphics
 	{
 		D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
 		BufferAllocation vertexBufferAllocation;
+		D3D12_RESOURCE_STATES currentResourceState;
 	};
 
 	struct IndexBuffer
@@ -53,6 +54,7 @@ namespace Graphics
 		uint32_t indicesCount;
 		D3D12_INDEX_BUFFER_VIEW indexBufferView;
 		BufferAllocation indexBufferAllocation;
+		D3D12_RESOURCE_STATES currentResourceState;
 	};
 
 	struct ConstantBuffer
@@ -60,6 +62,7 @@ namespace Graphics
 		D3D12_CONSTANT_BUFFER_VIEW_DESC constantBufferViewDesc;
 		BufferAllocation uploadBufferAllocation;
 		DescriptorAllocation bufferDescriptorAllocation;
+		D3D12_RESOURCE_STATES currentResourceState;
 	};
 
 	struct Texture
@@ -68,6 +71,7 @@ namespace Graphics
 		TextureInfo info;
 		TextureAllocation textureAllocation;
 		DescriptorAllocation shaderResourceDescriptorAllocation;
+		D3D12_RESOURCE_STATES currentResourceState;
 	};
 
 	struct Buffer
@@ -75,6 +79,7 @@ namespace Graphics
 		D3D12_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
 		BufferAllocation bufferAllocation;
 		DescriptorAllocation shaderResourceDescriptorAllocation;
+		D3D12_RESOURCE_STATES currentResourceState;
 	};
 
 	struct Sampler
@@ -91,6 +96,7 @@ namespace Graphics
 		TextureAllocation textureAllocation;
 		DescriptorAllocation shaderResourceDescriptorAllocation;
 		DescriptorAllocation renderTargetDescriptorAllocation;
+		D3D12_RESOURCE_STATES currentResourceState;
 	};
 
 	struct DepthStencil
@@ -101,6 +107,7 @@ namespace Graphics
 		TextureAllocation textureAllocation;
 		DescriptorAllocation shaderResourceDescriptorAllocation;
 		DescriptorAllocation depthStencilDescriptorAllocation;
+		D3D12_RESOURCE_STATES currentResourceState;
 	};
 
 	struct RWTexture
@@ -112,6 +119,7 @@ namespace Graphics
 		DescriptorAllocation shaderResourceDescriptorAllocation;
 		DescriptorAllocation unorderedAccessDescriptorAllocation;
 		DescriptorAllocation shaderNonVisibleDescriptorAllocation;
+		D3D12_RESOURCE_STATES currentResourceState;
 	};
 
 	struct RWBuffer
@@ -122,6 +130,7 @@ namespace Graphics
 		DescriptorAllocation shaderResourceDescriptorAllocation;
 		DescriptorAllocation unorderedAccessDescriptorAllocation;
 		DescriptorAllocation shaderNonVisibleDescriptorAllocation;
+		D3D12_RESOURCE_STATES currentResourceState;
 	};
 
 	class ResourceManager
@@ -170,9 +179,32 @@ namespace Graphics
 		ID3D12DescriptorHeap* GetShaderResourceViewDescriptorHeap();
 
 		void GetTextureDataFromGPU(TextureId textureId, std::vector<float4>& textureRawData);
+		void GetBufferDataFromGPU(BufferId bufferId, std::vector<uint8_t>& bufferRawData);
 
 		void UpdateDynamicVertexBuffer(const VertexBufferId& resourceId, const void* data, size_t dataSize);
 		void UpdateConstantBuffer(const ConstantBufferId& resourceId, const void* data, size_t dataSize);
+
+		void SetResourceBarrier(ID3D12GraphicsCommandList* commandList, const VertexBufferId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
+			D3D12_RESOURCE_STATES resourceBarrierStateAfter);
+		void SetResourceBarrier(ID3D12GraphicsCommandList* commandList, const IndexBufferId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
+			D3D12_RESOURCE_STATES resourceBarrierStateAfter);
+		void SetResourceBarrier(ID3D12GraphicsCommandList* commandList, const TextureId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
+			D3D12_RESOURCE_STATES resourceBarrierStateAfter);
+		void SetResourceBarrier(ID3D12GraphicsCommandList* commandList, const BufferId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
+			D3D12_RESOURCE_STATES resourceBarrierStateAfter);
+		void SetResourceBarrier(ID3D12GraphicsCommandList* commandList, const RenderTargetId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
+			D3D12_RESOURCE_STATES resourceBarrierStateAfter);
+		void SetResourceBarrier(ID3D12GraphicsCommandList* commandList, const DepthStencilId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
+			D3D12_RESOURCE_STATES resourceBarrierStateAfter);
+		void SetResourceBarrier(ID3D12GraphicsCommandList* commandList, const RWTextureId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
+			D3D12_RESOURCE_STATES resourceBarrierStateAfter);
+		void SetResourceBarrier(ID3D12GraphicsCommandList* commandList, const RWBufferId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
+			D3D12_RESOURCE_STATES resourceBarrierStateAfter);
+		void SetResourceBarrier(ID3D12GraphicsCommandList* commandList, size_t swapChainBufferId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
+			D3D12_RESOURCE_STATES resourceBarrierStateAfter);
+
+		void SetUAVBarrier(ID3D12GraphicsCommandList* commandList, const RWTextureId& resourceId);
+		void SetUAVBarrier(ID3D12GraphicsCommandList* commandList, const RWBufferId& resourceId);
 
 		void ReleaseTemporaryUploadBuffers();
 
@@ -189,6 +221,10 @@ namespace Graphics
 			uint8_t* uploadBufferCPUAddress);
 		void CopyRawDataToSubresource(const TextureInfo& srcTextureInfo, uint32_t numRows, uint16_t numSlices, uint64_t destRowPitch, uint64_t destSlicePitch,
 			uint64_t rowSizeInBytes, const uint8_t* srcAddress, uint8_t* destAddress);
+
+		void SetResourceBarrier(ID3D12GraphicsCommandList* commandList, ID3D12Resource* const resource, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
+			D3D12_RESOURCE_STATES resourceBarrierStateBefore, D3D12_RESOURCE_STATES resourceBarrierStateAfter);
+		void SetUAVBarrier(ID3D12GraphicsCommandList* commandList, ID3D12Resource* const resource);
 
 		void ExecuteGPUCommands();
 
@@ -213,6 +249,7 @@ namespace Graphics
 
 		std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> swapChainDescriptorBases;
 		std::vector<ComPtr<ID3D12Resource>> swapChainBuffers;
+		std::vector<D3D12_RESOURCE_STATES> swapChainStates;
 
 		BufferAllocator& bufferAllocator = BufferAllocator::GetInstance();
 		DescriptorAllocator& descriptorAllocator = DescriptorAllocator::GetInstance();

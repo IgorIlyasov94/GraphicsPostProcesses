@@ -58,6 +58,7 @@ void Graphics::LightingSystem::ComposeLightBuffer(ID3D12Device* device, ID3D12Gr
 
 		pointLightBufferId = resourceManager.CreateRWBuffer(pointLightBufferData.data(), pointLightBufferData.size() * sizeof(PointLightBufferElement), sizeof(PointLightBufferElement),
 			pointLightBufferData.size(), DXGI_FORMAT_UNKNOWN, false);
+		resourceManager.SetResourceBarrier(commandList, pointLightBufferId, D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_COMMON);
 
 		TextureInfo pointLightClusterInfo{};
 		pointLightClusterInfo.width = CLUSTER_SIZE_X * CLUSTER_LIGHTS_PER_CELL;
@@ -69,6 +70,7 @@ void Graphics::LightingSystem::ComposeLightBuffer(ID3D12Device* device, ID3D12Gr
 		pointLightClusterInfo.srvDimension = D3D12_SRV_DIMENSION_TEXTURE3D;
 		
 		pointLightClusterId = resourceManager.CreateRWTexture(pointLightClusterInfo);
+		resourceManager.SetResourceBarrier(commandList, pointLightClusterId, D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_COMMON);
 	}
 	
 	{
@@ -132,16 +134,14 @@ void Graphics::LightingSystem::UpdateCluster(ID3D12GraphicsCommandList* commandL
 	if (pointLights.empty())
 		return;
 
-	SetResourceBarrier(commandList, resourceManager.GetRWBuffer(pointLightBufferId).bufferAllocation.bufferResource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	resourceManager.SetResourceBarrier(commandList, pointLightBufferId, D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 	calculateClusterCoordinatesCO->Present(commandList);
 	
-	SetUAVBarrier(commandList, resourceManager.GetRWBuffer(pointLightBufferId).bufferAllocation.bufferResource);
-	SetUAVBarrier(commandList, resourceManager.GetRWBuffer(clusterDataBufferId).bufferAllocation.bufferResource);
+	resourceManager.SetUAVBarrier(commandList, pointLightBufferId);
+	resourceManager.SetUAVBarrier(commandList, clusterDataBufferId);
 
-	SetResourceBarrier(commandList, resourceManager.GetRWTexture(pointLightClusterId).textureAllocation.textureResource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	resourceManager.SetResourceBarrier(commandList, pointLightClusterId, D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 	uint32_t clearValue[4]{};
 
@@ -151,12 +151,9 @@ void Graphics::LightingSystem::UpdateCluster(ID3D12GraphicsCommandList* commandL
 
 	distributePointLightCO->Present(commandList);
 
-	SetUAVBarrier(commandList, resourceManager.GetRWTexture(pointLightClusterId).textureAllocation.textureResource);
-	SetResourceBarrier(commandList, resourceManager.GetRWTexture(pointLightClusterId).textureAllocation.textureResource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-
-	SetResourceBarrier(commandList, resourceManager.GetRWBuffer(pointLightBufferId).bufferAllocation.bufferResource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	resourceManager.SetUAVBarrier(commandList, pointLightClusterId);
+	resourceManager.SetResourceBarrier(commandList, pointLightClusterId, D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	resourceManager.SetResourceBarrier(commandList, pointLightBufferId, D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 }
 
 void Graphics::LightingSystem::Clear()

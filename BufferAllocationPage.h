@@ -9,7 +9,8 @@ namespace Graphics
 		uint8_t* cpuAddress;
 		D3D12_GPU_VIRTUAL_ADDRESS gpuAddress;
 		uint64_t gpuPageOffset;
-		ID3D12Resource* bufferResource; //TODO: Check const
+		size_t nonAlignedSizeInBytes;
+		ID3D12Resource* bufferResource;
 	};
 
 	struct BufferAllocationPage

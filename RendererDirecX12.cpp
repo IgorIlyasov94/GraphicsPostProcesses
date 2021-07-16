@@ -140,18 +140,18 @@ void Graphics::RendererDirectX12::FrameStart()
 
 void Graphics::RendererDirectX12::FrameRender()
 {
-	SetResourceBarrier(commandList.Get(), resourceManager.GetSwapChainBuffer(bufferIndex), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	resourceManager.SetResourceBarrier(commandList.Get(), bufferIndex, D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
 	commandList->RSSetViewports(1, &sceneViewport);
 	commandList->RSSetScissorRects(1, &sceneScissorRect);
 	
-	D3D12_CPU_DESCRIPTOR_HANDLE multiplyRenderTarget[] =
+	D3D12_CPU_DESCRIPTOR_HANDLE multipleRenderTarget[] =
 	{
 		resourceManager.GetRenderTargetDescriptorBase(sceneRenderTargetId[0]),
 		resourceManager.GetRenderTargetDescriptorBase(sceneRenderTargetId[1])
 	};
 
-	commandList->OMSetRenderTargets(MULTIPLY_RENDER_TARGET_COUNT, multiplyRenderTarget, true, &resourceManager.GetDepthStencilDescriptorBase(sceneDepthStencilId));
+	commandList->OMSetRenderTargets(MULTIPLE_RENDER_TARGET_COUNT, multipleRenderTarget, true, &resourceManager.GetDepthStencilDescriptorBase(sceneDepthStencilId));
 
 	const float clearColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	commandList->ClearRenderTargetView(resourceManager.GetRenderTargetDescriptorBase(sceneRenderTargetId[0]), clearColor, 0, nullptr);
@@ -164,7 +164,7 @@ void Graphics::RendererDirectX12::FrameRender()
 
 	sceneManager.DrawUI(commandList.Get());
 
-	SetResourceBarrier(commandList.Get(), resourceManager.GetSwapChainBuffer(bufferIndex), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	resourceManager.SetResourceBarrier(commandList.Get(), bufferIndex, D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_PRESENT);
 
 	ThrowIfFailed(commandList->Close(), "RendererDirectX12::FrameRender: Command List closing error!");
 

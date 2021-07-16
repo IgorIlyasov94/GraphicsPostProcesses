@@ -52,6 +52,7 @@ void Graphics::BufferAllocationPage::Allocate(uint64_t _size, uint64_t alignment
 	allocation.cpuAddress = currentCPUAddress + offset;
 	allocation.gpuAddress = currentGPUAddress + offset;
 	allocation.gpuPageOffset = offset;
+	allocation.nonAlignedSizeInBytes = _size;
 	allocation.bufferResource = pageResource.Get();
 
 	offset += alignedSize;
