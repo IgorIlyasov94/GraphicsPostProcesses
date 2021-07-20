@@ -61,4 +61,18 @@ ECHO ON
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
 %dxcCmd% /Zi /E"main" /Vn"uiTextStandardPS" /Tps_6_0 /Fh"UITextStandardPS.hlsl.h" /nologo UITextStandardPS.hlsl
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
+%dxcCmd% /Zi /E"main" /Vn"clothApplyConstaintsCS" /Tcs_6_0 /Fh"ClothApplyConstaintsCS.hlsl.h" /nologo ClothApplyConstaintsCS.hlsl
+@IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
+%dxcCmd% /Zi /E"main" /Vn"clothApplyExternalConstraintsCS" /Tcs_6_0 /Fh"ClothApplyExternalConstraintsCS.hlsl.h" /nologo ClothApplyExternalConstraintsCS.hlsl
+@IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
+%dxcCmd% /Zi /E"main" /Vn"clothApplyForcesCS" /Tcs_6_0 /Fh"ClothApplyForcesCS.hlsl.h" /nologo ClothApplyForcesCS.hlsl
+@IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
+%dxcCmd% /Zi /E"main" /Vn"clothApplySelfCollisionCS" /Tcs_6_0 /Fh"ClothApplySelfCollisionCS.hlsl.h" /nologo ClothApplySelfCollisionCS.hlsl
+@IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
+%dxcCmd% /Zi /E"main" /Vn"clothRecalculateTangentsGS" /Tgs_6_0 /Fh"ClothRecalculateTangentsGS.hlsl.h" /nologo ClothRecalculateTangentsGS.hlsl
+@IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
+%dxcCmd% /Zi /E"main" /Vn"emptyVS" /Tvs_6_0 /Fh"EmptyVS.hlsl.h" /nologo EmptyVS.hlsl
+@IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
+%dxcCmd% /Zi /E"main" /Vn"onlyVertexIdOutputVS" /Tvs_6_0 /Fh"OnlyVertexIdOutputVS.hlsl.h" /nologo OnlyVertexIdOutputVS.hlsl
+@IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
 ECHO Done.

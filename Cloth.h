@@ -1,9 +1,9 @@
 #pragma once
 
+#include "ResourceManager.h"
 #include "Mesh.h"
 #include "Material.h"
 #include "ComputeObject.h"
-#include "GraphicObject.h"
 #include "IRenderable.h"
 
 namespace Graphics
@@ -11,7 +11,7 @@ namespace Graphics
 	class Cloth final : public IRenderable
 	{
 	public:
-		Cloth(const Mesh* _mesh);
+		Cloth(ID3D12GraphicsCommandList* commandList, const Mesh* _mesh);
 		~Cloth();
 
 		const BoundingBox& GetBoundingBox() const noexcept override;
@@ -24,9 +24,9 @@ namespace Graphics
 
 		BoundingBox boundingBox;
 
-		RenderingLayer layer;
-
 		const Mesh* mesh;
 		const Material* material;
+
+		ResourceManager& resourceManager = ResourceManager::GetInstance();
 	};
 }

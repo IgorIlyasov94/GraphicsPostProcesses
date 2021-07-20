@@ -1,7 +1,7 @@
 #include "Cloth.h"
 
-Graphics::Cloth::Cloth(const Mesh* _mesh)
-	: boundingBox{}, layer(RenderingLayer::RENDERING_LAYER_OPAQUE), mesh(nullptr), material(nullptr)
+Graphics::Cloth::Cloth(ID3D12GraphicsCommandList* commandList, const Mesh* _mesh)
+	: boundingBox{}, mesh(nullptr), material(nullptr)
 {
 	mesh = _mesh;
 
@@ -14,6 +14,9 @@ Graphics::Cloth::Cloth(const Mesh* _mesh)
 
 	XMStoreFloat3(&boundingBox.minCornerPoint, XMLoadFloat3(&boundingBox.minCornerPoint) - XMLoadFloat3(&boundingBoxSize));
 	XMStoreFloat3(&boundingBox.maxCornerPoint, XMLoadFloat3(&boundingBox.maxCornerPoint) + XMLoadFloat3(&boundingBoxSize));
+
+	std::vector<uint8_t> rawVerticesData;
+	resourceManager.GetBufferDataFromGPU(mesh->GetVertexBufferId(), rawVerticesData);
 
 
 }
