@@ -32,7 +32,7 @@ namespace Graphics
 
 		const bool& IsComposed() const noexcept;
 
-		void SetThreadGroupCount(uint32_t xCount, uint32_t yCount, uint32_t zCount);
+		void SetThreadGroupCount(size_t xCount, size_t yCount, size_t zCount);
 
 		void Present(ID3D12GraphicsCommandList* commandList) const;
 

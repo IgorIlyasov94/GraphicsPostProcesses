@@ -33,7 +33,7 @@ void Graphics::Material::SetSampler(size_t registerIndex, D3D12_FILTER filter, D
 	samplerDesc.MaxAnisotropy = maxAnisotropy;
 	samplerDesc.MinLOD = 0;
 	samplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
-	samplerDesc.ShaderRegister = registerIndex;
+	samplerDesc.ShaderRegister = static_cast<uint32_t>(registerIndex);
 
 	samplerDescs.push_back(samplerDesc);
 }
@@ -129,7 +129,7 @@ void Graphics::Material::AddCustomInputLayoutElement(std::string semanticName, s
 
 	D3D12_INPUT_ELEMENT_DESC inputElementDesc{};
 	inputElementDesc.SemanticName = semanticNames.back()->data();
-	inputElementDesc.SemanticIndex = semanticIndex;
+	inputElementDesc.SemanticIndex = static_cast<uint32_t>(semanticIndex);
 	inputElementDesc.Format = format;
 	inputElementDesc.InputSlot = 0;
 	inputElementDesc.AlignedByteOffset = (inputElementDescs.empty()) ? 0 : D3D12_APPEND_ALIGNED_ELEMENT;
@@ -294,37 +294,37 @@ void Graphics::Material::CreateResourceRootDescriptorTables(const RegisterSet& _
 
 	for (auto& textureRegisterId : _registerSet.textureRegisterIndices)
 	{
-		descRange.BaseShaderRegister = textureRegisterId;
+		descRange.BaseShaderRegister = static_cast<uint32_t>(textureRegisterId);
 		descriptorRanges.push_back(descRange);
 	}
 
 	for (auto& rwTextureRegisterId : _registerSet.rwTextureReadOnlyRegisterIndices)
 	{
-		descRange.BaseShaderRegister = rwTextureRegisterId;
+		descRange.BaseShaderRegister = static_cast<uint32_t>(rwTextureRegisterId);
 		descriptorRanges.push_back(descRange);
 	}
 
 	for (auto& renderTextureRegisterId : _registerSet.renderTextureRegisterIndices)
 	{
-		descRange.BaseShaderRegister = renderTextureRegisterId;
+		descRange.BaseShaderRegister = static_cast<uint32_t>(renderTextureRegisterId);
 		descriptorRanges.push_back(descRange);
 	}
 
 	for (auto& depthTextureRegisterId : _registerSet.depthTextureRegisterIndices)
 	{
-		descRange.BaseShaderRegister = depthTextureRegisterId;
+		descRange.BaseShaderRegister = static_cast<uint32_t>(depthTextureRegisterId);
 		descriptorRanges.push_back(descRange);
 	}
 
 	for (auto& bufferRegisterId : _registerSet.bufferRegisterIndices)
 	{
-		descRange.BaseShaderRegister = bufferRegisterId;
+		descRange.BaseShaderRegister = static_cast<uint32_t>(bufferRegisterId);
 		descriptorRanges.push_back(descRange);
 	}
 
 	for (auto& rwBufferRegisterId : _registerSet.rwBufferReadOnlyRegisterIndices)
 	{
-		descRange.BaseShaderRegister = rwBufferRegisterId;
+		descRange.BaseShaderRegister = static_cast<uint32_t>(rwBufferRegisterId);
 		descriptorRanges.push_back(descRange);
 	}
 
@@ -332,13 +332,13 @@ void Graphics::Material::CreateResourceRootDescriptorTables(const RegisterSet& _
 
 	for (auto& rwTextureRegisterId : _registerSet.rwTextureRegisterIndices)
 	{
-		descRange.BaseShaderRegister = rwTextureRegisterId;
+		descRange.BaseShaderRegister = static_cast<uint32_t>(rwTextureRegisterId);
 		descriptorRanges.push_back(descRange);
 	}
 
 	for (auto& rwBufferRegisterId : _registerSet.rwBufferRegisterIndices)
 	{
-		descRange.BaseShaderRegister = rwBufferRegisterId;
+		descRange.BaseShaderRegister = static_cast<uint32_t>(rwBufferRegisterId);
 		descriptorRanges.push_back(descRange);
 	}
 
@@ -376,7 +376,7 @@ void Graphics::Material::CreateRootParameters(const ShaderList& shaderList, cons
 
 		rootParameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 		rootParameter.Descriptor.RegisterSpace = 0;
-		rootParameter.Descriptor.ShaderRegister = constantBufferIndex;
+		rootParameter.Descriptor.ShaderRegister = static_cast<uint32_t>(constantBufferIndex);
 		rootParameter.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 		rootParameters.push_back(rootParameter);
@@ -397,12 +397,12 @@ void Graphics::Material::CreateRootSignature(ID3D12Device* device, const std::ve
 	const std::vector<D3D12_STATIC_SAMPLER_DESC>& samplerDescs, D3D12_ROOT_SIGNATURE_FLAGS flags, ID3D12RootSignature** rootSignature)
 {
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc{};
-	rootSignatureDesc.NumParameters = rootParameters.size();
+	rootSignatureDesc.NumParameters = static_cast<uint32_t>(rootParameters.size());
 
 	if (rootSignatureDesc.NumParameters > 0)
 		rootSignatureDesc.pParameters = rootParameters.data();
 
-	rootSignatureDesc.NumStaticSamplers = samplerDescs.size();
+	rootSignatureDesc.NumStaticSamplers = static_cast<uint32_t>(samplerDescs.size());
 
 	if (rootSignatureDesc.NumStaticSamplers > 0)
 		rootSignatureDesc.pStaticSamplers = samplerDescs.data();

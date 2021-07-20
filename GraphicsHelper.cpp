@@ -340,7 +340,7 @@ void Graphics::BoundingBoxVertices(const BoundingBox& boundingBox, std::array<fl
 void Graphics::TriangulateFace(VertexFormat vertexFormat, const std::vector<float3>& positions, std::vector<uint32_t>& face)
 {
 	size_t faceStride = (vertexFormat == VertexFormat::POSITION) ? 1 : (vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD) ? 3 : 2;
-	uint32_t verticesCount = face.size() / faceStride;
+	size_t verticesCount = face.size() / faceStride;
 
 	if (verticesCount == 3)
 		return;
@@ -385,7 +385,7 @@ void Graphics::TriangulateFace(VertexFormat vertexFormat, const std::vector<floa
 		int64_t freeVertexCurrentIndex;
 		int64_t freeVertexNextIndex;
 
-		if (vertexItShift + 2 < freeVertices.Size())
+		if (vertexItShift + 2 < static_cast<int64_t>(freeVertices.Size()))
 		{
 			freeVertexPreviousIndex = freeVertices[vertexItShift];
 			freeVertexCurrentIndex = freeVertices[vertexItShift + 1];
@@ -421,7 +421,7 @@ void Graphics::TriangulateFace(VertexFormat vertexFormat, const std::vector<floa
 				triangleIsIncorrect = true;
 
 		if (triangleIsIncorrect)
-			vertexItShift = ((vertexItShift + 2) >= freeVertices.Size()) ? 0 : ++vertexItShift;
+			vertexItShift = ((vertexItShift + 2) >= static_cast<int64_t>(freeVertices.Size())) ? 0 : ++vertexItShift;
 		else
 		{
 			for (uint32_t faceAttributeId = 0; faceAttributeId < faceStride; faceAttributeId++)
@@ -431,7 +431,7 @@ void Graphics::TriangulateFace(VertexFormat vertexFormat, const std::vector<floa
 			for (uint32_t faceAttributeId = 0; faceAttributeId < faceStride; faceAttributeId++)
 				newFace.push_back(face[freeVertexNextIndex * faceStride + faceAttributeId]);
 
-			freeVertices.RemoveElement((vertexItShift + 2 < freeVertices.Size()) ? vertexItShift + 1 : 1);
+			freeVertices.RemoveElement((vertexItShift + 2 < static_cast<int64_t>(freeVertices.Size())) ? vertexItShift + 1 : 1);
 
 			vertexItShift = 0;
 		}
@@ -443,7 +443,7 @@ void Graphics::TriangulateFace(VertexFormat vertexFormat, const std::vector<floa
 float3 Graphics::CalculatePolygonCenter(VertexFormat vertexFormat, const std::vector<float3>& positions, const std::vector<uint32_t>& face)
 {
 	uint32_t faceStride = (vertexFormat == VertexFormat::POSITION) ? 1 : (vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD) ? 3 : 2;
-	uint32_t verticesCount = face.size() / faceStride;
+	uint32_t verticesCount = static_cast<uint32_t>(face.size() / faceStride);
 
 	floatN positionSum{};
 
@@ -462,7 +462,7 @@ float3 Graphics::CalculatePolygonCenter(VertexFormat vertexFormat, const std::ve
 float3 Graphics::CalculatePolygonNormal(VertexFormat vertexFormat, const std::vector<float3>& positions, const std::vector<uint32_t>& face)
 {
 	size_t faceStride = (vertexFormat == VertexFormat::POSITION) ? 1 : (vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD) ? 3 : 2;
-	uint32_t verticesCount = face.size() / faceStride;
+	uint32_t verticesCount = static_cast<uint32_t>(face.size() / faceStride);
 
 	floatN normal{};
 
@@ -580,7 +580,7 @@ void Graphics::CalculateNormals(VertexFormat vertexFormat, const std::vector<flo
 			newFaces.push_back(positionIndex[localVertexId]);
 			if (vertexFormat == VertexFormat::POSITION_TEXCOORD || vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD)
 				newFaces.push_back(texCoordIndex[localVertexId]);
-			newFaces.push_back(newNormals.size());
+			newFaces.push_back(static_cast<uint32_t>(newNormals.size()));
 		}
 
 		newNormals.push_back(normal);
@@ -629,7 +629,7 @@ void Graphics::SmoothNormals(VertexFormat vertexFormat, const std::vector<float3
 
 	std::set<uint32_t> processedFaceIds;
 
-	for (uint32_t faceId = 0; faceId < faces.size(); faceId += faceStride)
+	for (uint32_t faceId = 0; faceId < static_cast<uint32_t>(faces.size()); faceId += static_cast<uint32_t>(faceStride))
 	{
 		if (processedFaceIds.find(faceId) != processedFaceIds.end())
 			continue;
@@ -650,7 +650,7 @@ void Graphics::SmoothNormals(VertexFormat vertexFormat, const std::vector<float3
 
 		for (auto& samePositionFaceIndex : samePositionFaceIndices)
 		{
-			faces[samePositionFaceIndex + faceStride - 1] = newNormals.size() - 1;
+			faces[samePositionFaceIndex + faceStride - 1] = static_cast<uint32_t>(newNormals.size() - 1);
 			processedFaceIds.insert(samePositionFaceIndex);
 		}
 	}
@@ -746,5 +746,5 @@ int64_t Graphics::GetIndexForSameVertex(uint32_t vertex4ByteStride, const std::v
 
 uint32_t Graphics::GetVertex4ByteStride(VertexFormat vertexFormat)
 {
-	return GetVertexStride(vertexFormat) / 4;
+	return static_cast<uint32_t>(GetVertexStride(vertexFormat) / 4);
 }

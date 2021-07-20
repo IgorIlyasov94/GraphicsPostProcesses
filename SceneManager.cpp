@@ -85,33 +85,6 @@ void Graphics::SceneManager::InitializeTestScene(ID3D12Device* device, ID3D12Gra
 	goldenFrame->AssignRenderableEntity(goldenFrameMesh.get());
 	goldenFrame->AssignMaterial(goldenFrameMaterial.get());
 
-	/*cubeMeshSecond = std::make_shared<Mesh>("Resources\\Meshes\\Cube.obj", true, false, false);
-
-	cubeSecondMaterial = std::make_shared<Material>();
-
-	cubeSecondMaterial->SetVertexFormat(cubeMeshSecond->GetVertexFormat());
-	cubeSecondMaterial->SetVertexShader({ meshStandardVertexShader, sizeof(meshStandardVertexShader) });
-	cubeSecondMaterial->SetPixelShader({ meshStandardPixelShader, sizeof(meshStandardPixelShader) });
-	cubeSecondMaterial->SetDepthTest(true);
-	cubeSecondMaterial->SetDepthStencilFormat(32);
-	cubeSecondMaterial->SetCullMode(D3D12_CULL_MODE_NONE);
-	cubeSecondMaterial->SetRenderTargetFormat(0, DXGI_FORMAT_R16G16B16A16_FLOAT);
-	cubeSecondMaterial->SetRenderTargetFormat(1, DXGI_FORMAT_R8G8B8A8_SNORM);
-
-	cubeSecondConstBuffer.world = XMMatrixIdentity();
-	cubeSecondConstBuffer.wvp = camera->GetViewProjection();
-
-	cubeSecondConstBufferId = cubeSecondMaterial->SetConstantBuffer(0, &cubeSecondConstBuffer, sizeof(cubeSecondConstBuffer));
-
-	cubeSecondMaterial->AssignBuffer(0, currentScene->GetLightingSystem()->GetLightBufferId());
-	cubeSecondMaterial->AssignTexture(1, currentScene->GetLightingSystem()->GetLightClusterId());
-	
-	cubeSecondMaterial->Compose(device);
-
-	cubeSecond = std::make_shared<GraphicObject>();
-	cubeSecond->AssignMesh(cubeMeshSecond.get());
-	cubeSecond->AssignMaterial(cubeSecondMaterial.get());*/
-
 	testEffectParticleSystem = std::shared_ptr<ParticleSystem>(new ParticleSystem(100, 30, 600, paddingDefaultTextureId));
 	testEffectParticleSystem->SetEmitter({ 0.0f, 2.0f, 0.0f }, 10.0f, 1, false, ParticleEmitterShape::EMITTER_POINT,
 		BoundingBox({ { -3.0f, -3.0f, -3.0f }, { 3.0f, 3.0f, 3.0f } }));
@@ -146,6 +119,9 @@ void Graphics::SceneManager::InitializeTestScene(ID3D12Device* device, ID3D12Gra
 	testEffect->SetRenderingLayer(RenderingLayer::RENDERING_LAYER_EFFECT);
 	testEffect->AssignRenderableEntity(testEffectParticleSystem.get());
 	testEffect->AssignMaterial(testEffectMaterial.get());
+
+	auto testClothMesh = std::shared_ptr<Mesh>(new Mesh("Resources\\Meshes\\Cube.obj", true, false, false));
+	testClothCloth = std::shared_ptr<Cloth>(new Cloth(commandList, testClothMesh.get()));
 
 	auto testSpriteTextureId = resourceManager.CreateTexture("Resources\\Textures\\TestSprite.dds");
 

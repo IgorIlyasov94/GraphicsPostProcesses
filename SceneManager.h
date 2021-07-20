@@ -34,17 +34,16 @@ namespace Graphics
 		//temp
 
 		std::shared_ptr<GraphicObject> goldenFrame;
-		std::shared_ptr<ComputeObject> goldenFrameCompute;
 		std::shared_ptr<Material> goldenFrameMaterial;
 		std::shared_ptr<Mesh> goldenFrameMesh;
 		
-		std::shared_ptr<GraphicObject> cubeSecond;
-		std::shared_ptr<Material> cubeSecondMaterial;
-		std::shared_ptr<Mesh> cubeMeshSecond;
-
 		std::shared_ptr<GraphicObject> testEffect;
 		std::shared_ptr<Material> testEffectMaterial;
 		std::shared_ptr<ParticleSystem> testEffectParticleSystem;
+
+		std::shared_ptr<GraphicObject> testCloth;
+		std::shared_ptr<Material> testClothMaterial;
+		std::shared_ptr<Cloth> testClothCloth;
 
 		std::shared_ptr<Material> testUISpriteMaterial;
 		std::shared_ptr<Material> testUITextMaterial;
@@ -52,7 +51,6 @@ namespace Graphics
 		std::shared_ptr<Font> testUIFont;
 
 		ConstantBufferId goldenFrameConstBufferId;
-		ConstantBufferId cubeSecondConstBufferId;
 
 		ConstantBufferId immutableGlobalConstBufferId;
 		ConstantBufferId globalConstBufferId;
@@ -86,7 +84,6 @@ namespace Graphics
 		};
 
 		mutable StandardMeshConstBuffer goldenFrameConstBuffer;
-		mutable StandardMeshConstBuffer cubeSecondConstBuffer;
 
 		ImmutableGlobalConstBuffer immutableGlobalConstBuffer;
 		mutable GlobalConstBuffer globalConstBuffer;

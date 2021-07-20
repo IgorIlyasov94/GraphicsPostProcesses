@@ -102,7 +102,7 @@ void Graphics::SpriteUI::Draw(ID3D12GraphicsCommandList* commandList) const
 
 		material->Present(commandList);
 
-		commandList->DrawIndexedInstanced(indices.size(), 1, 0, 0, 0);
+		commandList->DrawIndexedInstanced(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 	}
 }
 
@@ -186,13 +186,15 @@ bool Graphics::SpriteUI::FindFirstAlphaNonZeroPoint(size_t startPixelColumn, siz
 	int64_t rowDistance = endPixelRow - startPixelRow;
 	float length = std::sqrt(static_cast<float>(columnDistance * columnDistance + rowDistance * rowDistance));
 	float pixelMomentIncrementor = 1.0f / length;
-	float2 currentPixel = { std::lerp(startPixelColumn, endPixelColumn, 0.0f),  std::lerp(startPixelRow, endPixelRow, 0.0f) };
-	float2 previousPixel = { std::lerp(startPixelColumn, endPixelColumn, -pixelMomentIncrementor),
-		std::lerp(startPixelRow, endPixelRow, -pixelMomentIncrementor) };
+	float2 currentPixel = { std::lerp(static_cast<float>(startPixelColumn), static_cast<float>(endPixelColumn), 0.0f), 
+		std::lerp(static_cast<float>(startPixelRow), static_cast<float>(endPixelRow), 0.0f) };
+	float2 previousPixel = { std::lerp(static_cast<float>(startPixelColumn), static_cast<float>(endPixelColumn), -pixelMomentIncrementor),
+		std::lerp(static_cast<float>(startPixelRow), static_cast<float>(endPixelRow), -pixelMomentIncrementor) };
 
 	for (float currentPixelMoment = 0.0f; currentPixelMoment <= 1.0f; currentPixelMoment += pixelMomentIncrementor)
 	{
-		currentPixel = { std::lerp(startPixelColumn, endPixelColumn, currentPixelMoment),  std::lerp(startPixelRow, endPixelRow, currentPixelMoment) };
+		currentPixel = { std::lerp(static_cast<float>(startPixelColumn), static_cast<float>(endPixelColumn), currentPixelMoment),
+			std::lerp(static_cast<float>(startPixelRow), static_cast<float>(endPixelRow), currentPixelMoment) };
 		size_t pixelIndex = static_cast<int64_t>(currentPixel.y) * textureWidth + static_cast<int64_t>(currentPixel.x);
 
 		if (textureData[pixelIndex].w > 0.0f)

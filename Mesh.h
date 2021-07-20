@@ -16,6 +16,8 @@ namespace Graphics
 
 		uint32_t GetIndicesCount() const noexcept;
 		VertexFormat GetVertexFormat() const noexcept;
+		VertexBufferId GetVertexBufferId() const noexcept;
+		IndexBufferId GetIndexBufferId() const noexcept;
 		const BoundingBox& GetBoundingBox() const noexcept override;
 
 		void Update(ID3D12GraphicsCommandList* commandList) const override;

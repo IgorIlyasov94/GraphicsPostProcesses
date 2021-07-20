@@ -55,7 +55,7 @@ namespace Graphics
 			float radius;
 			float3 color;
 			float intensity;
-			uint32_t pointLightId;
+			size_t pointLightId;
 			float3 padding;
 		};
 

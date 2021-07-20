@@ -102,7 +102,7 @@ namespace Graphics
 			return buffer;
 		}
 
-		const size_t& Size() const noexcept
+		size_t Size() const noexcept
 		{
 			return buffer.size();
 		}

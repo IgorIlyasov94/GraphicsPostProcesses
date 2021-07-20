@@ -2,6 +2,7 @@
 
 #include "Mesh.h"
 #include "ParticleSystem.h"
+#include "Cloth.h"
 #include "Material.h"
 #include "ComputeObject.h"
 #include "IRenderable.h"

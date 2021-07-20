@@ -50,6 +50,16 @@ Graphics::VertexFormat Graphics::Mesh::GetVertexFormat() const noexcept
 	return vertexFormat;
 }
 
+Graphics::VertexBufferId Graphics::Mesh::GetVertexBufferId() const noexcept
+{
+	return vertexBufferId;
+}
+
+Graphics::IndexBufferId Graphics::Mesh::GetIndexBufferId() const noexcept
+{
+	return indexBufferId;
+}
+
 const Graphics::BoundingBox& Graphics::Mesh::GetBoundingBox() const noexcept
 {
 	return boundingBox;

@@ -17,13 +17,13 @@ namespace Graphics
 
 		}
 
-		ResourceId(uint32_t resourceId)
+		ResourceId(size_t resourceId)
 			: value(resourceId), category(Category)
 		{
 
 		}
 
-		uint32_t value;
+		size_t value;
 
 	private:
 		friend class ResourceManager;
@@ -178,33 +178,40 @@ namespace Graphics
 
 		ID3D12DescriptorHeap* GetShaderResourceViewDescriptorHeap();
 
-		void GetTextureDataFromGPU(TextureId textureId, std::vector<float4>& textureRawData);
-		void GetBufferDataFromGPU(BufferId bufferId, std::vector<uint8_t>& bufferRawData);
+		void GetTextureDataFromGPU(TextureId textureId, std::vector<float4>& rawTextureData);
+		void GetTextureDataFromGPU(RenderTargetId textureId, std::vector<float4>& rawTextureData);
+		void GetTextureDataFromGPU(DepthStencilId textureId, std::vector<float4>& rawTextureData);
+		void GetTextureDataFromGPU(RWTextureId textureId, std::vector<float4>& rawTextureData);
+		void GetBufferDataFromGPU(VertexBufferId bufferId, std::vector<uint8_t>& rawBufferData);
+		void GetBufferDataFromGPU(IndexBufferId bufferId, std::vector<uint8_t>& rawBufferData);
+		void GetBufferDataFromGPU(ConstantBufferId bufferId, std::vector<uint8_t>& rawBufferData);
+		void GetBufferDataFromGPU(BufferId bufferId, std::vector<uint8_t>& rawBufferData);
+		void GetBufferDataFromGPU(RWBufferId bufferId, std::vector<uint8_t>& rawBufferData);
 
 		void UpdateDynamicVertexBuffer(const VertexBufferId& resourceId, const void* data, size_t dataSize);
 		void UpdateConstantBuffer(const ConstantBufferId& resourceId, const void* data, size_t dataSize);
 
-		void SetResourceBarrier(ID3D12GraphicsCommandList* commandList, const VertexBufferId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
+		void SetResourceBarrier(ID3D12GraphicsCommandList* _commandList, const VertexBufferId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
 			D3D12_RESOURCE_STATES resourceBarrierStateAfter);
-		void SetResourceBarrier(ID3D12GraphicsCommandList* commandList, const IndexBufferId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
+		void SetResourceBarrier(ID3D12GraphicsCommandList* _commandList, const IndexBufferId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
 			D3D12_RESOURCE_STATES resourceBarrierStateAfter);
-		void SetResourceBarrier(ID3D12GraphicsCommandList* commandList, const TextureId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
+		void SetResourceBarrier(ID3D12GraphicsCommandList* _commandList, const TextureId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
 			D3D12_RESOURCE_STATES resourceBarrierStateAfter);
-		void SetResourceBarrier(ID3D12GraphicsCommandList* commandList, const BufferId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
+		void SetResourceBarrier(ID3D12GraphicsCommandList* _commandList, const BufferId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
 			D3D12_RESOURCE_STATES resourceBarrierStateAfter);
-		void SetResourceBarrier(ID3D12GraphicsCommandList* commandList, const RenderTargetId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
+		void SetResourceBarrier(ID3D12GraphicsCommandList* _commandList, const RenderTargetId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
 			D3D12_RESOURCE_STATES resourceBarrierStateAfter);
-		void SetResourceBarrier(ID3D12GraphicsCommandList* commandList, const DepthStencilId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
+		void SetResourceBarrier(ID3D12GraphicsCommandList* _commandList, const DepthStencilId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
 			D3D12_RESOURCE_STATES resourceBarrierStateAfter);
-		void SetResourceBarrier(ID3D12GraphicsCommandList* commandList, const RWTextureId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
+		void SetResourceBarrier(ID3D12GraphicsCommandList* _commandList, const RWTextureId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
 			D3D12_RESOURCE_STATES resourceBarrierStateAfter);
-		void SetResourceBarrier(ID3D12GraphicsCommandList* commandList, const RWBufferId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
+		void SetResourceBarrier(ID3D12GraphicsCommandList* _commandList, const RWBufferId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
 			D3D12_RESOURCE_STATES resourceBarrierStateAfter);
-		void SetResourceBarrier(ID3D12GraphicsCommandList* commandList, size_t swapChainBufferId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
+		void SetResourceBarrier(ID3D12GraphicsCommandList* _commandList, size_t swapChainBufferId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
 			D3D12_RESOURCE_STATES resourceBarrierStateAfter);
 
-		void SetUAVBarrier(ID3D12GraphicsCommandList* commandList, const RWTextureId& resourceId);
-		void SetUAVBarrier(ID3D12GraphicsCommandList* commandList, const RWBufferId& resourceId);
+		void SetUAVBarrier(ID3D12GraphicsCommandList* _commandList, const RWTextureId& resourceId);
+		void SetUAVBarrier(ID3D12GraphicsCommandList* _commandList, const RWBufferId& resourceId);
 
 		void ReleaseTemporaryUploadBuffers();
 
@@ -216,6 +223,10 @@ namespace Graphics
 		ResourceManager(ResourceManager&&) = delete;
 		ResourceManager& operator=(const ResourceManager&) = delete;
 		ResourceManager& operator=(ResourceManager&&) = delete;
+
+		void GetTextureDataFromGPU(ID3D12Resource* resource, const TextureInfo& textureInfo, D3D12_RESOURCE_STATES beforeResourceState,
+			std::vector<float4>& rawTextureData);
+		void GetBufferDataFromGPU(ID3D12Resource* resource, size_t requiredSize, D3D12_RESOURCE_STATES beforeResourceState, std::vector<uint8_t>& rawBufferData);
 
 		void UploadTexture(ID3D12Resource* uploadBuffer, ID3D12Resource* targetTexture, const TextureInfo& textureInfo, const std::vector<uint8_t>& data,
 			uint8_t* uploadBufferCPUAddress);

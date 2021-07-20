@@ -75,7 +75,7 @@ void Graphics::TextUI::SetString(ID3D12GraphicsCommandList* commandList, std::ws
 				charsInLine = 0;
 			}
 
-			if (charCode < 0 || charCode >= glyphBuffer.size())
+			if (charCode < 0 || charCode >= static_cast<int64_t>(glyphBuffer.size()))
 				continue;
 
 			charsInLine++;
@@ -145,6 +145,6 @@ void Graphics::TextUI::Draw(ID3D12GraphicsCommandList* commandList) const
 
 		material->Present(commandList);
 
-		commandList->DrawInstanced(4, stringSize, 0, 0);
+		commandList->DrawInstanced(4, static_cast<uint32_t>(stringSize), 0, 0);
 	}
 }

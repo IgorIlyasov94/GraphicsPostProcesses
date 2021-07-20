@@ -259,7 +259,7 @@ void Graphics::OBJLoader::ComposeVertices(VertexFormat vertexFormat, const std::
 				vertices[resultVerticesCount * vertex4ByteStride + 4 + normalStride + tangentsStride] = texCoord.y;
 			}
 
-			indices[resultIndicesCount++] = resultVerticesCount++;
+			indices[resultIndicesCount++] = static_cast<uint32_t>(resultVerticesCount++);
 		}
 		else
 		{

@@ -53,17 +53,17 @@ void Graphics::Font::GetGlyphDataFromTextureRegion(size_t columnId, size_t rowId
 	size_t atlasCellWidth = textureWidth / atlasColumnNumber;
 	size_t atlasCellHeight = textureHeight / atlasRowNumber;
 
-	size_t startTextureColumn = columnId * atlasCellWidth;
-	size_t startTextureRow = rowId * atlasCellHeight;
-	size_t endTextureColumn = startTextureColumn + atlasCellWidth - 1;
-	size_t endTextureRow = startTextureRow + atlasCellHeight - 1;
-	size_t minColumn = endTextureColumn;
-	size_t maxColumn = startTextureColumn;
-	size_t minRow = endTextureRow;
-	size_t maxRow = startTextureRow;
+	int64_t startTextureColumn = columnId * atlasCellWidth;
+	int64_t startTextureRow = rowId * atlasCellHeight;
+	int64_t endTextureColumn = startTextureColumn + atlasCellWidth - 1;
+	int64_t endTextureRow = startTextureRow + atlasCellHeight - 1;
+	int64_t minColumn = endTextureColumn;
+	int64_t maxColumn = startTextureColumn;
+	int64_t minRow = endTextureRow;
+	int64_t maxRow = startTextureRow;
 
-	for (size_t rowId = startTextureRow; rowId <= endTextureRow; rowId++)
-		for (size_t columnId = startTextureColumn; columnId <= endTextureColumn; columnId++)
+	for (int64_t rowId = startTextureRow; rowId <= endTextureRow; rowId++)
+		for (int64_t columnId = startTextureColumn; columnId <= endTextureColumn; columnId++)
 		{
 			size_t pixelIndex = rowId * textureWidth + columnId;
 
@@ -77,8 +77,8 @@ void Graphics::Font::GetGlyphDataFromTextureRegion(size_t columnId, size_t rowId
 			}
 		}
 
-	for (int64_t rowId = endTextureRow; rowId >= static_cast<int64_t>(startTextureRow); rowId--)
-		for (int64_t columnId = endTextureColumn; columnId >= static_cast<int64_t>(startTextureColumn); columnId--)
+	for (int64_t rowId = endTextureRow; rowId >= startTextureRow; rowId--)
+		for (int64_t columnId = endTextureColumn; columnId >= startTextureColumn; columnId--)
 		{
 			size_t pixelIndex = rowId * textureWidth + columnId;
 
@@ -93,8 +93,8 @@ void Graphics::Font::GetGlyphDataFromTextureRegion(size_t columnId, size_t rowId
 		}
 
 	result.offset = { (minColumn - 1) / static_cast<float>(textureWidth), (minRow - 1) / static_cast<float>(textureHeight) };
-	result.localOffset.x = std::max(static_cast<int64_t>(minColumn - startTextureColumn - 1), 0i64) / static_cast<float>(atlasCellWidth);
-	result.localOffset.y = std::max(static_cast<int64_t>(minRow - startTextureRow - 1), 0i64) / static_cast<float>(atlasCellHeight);
-	result.size.x = (static_cast<int64_t>(maxColumn - minColumn) + 2) / static_cast<float>(textureWidth);
-	result.size.y = (static_cast<int64_t>(maxRow - minRow) + 2) / static_cast<float>(textureHeight);
+	result.localOffset.x = std::max(minColumn - startTextureColumn - 1, 0i64) / static_cast<float>(atlasCellWidth);
+	result.localOffset.y = std::max(minRow - startTextureRow - 1, 0i64) / static_cast<float>(atlasCellHeight);
+	result.size.x = (maxColumn - minColumn + 2) / static_cast<float>(textureWidth);
+	result.size.y = (maxRow - minRow + 2) / static_cast<float>(textureHeight);
 }

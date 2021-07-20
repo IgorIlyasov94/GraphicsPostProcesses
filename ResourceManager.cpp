@@ -53,8 +53,8 @@ Graphics::VertexBufferId Graphics::ResourceManager::CreateVertexBuffer(const voi
 
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
 	vertexBufferView.BufferLocation = vertexBufferAllocation.gpuAddress;
-	vertexBufferView.SizeInBytes = dataSize;
-	vertexBufferView.StrideInBytes = vertexStride;
+	vertexBufferView.SizeInBytes = static_cast<uint32_t>(dataSize);
+	vertexBufferView.StrideInBytes = static_cast<uint32_t>(vertexStride);
 
 	VertexBuffer vertexBuffer{};
 	vertexBuffer.vertexBufferAllocation = vertexBufferAllocation;
@@ -78,8 +78,8 @@ Graphics::VertexBufferId Graphics::ResourceManager::CreateDynamicVertexBuffer(co
 
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
 	vertexBufferView.BufferLocation = vertexBufferAllocation.gpuAddress;
-	vertexBufferView.SizeInBytes = dataSize;
-	vertexBufferView.StrideInBytes = vertexStride;
+	vertexBufferView.SizeInBytes = static_cast<uint32_t>(dataSize);
+	vertexBufferView.StrideInBytes = static_cast<uint32_t>(vertexStride);
 
 	VertexBuffer vertexBuffer{};
 	vertexBuffer.vertexBufferAllocation = vertexBufferAllocation;
@@ -109,7 +109,7 @@ Graphics::IndexBufferId Graphics::ResourceManager::CreateIndexBuffer(const void*
 
 	D3D12_INDEX_BUFFER_VIEW indexBufferView{};
 	indexBufferView.BufferLocation = indexBufferAllocation.gpuAddress;
-	indexBufferView.SizeInBytes = dataSize;
+	indexBufferView.SizeInBytes = static_cast<uint32_t>(dataSize);
 	indexBufferView.Format = (indexStride == 4) ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
 
 	commandList->CopyBufferRegion(indexBufferAllocation.bufferResource, indexBufferAllocation.gpuPageOffset, uploadBufferAllocation.bufferResource,
@@ -121,7 +121,7 @@ Graphics::IndexBufferId Graphics::ResourceManager::CreateIndexBuffer(const void*
 	ExecuteGPUCommands();
 
 	IndexBuffer indexBuffer{};
-	indexBuffer.indicesCount = dataSize / indexStride;
+	indexBuffer.indicesCount = static_cast<uint32_t>(dataSize / indexStride);
 	indexBuffer.indexBufferView = indexBufferView;
 	indexBuffer.indexBufferAllocation = indexBufferAllocation;
 	indexBuffer.currentResourceState = D3D12_RESOURCE_STATE_INDEX_BUFFER;
@@ -144,7 +144,7 @@ Graphics::ConstantBufferId Graphics::ResourceManager::CreateConstantBuffer(const
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC constantBufferViewDesc{};
 	constantBufferViewDesc.BufferLocation = constantBufferAllocation.gpuAddress;
-	constantBufferViewDesc.SizeInBytes = AlignSize(dataSize, static_cast<size_t>(D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT));
+	constantBufferViewDesc.SizeInBytes = static_cast<uint32_t>(AlignSize(dataSize, static_cast<size_t>(D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)));
 
 	device->CreateConstantBufferView(&constantBufferViewDesc, constantBufferDescriptorAllocation.descriptorBase);
 
@@ -275,8 +275,8 @@ Graphics::BufferId Graphics::ResourceManager::CreateBuffer(const void* data, siz
 	shaderResourceViewDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
 	shaderResourceViewDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	shaderResourceViewDesc.Buffer.Flags = (bufferStride == 1) ? D3D12_BUFFER_SRV_FLAG_RAW : D3D12_BUFFER_SRV_FLAG_NONE;
-	shaderResourceViewDesc.Buffer.NumElements = numElements;
-	shaderResourceViewDesc.Buffer.StructureByteStride = bufferStride;
+	shaderResourceViewDesc.Buffer.NumElements = static_cast<uint32_t>(numElements);
+	shaderResourceViewDesc.Buffer.StructureByteStride = static_cast<uint32_t>(bufferStride);
 
 	DescriptorAllocation shaderResourceDescriptorAllocation{};
 	descriptorAllocator.Allocate(device, false, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, shaderResourceDescriptorAllocation);
@@ -528,8 +528,8 @@ Graphics::RWBufferId Graphics::ResourceManager::CreateRWBuffer(const void* initi
 	shaderResourceViewDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
 	shaderResourceViewDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	shaderResourceViewDesc.Buffer.Flags = (bufferStride == 1) ? D3D12_BUFFER_SRV_FLAG_RAW : D3D12_BUFFER_SRV_FLAG_NONE;
-	shaderResourceViewDesc.Buffer.NumElements = numElements;
-	shaderResourceViewDesc.Buffer.StructureByteStride = (bufferStride > 1) ? bufferStride : 0;
+	shaderResourceViewDesc.Buffer.NumElements = static_cast<uint32_t>(numElements);
+	shaderResourceViewDesc.Buffer.StructureByteStride = (bufferStride > 1) ? static_cast<uint32_t>(bufferStride) : 0u;
 
 	DescriptorAllocation shaderResourceDescriptorAllocation{};
 	descriptorAllocator.Allocate(device, false, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, shaderResourceDescriptorAllocation);
@@ -539,8 +539,8 @@ Graphics::RWBufferId Graphics::ResourceManager::CreateRWBuffer(const void* initi
 	unorderedAccessViewDesc.Format = (bufferStride == 0) ? format : (bufferStride == 1) ? DXGI_FORMAT_R32_TYPELESS : DXGI_FORMAT_UNKNOWN;
 	unorderedAccessViewDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
 	unorderedAccessViewDesc.Buffer.Flags = (bufferStride == 1) ? D3D12_BUFFER_UAV_FLAG_RAW : D3D12_BUFFER_UAV_FLAG_NONE;
-	unorderedAccessViewDesc.Buffer.NumElements = numElements;
-	unorderedAccessViewDesc.Buffer.StructureByteStride = (bufferStride > 1) ? bufferStride : 0;
+	unorderedAccessViewDesc.Buffer.NumElements = static_cast<uint32_t>(numElements);
+	unorderedAccessViewDesc.Buffer.StructureByteStride = (bufferStride > 1) ? static_cast<uint32_t>(bufferStride) : 0u;
 	
 	DescriptorAllocation unorderedAccessDescriptorAllocation{};
 	descriptorAllocator.Allocate(device, false, 1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, unorderedAccessDescriptorAllocation);
@@ -670,8 +670,8 @@ void Graphics::ResourceManager::ResetSwapChainBuffers(IDXGISwapChain4* swapChain
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
 	swapChain->GetDesc1(&swapChainDesc);
 
-	ThrowIfFailed(swapChain->ResizeBuffers(swapChainBuffers.size(), swapChainDesc.Width, swapChainDesc.Height, swapChainDesc.Format, swapChainDesc.Flags),
-		"ResourceManager::ResetSwapChainBuffers: Back buffers resizing error!");
+	ThrowIfFailed(swapChain->ResizeBuffers(static_cast<uint32_t>(swapChainBuffers.size()), swapChainDesc.Width, swapChainDesc.Height, swapChainDesc.Format,
+		swapChainDesc.Flags), "ResourceManager::ResetSwapChainBuffers: Back buffers resizing error!");
 
 	for (uint32_t swapChainBufferId = 0; swapChainBufferId < swapChainBuffers.size(); swapChainBufferId++)
 	{
@@ -708,9 +708,200 @@ ID3D12DescriptorHeap* Graphics::ResourceManager::GetShaderResourceViewDescriptor
 	return texturePool.front().shaderResourceDescriptorAllocation.descriptorHeap;
 }
 
-void Graphics::ResourceManager::GetTextureDataFromGPU(TextureId textureId, std::vector<float4>& textureRawData)
+void Graphics::ResourceManager::GetTextureDataFromGPU(TextureId textureId, std::vector<float4>& rawTextureData)
 {
-	auto textureInfo = texturePool[textureId.value].info;
+	auto& resource = texturePool[textureId.value];
+
+	GetTextureDataFromGPU(resource.textureAllocation.textureResource, resource.info, resource.currentResourceState, rawTextureData);
+}
+
+void Graphics::ResourceManager::GetTextureDataFromGPU(RenderTargetId textureId, std::vector<float4>& rawTextureData)
+{
+	auto& resource = renderTargetPool[textureId.value];
+
+	GetTextureDataFromGPU(resource.textureAllocation.textureResource, resource.info, resource.currentResourceState, rawTextureData);
+}
+
+void Graphics::ResourceManager::GetTextureDataFromGPU(DepthStencilId textureId, std::vector<float4>& rawTextureData)
+{
+	auto& resource = depthStencilPool[textureId.value];
+
+	GetTextureDataFromGPU(resource.textureAllocation.textureResource, resource.info, resource.currentResourceState, rawTextureData);
+}
+
+void Graphics::ResourceManager::GetTextureDataFromGPU(RWTextureId textureId, std::vector<float4>& rawTextureData)
+{
+	auto& resource = rwTexturePool[textureId.value];
+
+	GetTextureDataFromGPU(resource.textureAllocation.textureResource, resource.info, resource.currentResourceState, rawTextureData);
+}
+
+void Graphics::ResourceManager::GetBufferDataFromGPU(VertexBufferId bufferId, std::vector<uint8_t>& rawBufferData)
+{
+	auto& resource = vertexBufferPool[bufferId.value];
+
+	GetBufferDataFromGPU(resource.vertexBufferAllocation.bufferResource, resource.vertexBufferAllocation.nonAlignedSizeInBytes, resource.currentResourceState,
+		rawBufferData);
+}
+
+void Graphics::ResourceManager::GetBufferDataFromGPU(IndexBufferId bufferId, std::vector<uint8_t>& rawBufferData)
+{
+	auto& resource = indexBufferPool[bufferId.value];
+
+	GetBufferDataFromGPU(resource.indexBufferAllocation.bufferResource, resource.indexBufferAllocation.nonAlignedSizeInBytes, resource.currentResourceState,
+		rawBufferData);
+}
+
+void Graphics::ResourceManager::GetBufferDataFromGPU(ConstantBufferId bufferId, std::vector<uint8_t>& rawBufferData)
+{
+	auto& resource = constantBufferPool[bufferId.value];
+
+	GetBufferDataFromGPU(resource.uploadBufferAllocation.bufferResource, resource.uploadBufferAllocation.nonAlignedSizeInBytes, resource.currentResourceState,
+		rawBufferData);
+}
+
+void Graphics::ResourceManager::GetBufferDataFromGPU(BufferId bufferId, std::vector<uint8_t>& rawBufferData)
+{
+	auto& resource = bufferPool[bufferId.value];
+
+	GetBufferDataFromGPU(resource.bufferAllocation.bufferResource, resource.bufferAllocation.nonAlignedSizeInBytes, resource.currentResourceState, rawBufferData);
+}
+
+void Graphics::ResourceManager::GetBufferDataFromGPU(RWBufferId bufferId, std::vector<uint8_t>& rawBufferData)
+{
+	auto& resource = rwBufferPool[bufferId.value];
+
+	GetBufferDataFromGPU(resource.bufferAllocation.bufferResource, resource.bufferAllocation.nonAlignedSizeInBytes, resource.currentResourceState, rawBufferData);
+}
+
+void Graphics::ResourceManager::UpdateDynamicVertexBuffer(const VertexBufferId& resourceId, const void* data, size_t dataSize)
+{
+	std::copy(reinterpret_cast<const uint8_t*>(data), reinterpret_cast<const uint8_t*>(data) + dataSize,
+		vertexBufferPool[resourceId.value].vertexBufferAllocation.cpuAddress);
+}
+
+void Graphics::ResourceManager::UpdateConstantBuffer(const ConstantBufferId& resourceId, const void* data, size_t dataSize)
+{
+	std::copy(reinterpret_cast<const uint8_t*>(data), reinterpret_cast<const uint8_t*>(data) + dataSize,
+		constantBufferPool[resourceId.value].uploadBufferAllocation.cpuAddress);
+}
+
+void Graphics::ResourceManager::SetResourceBarrier(ID3D12GraphicsCommandList* _commandList, const VertexBufferId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
+	D3D12_RESOURCE_STATES resourceBarrierStateAfter)
+{
+	auto& resource = vertexBufferPool[resourceId.value];
+
+	SetResourceBarrier(_commandList, resource.vertexBufferAllocation.bufferResource, resourceBarrierFlags, resource.currentResourceState, resourceBarrierStateAfter);
+
+	if (resourceBarrierFlags != D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY)
+		resource.currentResourceState = resourceBarrierStateAfter;
+}
+
+void Graphics::ResourceManager::SetResourceBarrier(ID3D12GraphicsCommandList* _commandList, const IndexBufferId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
+	D3D12_RESOURCE_STATES resourceBarrierStateAfter)
+{
+	auto& resource = indexBufferPool[resourceId.value];
+
+	SetResourceBarrier(_commandList, resource.indexBufferAllocation.bufferResource, resourceBarrierFlags, resource.currentResourceState, resourceBarrierStateAfter);
+
+	if (resourceBarrierFlags != D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY)
+		resource.currentResourceState = resourceBarrierStateAfter;
+}
+
+void Graphics::ResourceManager::SetResourceBarrier(ID3D12GraphicsCommandList* _commandList, const TextureId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
+	D3D12_RESOURCE_STATES resourceBarrierStateAfter)
+{
+	auto& resource = texturePool[resourceId.value];
+
+	SetResourceBarrier(_commandList, resource.textureAllocation.textureResource, resourceBarrierFlags, resource.currentResourceState, resourceBarrierStateAfter);
+
+	if (resourceBarrierFlags != D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY)
+		resource.currentResourceState = resourceBarrierStateAfter;
+}
+
+void Graphics::ResourceManager::SetResourceBarrier(ID3D12GraphicsCommandList* _commandList, const BufferId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
+	D3D12_RESOURCE_STATES resourceBarrierStateAfter)
+{
+	auto& resource = bufferPool[resourceId.value];
+
+	SetResourceBarrier(_commandList, resource.bufferAllocation.bufferResource, resourceBarrierFlags, resource.currentResourceState, resourceBarrierStateAfter);
+
+	if (resourceBarrierFlags != D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY)
+		resource.currentResourceState = resourceBarrierStateAfter;
+}
+
+void Graphics::ResourceManager::SetResourceBarrier(ID3D12GraphicsCommandList* _commandList, const RenderTargetId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
+	D3D12_RESOURCE_STATES resourceBarrierStateAfter)
+{
+	auto& resource = renderTargetPool[resourceId.value];
+
+	SetResourceBarrier(_commandList, resource.textureAllocation.textureResource, resourceBarrierFlags, resource.currentResourceState, resourceBarrierStateAfter);
+
+	if (resourceBarrierFlags != D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY)
+		resource.currentResourceState = resourceBarrierStateAfter;
+}
+
+void Graphics::ResourceManager::SetResourceBarrier(ID3D12GraphicsCommandList* _commandList, const DepthStencilId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
+	D3D12_RESOURCE_STATES resourceBarrierStateAfter)
+{
+	auto& resource = depthStencilPool[resourceId.value];
+
+	SetResourceBarrier(_commandList, resource.textureAllocation.textureResource, resourceBarrierFlags, resource.currentResourceState, resourceBarrierStateAfter);
+
+	if (resourceBarrierFlags != D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY)
+		resource.currentResourceState = resourceBarrierStateAfter;
+}
+
+void Graphics::ResourceManager::SetResourceBarrier(ID3D12GraphicsCommandList* _commandList, const RWTextureId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
+	D3D12_RESOURCE_STATES resourceBarrierStateAfter)
+{
+	auto& resource = rwTexturePool[resourceId.value];
+
+	SetResourceBarrier(_commandList, resource.textureAllocation.textureResource, resourceBarrierFlags, resource.currentResourceState, resourceBarrierStateAfter);
+
+	if (resourceBarrierFlags != D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY)
+		resource.currentResourceState = resourceBarrierStateAfter;
+}
+
+void Graphics::ResourceManager::SetResourceBarrier(ID3D12GraphicsCommandList* _commandList, const RWBufferId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
+	D3D12_RESOURCE_STATES resourceBarrierStateAfter)
+{
+	auto& resource = rwBufferPool[resourceId.value];
+
+	SetResourceBarrier(_commandList, resource.bufferAllocation.bufferResource, resourceBarrierFlags, resource.currentResourceState, resourceBarrierStateAfter);
+
+	if (resourceBarrierFlags != D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY)
+		resource.currentResourceState = resourceBarrierStateAfter;
+}
+
+void Graphics::ResourceManager::SetResourceBarrier(ID3D12GraphicsCommandList* _commandList, size_t swapChainBufferId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
+	D3D12_RESOURCE_STATES resourceBarrierStateAfter)
+{
+	SetResourceBarrier(_commandList, swapChainBuffers[swapChainBufferId].Get(), resourceBarrierFlags, swapChainStates[swapChainBufferId], resourceBarrierStateAfter);
+
+	if (resourceBarrierFlags != D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY)
+		swapChainStates[swapChainBufferId] = resourceBarrierStateAfter;
+}
+
+void Graphics::ResourceManager::SetUAVBarrier(ID3D12GraphicsCommandList* _commandList, const RWTextureId& resourceId)
+{
+	SetUAVBarrier(_commandList, rwTexturePool[resourceId.value].textureAllocation.textureResource);
+}
+
+void Graphics::ResourceManager::SetUAVBarrier(ID3D12GraphicsCommandList* _commandList, const RWBufferId& resourceId)
+{
+	SetUAVBarrier(_commandList, rwBufferPool[resourceId.value].bufferAllocation.bufferResource);
+}
+
+void Graphics::ResourceManager::ReleaseTemporaryUploadBuffers()
+{
+	bufferAllocator.ReleaseTemporaryBuffers();
+	textureAllocator.ReleaseTemporaryBuffers();
+}
+
+void Graphics::ResourceManager::GetTextureDataFromGPU(ID3D12Resource* resource, const TextureInfo& textureInfo, D3D12_RESOURCE_STATES beforeResourceState,
+	std::vector<float4>& rawTextureData)
+{
 	uint64_t rowPitch = AlignSize(textureInfo.rowPitch, 256ui64);
 
 	uint64_t requiredSize = rowPitch * textureInfo.height;
@@ -718,10 +909,10 @@ void Graphics::ResourceManager::GetTextureDataFromGPU(TextureId textureId, std::
 	BufferAllocation readbackTextureAllocation{};
 	bufferAllocator.AllocateTemporary(device, requiredSize, D3D12_HEAP_TYPE_READBACK, readbackTextureAllocation);
 
-	SetResourceBarrier(commandList.Get(), textureId, D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_COPY_SOURCE);
+	SetResourceBarrier(commandList.Get(), resource, D3D12_RESOURCE_BARRIER_FLAG_NONE, beforeResourceState, D3D12_RESOURCE_STATE_COPY_SOURCE);
 
 	D3D12_TEXTURE_COPY_LOCATION srcLocation{};
-	srcLocation.pResource = texturePool[textureId.value].textureAllocation.textureResource;
+	srcLocation.pResource = resource;
 
 	D3D12_PLACED_SUBRESOURCE_FOOTPRINT subresourceFootprint{};
 	subresourceFootprint.Footprint.Width = static_cast<uint32_t>(textureInfo.width);
@@ -734,10 +925,10 @@ void Graphics::ResourceManager::GetTextureDataFromGPU(TextureId textureId, std::
 	destLocation.pResource = readbackTextureAllocation.bufferResource;
 	destLocation.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
 	destLocation.PlacedFootprint = subresourceFootprint;
-		
+
 	commandList->CopyTextureRegion(&destLocation, 0, 0, 0, &srcLocation, nullptr);
-	
-	SetResourceBarrier(commandList.Get(), textureId, D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_COMMON);
+
+	SetResourceBarrier(commandList.Get(), resource, D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_COPY_SOURCE, beforeResourceState);
 
 	ExecuteGPUCommands();
 
@@ -746,7 +937,7 @@ void Graphics::ResourceManager::GetTextureDataFromGPU(TextureId textureId, std::
 	if (rawData == nullptr)
 		throw std::exception("ResourceManager::GetTextureDataFromGPU: Getting the texture is failed");
 
-	textureRawData.resize(textureInfo.width * textureInfo.height, {});
+	rawTextureData.resize(textureInfo.width * textureInfo.height, {});
 	size_t texelId = 0;
 
 	for (size_t pixelId = 0; pixelId < requiredSize / 4; pixelId++)
@@ -763,25 +954,21 @@ void Graphics::ResourceManager::GetTextureDataFromGPU(TextureId textureId, std::
 		texel.z = rawData[pixelId * 4 + 2] / 255.0f;
 		texel.w = rawData[pixelId * 4 + 3] / 255.0f;
 
-		textureRawData[texelId++] = texel;
+		rawTextureData[texelId++] = texel;
 	}
 }
 
-void Graphics::ResourceManager::GetBufferDataFromGPU(BufferId bufferId, std::vector<uint8_t>& bufferRawData)
+void Graphics::ResourceManager::GetBufferDataFromGPU(ID3D12Resource* resource, size_t requiredSize, D3D12_RESOURCE_STATES beforeResourceState, std::vector<uint8_t>& rawBufferData)
 {
-	auto requiredSize = bufferPool[bufferId.value].bufferAllocation.nonAlignedSizeInBytes;
-
 	BufferAllocation readbackBufferAllocation{};
 	bufferAllocator.AllocateTemporary(device, requiredSize, D3D12_HEAP_TYPE_READBACK, readbackBufferAllocation);
 
-	auto beforeResourceState = bufferPool[bufferId.value].currentResourceState;
-
-	SetResourceBarrier(commandList.Get(), bufferId, D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_COPY_SOURCE);
+	SetResourceBarrier(commandList.Get(), resource, D3D12_RESOURCE_BARRIER_FLAG_NONE, beforeResourceState, D3D12_RESOURCE_STATE_COPY_SOURCE);
 
 	if (readbackBufferAllocation.bufferResource != nullptr)
-		commandList->CopyResource(readbackBufferAllocation.bufferResource, bufferPool[bufferId.value].bufferAllocation.bufferResource);
+		commandList->CopyResource(readbackBufferAllocation.bufferResource, resource);
 
-	SetResourceBarrier(commandList.Get(), bufferId, D3D12_RESOURCE_BARRIER_FLAG_NONE, beforeResourceState);
+	SetResourceBarrier(commandList.Get(), resource, D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_COPY_SOURCE, beforeResourceState);
 
 	ExecuteGPUCommands();
 
@@ -790,134 +977,9 @@ void Graphics::ResourceManager::GetBufferDataFromGPU(BufferId bufferId, std::vec
 	if (rawData == nullptr)
 		throw std::exception("ResourceManager::GetBufferDataFromGPU: Getting the buffer is failed");
 
-	bufferRawData.resize(requiredSize, {});
-	
-	std::copy(rawData, rawData + requiredSize, bufferRawData.data());
-}
+	rawBufferData.resize(requiredSize, {});
 
-void Graphics::ResourceManager::UpdateDynamicVertexBuffer(const VertexBufferId& resourceId, const void* data, size_t dataSize)
-{
-	std::copy(reinterpret_cast<const uint8_t*>(data), reinterpret_cast<const uint8_t*>(data) + dataSize,
-		vertexBufferPool[resourceId.value].vertexBufferAllocation.cpuAddress);
-}
-
-void Graphics::ResourceManager::UpdateConstantBuffer(const ConstantBufferId& resourceId, const void* data, size_t dataSize)
-{
-	std::copy(reinterpret_cast<const uint8_t*>(data), reinterpret_cast<const uint8_t*>(data) + dataSize,
-		constantBufferPool[resourceId.value].uploadBufferAllocation.cpuAddress);
-}
-
-void Graphics::ResourceManager::SetResourceBarrier(ID3D12GraphicsCommandList* commandList, const VertexBufferId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
-	D3D12_RESOURCE_STATES resourceBarrierStateAfter)
-{
-	auto& resource = vertexBufferPool[resourceId.value];
-
-	SetResourceBarrier(commandList, resource.vertexBufferAllocation.bufferResource, resourceBarrierFlags, resource.currentResourceState, resourceBarrierStateAfter);
-
-	if (resourceBarrierFlags != D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY)
-		resource.currentResourceState = resourceBarrierStateAfter;
-}
-
-void Graphics::ResourceManager::SetResourceBarrier(ID3D12GraphicsCommandList* commandList, const IndexBufferId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
-	D3D12_RESOURCE_STATES resourceBarrierStateAfter)
-{
-	auto& resource = indexBufferPool[resourceId.value];
-
-	SetResourceBarrier(commandList, resource.indexBufferAllocation.bufferResource, resourceBarrierFlags, resource.currentResourceState, resourceBarrierStateAfter);
-
-	if (resourceBarrierFlags != D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY)
-		resource.currentResourceState = resourceBarrierStateAfter;
-}
-
-void Graphics::ResourceManager::SetResourceBarrier(ID3D12GraphicsCommandList* commandList, const TextureId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
-	D3D12_RESOURCE_STATES resourceBarrierStateAfter)
-{
-	auto& resource = texturePool[resourceId.value];
-
-	SetResourceBarrier(commandList, resource.textureAllocation.textureResource, resourceBarrierFlags, resource.currentResourceState, resourceBarrierStateAfter);
-
-	if (resourceBarrierFlags != D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY)
-		resource.currentResourceState = resourceBarrierStateAfter;
-}
-
-void Graphics::ResourceManager::SetResourceBarrier(ID3D12GraphicsCommandList* commandList, const BufferId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
-	D3D12_RESOURCE_STATES resourceBarrierStateAfter)
-{
-	auto& resource = bufferPool[resourceId.value];
-
-	SetResourceBarrier(commandList, resource.bufferAllocation.bufferResource, resourceBarrierFlags, resource.currentResourceState, resourceBarrierStateAfter);
-
-	if (resourceBarrierFlags != D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY)
-		resource.currentResourceState = resourceBarrierStateAfter;
-}
-
-void Graphics::ResourceManager::SetResourceBarrier(ID3D12GraphicsCommandList* commandList, const RenderTargetId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
-	D3D12_RESOURCE_STATES resourceBarrierStateAfter)
-{
-	auto& resource = renderTargetPool[resourceId.value];
-
-	SetResourceBarrier(commandList, resource.textureAllocation.textureResource, resourceBarrierFlags, resource.currentResourceState, resourceBarrierStateAfter);
-
-	if (resourceBarrierFlags != D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY)
-		resource.currentResourceState = resourceBarrierStateAfter;
-}
-
-void Graphics::ResourceManager::SetResourceBarrier(ID3D12GraphicsCommandList* commandList, const DepthStencilId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
-	D3D12_RESOURCE_STATES resourceBarrierStateAfter)
-{
-	auto& resource = depthStencilPool[resourceId.value];
-
-	SetResourceBarrier(commandList, resource.textureAllocation.textureResource, resourceBarrierFlags, resource.currentResourceState, resourceBarrierStateAfter);
-
-	if (resourceBarrierFlags != D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY)
-		resource.currentResourceState = resourceBarrierStateAfter;
-}
-
-void Graphics::ResourceManager::SetResourceBarrier(ID3D12GraphicsCommandList* commandList, const RWTextureId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
-	D3D12_RESOURCE_STATES resourceBarrierStateAfter)
-{
-	auto& resource = rwTexturePool[resourceId.value];
-
-	SetResourceBarrier(commandList, resource.textureAllocation.textureResource, resourceBarrierFlags, resource.currentResourceState, resourceBarrierStateAfter);
-
-	if (resourceBarrierFlags != D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY)
-		resource.currentResourceState = resourceBarrierStateAfter;
-}
-
-void Graphics::ResourceManager::SetResourceBarrier(ID3D12GraphicsCommandList* commandList, const RWBufferId& resourceId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
-	D3D12_RESOURCE_STATES resourceBarrierStateAfter)
-{
-	auto& resource = rwBufferPool[resourceId.value];
-
-	SetResourceBarrier(commandList, resource.bufferAllocation.bufferResource, resourceBarrierFlags, resource.currentResourceState, resourceBarrierStateAfter);
-
-	if (resourceBarrierFlags != D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY)
-		resource.currentResourceState = resourceBarrierStateAfter;
-}
-
-void Graphics::ResourceManager::SetResourceBarrier(ID3D12GraphicsCommandList* commandList, size_t swapChainBufferId, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
-	D3D12_RESOURCE_STATES resourceBarrierStateAfter)
-{
-	SetResourceBarrier(commandList, swapChainBuffers[swapChainBufferId].Get(), resourceBarrierFlags, swapChainStates[swapChainBufferId], resourceBarrierStateAfter);
-
-	if (resourceBarrierFlags != D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY)
-		swapChainStates[swapChainBufferId] = resourceBarrierStateAfter;
-}
-
-void Graphics::ResourceManager::SetUAVBarrier(ID3D12GraphicsCommandList* commandList, const RWTextureId& resourceId)
-{
-	SetUAVBarrier(commandList, rwTexturePool[resourceId.value].textureAllocation.textureResource);
-}
-
-void Graphics::ResourceManager::SetUAVBarrier(ID3D12GraphicsCommandList* commandList, const RWBufferId& resourceId)
-{
-	SetUAVBarrier(commandList, rwBufferPool[resourceId.value].bufferAllocation.bufferResource);
-}
-
-void Graphics::ResourceManager::ReleaseTemporaryUploadBuffers()
-{
-	bufferAllocator.ReleaseTemporaryBuffers();
-	textureAllocator.ReleaseTemporaryBuffers();
+	std::copy(rawData, rawData + requiredSize, rawBufferData.data());
 }
 
 void Graphics::ResourceManager::UploadTexture(ID3D12Resource* uploadBuffer, ID3D12Resource* targetTexture, const TextureInfo& textureInfo, const std::vector<uint8_t>& data,
