@@ -31,8 +31,8 @@
 /Resources/Shaders/UITextStandardPS.hlsl.h
 /Resources/Shaders/OnlyVertexIdOutputVS.hlsl.h
 /Resources/Shaders/EmptyVS.hlsl.h
-/Resources/Shaders/ClothRecalculateTangentsGS.hlsl.h
 /Resources/Shaders/ClothApplySelfCollisionCS.hlsl.h
 /Resources/Shaders/ClothApplyForcesCS.hlsl.h
 /Resources/Shaders/ClothApplyExternalConstraintsCS.hlsl.h
 /Resources/Shaders/ClothApplyConstaintsCS.hlsl.h
+/Resources/Shaders/ClothRecalculateTangentsCS.hlsl.h

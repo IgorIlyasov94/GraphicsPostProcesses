@@ -12,12 +12,11 @@ cbuffer GlobalConstBuffer : register(b0)
 cbuffer LocalConstBuffer : register(b1)
 {
 	float3 windStrength;
-	float stiffness;
+	float damping;
 	float3 gravity;
 	float mass;
-	float damping;
 	float previousElapsedTime;
-	float2 padding;
+	float3 padding;
 };
 
 struct Vertex

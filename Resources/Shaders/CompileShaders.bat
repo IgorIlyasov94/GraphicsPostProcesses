@@ -69,7 +69,7 @@ ECHO ON
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
 %dxcCmd% /Zi /E"main" /Vn"clothApplySelfCollisionCS" /Tcs_6_0 /Fh"ClothApplySelfCollisionCS.hlsl.h" /nologo ClothApplySelfCollisionCS.hlsl
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
-%dxcCmd% /Zi /E"main" /Vn"clothRecalculateTangentsGS" /Tgs_6_0 /Fh"ClothRecalculateTangentsGS.hlsl.h" /nologo ClothRecalculateTangentsGS.hlsl
+%dxcCmd% /Zi /E"main" /Vn"clothRecalculateTangentsCS" /Tcs_6_0 /Fh"ClothRecalculateTangentsCS.hlsl.h" /nologo ClothRecalculateTangentsCS.hlsl
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
 %dxcCmd% /Zi /E"main" /Vn"emptyVS" /Tvs_6_0 /Fh"EmptyVS.hlsl.h" /nologo EmptyVS.hlsl
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)

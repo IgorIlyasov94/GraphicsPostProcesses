@@ -1,16 +1,3 @@
-cbuffer LocalConstBuffer : register(b0)
-{
-	float stiffness;
-};
-
-struct Joint
-{
-	uint vertexId0;
-	uint vertexId1;
-	float restLength;
-	float padding;
-};
-
 struct Vertex
 {
 	float3 position;
@@ -22,33 +9,44 @@ struct Vertex
 	uint isFree;
 };
 
-Buffer<uint> jointIndexBuffer : register(t0);
-StructuredBuffer<Joint> jointBuffer : register(t1);
+struct JointInfo
+{
+	uint adjacentPointsNumber;
+	uint adjacentPointIndexOffset;
+	float restLength;
+	float stiffness;
+};
+
+StructuredBuffer<JointInfo> jointInfoBuffer : register(t0);
+Buffer<uint> jointBuffer : register(t1);
 RWStructuredBuffer<Vertex> vertexBuffer : register(u0);
 
 [numthreads(1, 1, 1)]
 void main(uint3 groupId : SV_GroupId)
 {
-	uint jointNumber = jointIndexBuffer[groupId.x * 2];
-	uint jointStartIndex = jointIndexBuffer[groupId.x * 2 + 1];
+	JointInfo jointInfo = jointInfoBuffer[groupId.x];
 	
-	for (uint jointIndex = jointStartIndex; jointIndex < jointNumber; jointIndex++)
+	uint vertexId0 = groupId.x;
+	Vertex vertex0 = vertexBuffer[vertexId0];
+	
+	for (uint adjacentPointIndex = 0; adjacentPointIndex < jointInfo.adjacentPointsNumber; adjacentPointIndex++)
 	{
-		Joint joint = jointBuffer[jointIndex];
-		Vertex vertex0 = vertexBuffer[joint.vertexId0];
-		Vertex vertex1 = vertexBuffer[joint.vertexId1];
-		
-		float3 deltaPosition = vertex1.position - vertex0.position;
-		float deltaPositionLength = max(length(deltaPosition), 1e-7);
-		float stretching = 1.0f - joint.restLength / deltaPositionLength;
-		deltaPosition *= stretching;
-		
-		float2 velocityCoeff = saturate(float2(vertex0.isFree - vertex1.isFree * 0.5f, vertex1.isFree - vertex0.isFree * 0.5f));
-		
-		vertex0.position += deltaPosition * velocityCoeff.x * stiffness;
-		vertex1.position -= deltaPosition * velocityCoeff.y * stiffness;
-		
-		vertexBuffer[joint.vertexId0].position = vertex0.position;
-		vertexBuffer[joint.vertexId1].position = vertex1.position;
+		if (vertex0.isFree == 1)
+		{
+			uint vertexId1 = jointBuffer[adjacentPointIndex + jointInfo.adjacentPointIndexOffset];
+			Vertex vertex1 = vertexBuffer[vertexId1];
+			
+			float3 deltaPosition = vertex1.position - vertex0.position;
+			float deltaPositionLength = max(length(deltaPosition), 1e-7);
+			float stretching = 1.0f - jointInfo.restLength / deltaPositionLength;
+			deltaPosition *= stretching;
+			
+			float2 velocityCoeff = saturate(float2(vertex0.isFree - vertex1.isFree * 0.5f, vertex1.isFree - vertex0.isFree * 0.5f));
+			
+			vertex0.position += deltaPosition * velocityCoeff.x * jointInfo.stiffness;
+		}
 	}
+		
+	if (vertex0.isFree == 1)
+		vertexBuffer[vertexId0].position = vertex0.position;
 }
