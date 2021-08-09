@@ -8,15 +8,15 @@ Graphics::Cloth::Cloth(ID3D12GraphicsCommandList* commandList, const Mesh* _mesh
 	if (mesh == nullptr)
 		throw std::exception("Graphics::Cloth::Cloth: Mesh is null");
 
-	boundingBox = mesh->GetBoundingBox();
+	//boundingBox = mesh->GetBoundingBox();
 	
 	auto boundingBoxSize = BoundingBoxSize(boundingBox);
 
 	XMStoreFloat3(&boundingBox.minCornerPoint, XMLoadFloat3(&boundingBox.minCornerPoint) - XMLoadFloat3(&boundingBoxSize));
 	XMStoreFloat3(&boundingBox.maxCornerPoint, XMLoadFloat3(&boundingBox.maxCornerPoint) + XMLoadFloat3(&boundingBoxSize));
 
-	std::vector<uint8_t> rawVerticesData;
-	resourceManager.GetBufferDataFromGPU(mesh->GetVertexBufferId(), rawVerticesData);
+	/*std::vector<uint8_t> rawVerticesData;
+	resourceManager.GetBufferDataFromGPU(mesh->GetVertexBufferId(), rawVerticesData);*/
 
 
 }

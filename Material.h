@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ResourceManager.h"
+#include "GeometryStructures.h"
 
 namespace Graphics
 {

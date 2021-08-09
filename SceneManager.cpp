@@ -56,7 +56,7 @@ void Graphics::SceneManager::InitializeTestScene(ID3D12Device* device, ID3D12Gra
 	
 	currentScene->GetLightingSystem()->ComposeLightBuffer(device, commandList, immutableGlobalConstBufferId, globalConstBufferId);
 	
-	goldenFrameMesh = std::shared_ptr<Mesh>(new Mesh("Resources\\Meshes\\Cube.obj", true, false, false));
+	goldenFrameMesh = std::shared_ptr<Mesh>(new Mesh("Resources\\Meshes\\GoldenFrame.obj", VertexFormat::POSITION | VertexFormat::NORMAL | VertexFormat::TEXCOORD, false, true));
 	goldenFrameMaterial = std::make_shared<Material>();
 
 	goldenFrameMaterial->SetVertexFormat(goldenFrameMesh->GetVertexFormat());
@@ -120,8 +120,8 @@ void Graphics::SceneManager::InitializeTestScene(ID3D12Device* device, ID3D12Gra
 	testEffect->AssignRenderableEntity(testEffectParticleSystem.get());
 	testEffect->AssignMaterial(testEffectMaterial.get());
 
-	auto testClothMesh = std::shared_ptr<Mesh>(new Mesh("Resources\\Meshes\\Cube.obj", true, false, false));
-	testClothCloth = std::shared_ptr<Cloth>(new Cloth(commandList, testClothMesh.get()));
+	//auto testClothMesh = std::shared_ptr<Mesh>(new Mesh("Resources\\Meshes\\Cube.obj", true, false, false));
+	//testClothCloth = std::shared_ptr<Cloth>(new Cloth(commandList, testClothMesh.get()));
 
 	auto testSpriteTextureId = resourceManager.CreateTexture("Resources\\Textures\\TestSprite.dds");
 

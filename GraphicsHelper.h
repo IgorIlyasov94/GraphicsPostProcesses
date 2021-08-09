@@ -3,15 +3,6 @@
 #include "stdafx.h"
 #include "RingBuffer.h"
 
-using namespace Microsoft::WRL;
-using namespace DirectX;
-
-using floatN = XMVECTOR;
-using float4 = XMFLOAT4;
-using float3 = XMFLOAT3;
-using float2 = XMFLOAT2;
-using float4x4 = XMMATRIX;
-
 namespace Graphics
 {
 	
@@ -53,17 +44,6 @@ namespace Graphics
 	{
 		float3 center;
 		float radius;
-	};
-
-	enum class VertexFormat
-	{
-		UNDEFINED,
-		POSITION,
-		POSITION_TEXCOORD,
-		POSITION_NORMAL,
-		POSITION_NORMAL_TANGENT_BINORMAL,
-		POSITION_NORMAL_TEXCOORD,
-		POSITION_NORMAL_TANGENT_BINORMAL_TEXCOORD
 	};
 
 	enum class UIHorizontalAlign
@@ -123,62 +103,6 @@ namespace Graphics
 	float BoundingBoxVolume(const BoundingBox& boundingBox);
 	void BoundingBoxVertices(const BoundingBox& boundingBox, std::array<floatN, 8>& vertices);
 	
-	void TriangulateFace(VertexFormat vertexFormat, const std::vector<float3>& positions, std::vector<uint32_t>& face);
-	float3 CalculatePolygonCenter(VertexFormat vertexFormat, const std::vector<float3>& positions, const std::vector<uint32_t>& face);
-	float3 CalculatePolygonNormal(VertexFormat vertexFormat, const std::vector<float3>& positions, const std::vector<uint32_t>& face);
-	float CalculateTriangleArea(float3 position0, float3 position1, float3 position2);
-	float3 CalculateBarycentric(float3 position0, float3 position1, float3 position2, float3 point);
-	bool CheckPointInTriangle(float3 position0, float3 position1, float3 position2, float3 point);
-	bool CheckTriangleInPolygon(float3 position0, float3 position1, float3 position2, float3 polygonNormal);
-
-	float3 CalculateNormal(float3 position0, float3 position1, float3 position2);
-	void CalculateNormals(VertexFormat vertexFormat, const std::vector<float3>& positions, std::vector<uint32_t>& faces, std::vector<float3>& normals);
-	void CalculateTangents(float3 normal, float3& tangent, float3& binormal);
-	void CalculateTangents(const std::vector<float3>& normals, std::vector<float3>& tangents, std::vector<float3>& binormals);
-	void SmoothNormals(VertexFormat vertexFormat, const std::vector<float3>& positions, std::vector<uint32_t>& faces, std::vector<float3>& normals);
-
-	const std::vector<uint32_t> GetFaceIndicesForSamePosition(VertexFormat vertexFormat, const std::vector<float3>& positions,
-		const std::vector<uint32_t>& faces, uint32_t startFaceIndex, float3 position);
-
-	int64_t GetIndexForSameVertex(uint32_t vertex4ByteStride, const std::vector<float>& vertices, const std::vector<uint32_t>& indices,
-		float3 position, float3 normal, float2 texCoord);
-
-	uint32_t GetVertex4ByteStride(VertexFormat vertexFormat);
-
-	constexpr size_t GetVertexAttributeCount(VertexFormat vertexFormat) noexcept
-	{
-		if (vertexFormat == VertexFormat::POSITION)
-			return 1;
-		else if (vertexFormat == VertexFormat::POSITION_TEXCOORD || vertexFormat == VertexFormat::POSITION_NORMAL)
-			return 2;
-		else if (vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD)
-			return 3;
-		else if (vertexFormat == VertexFormat::POSITION_NORMAL_TANGENT_BINORMAL)
-			return 4;
-		else if (vertexFormat == VertexFormat::POSITION_NORMAL_TANGENT_BINORMAL_TEXCOORD)
-			return 5;
-
-		return 0;
-	}
-
-	constexpr size_t GetVertexStride(VertexFormat vertexFormat) noexcept
-	{
-		if (vertexFormat == VertexFormat::POSITION)
-			return 12;
-		else if (vertexFormat == VertexFormat::POSITION_TEXCOORD)
-			return 20;
-		else if (vertexFormat == VertexFormat::POSITION_NORMAL)
-			return 24;
-		else if (vertexFormat == VertexFormat::POSITION_NORMAL_TEXCOORD)
-			return 32;
-		else if (vertexFormat == VertexFormat::POSITION_NORMAL_TANGENT_BINORMAL)
-			return 48;
-		else if (vertexFormat == VertexFormat::POSITION_NORMAL_TANGENT_BINORMAL_TEXCOORD)
-			return 56;
-
-		return 0;
-	}
-
 	template<typename T>
 	constexpr T AlignSize(const T size, const T alignment) noexcept
 	{

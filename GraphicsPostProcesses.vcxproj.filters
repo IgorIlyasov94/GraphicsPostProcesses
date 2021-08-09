@@ -31,17 +31,11 @@
     <Filter Include="Исходные файлы\GraphicsCore\GraphicsResourceManagement\TextureLoaders">
       <UniqueIdentifier>{27b47c16-b6fa-4121-a1e5-71a5096235a8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Исходные файлы\GraphicsCore\GraphicsResourceManagement\MeshLoaders">
-      <UniqueIdentifier>{f4dc2fb3-a8f4-405b-8414-968be1c31d76}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Файлы заголовков\GraphicsCore\GraphicsResourceManagement">
       <UniqueIdentifier>{a55a7c7d-4006-4d5e-befb-039203a398f3}</UniqueIdentifier>
     </Filter>
     <Filter Include="Файлы заголовков\GraphicsCore\GraphicsResourceManagement\TextureLoaders">
       <UniqueIdentifier>{aa1d4289-db5e-44d5-8e43-e366705bd3c4}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Файлы заголовков\GraphicsCore\GraphicsResourceManagement\MeshLoaders">
-      <UniqueIdentifier>{6de81a9e-e18f-48b6-af68-b4342ae4bbe5}</UniqueIdentifier>
     </Filter>
     <Filter Include="Файлы заголовков\GraphicsSceneManagement">
       <UniqueIdentifier>{37f2dc1f-2312-4f65-baac-eacc2401c950}</UniqueIdentifier>
@@ -73,6 +67,12 @@
     <Filter Include="Файлы заголовков\HelperClasses">
       <UniqueIdentifier>{ee7607bb-c981-491d-874d-52ac98df46da}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Файлы заголовков\GraphicsCore\GraphicsResourceManagement\MeshProcessing">
+      <UniqueIdentifier>{6de81a9e-e18f-48b6-af68-b4342ae4bbe5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\GraphicsCore\GraphicsResourceManagement\MeshProcessing">
+      <UniqueIdentifier>{f4dc2fb3-a8f4-405b-8414-968be1c31d76}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -88,7 +88,7 @@
       <Filter>Исходные файлы\GraphicsSceneManagement\GraphicsObjects</Filter>
     </ClCompile>
     <ClCompile Include="OBJLoader.cpp">
-      <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement\MeshLoaders</Filter>
+      <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement\MeshProcessing</Filter>
     </ClCompile>
     <ClCompile Include="DDSLoader.cpp">
       <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement\TextureLoaders</Filter>
@@ -162,9 +162,6 @@
     <ClCompile Include="UISystem.cpp">
       <Filter>Исходные файлы\GraphicsCore\GraphicsUIManagement</Filter>
     </ClCompile>
-    <ClCompile Include="RingBuffer.cpp">
-      <Filter>Исходные файлы\HelperClasses</Filter>
-    </ClCompile>
     <ClCompile Include="TextUI.cpp">
       <Filter>Исходные файлы\GraphicsCore\GraphicsUIManagement</Filter>
     </ClCompile>
@@ -173,6 +170,12 @@
     </ClCompile>
     <ClCompile Include="Cloth.cpp">
       <Filter>Исходные файлы\GraphicsSceneManagement\GraphicsObjects</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshProcessor.cpp">
+      <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement\MeshProcessing</Filter>
+    </ClCompile>
+    <ClCompile Include="GeometryProcessor.cpp">
+      <Filter>Исходные файлы\GraphicsCore\GraphicsResourceManagement\MeshProcessing</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -189,7 +192,7 @@
       <Filter>Файлы заголовков\GraphicsSceneManagement\GraphicsObjects</Filter>
     </ClInclude>
     <ClInclude Include="OBJLoader.h">
-      <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement\MeshLoaders</Filter>
+      <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement\MeshProcessing</Filter>
     </ClInclude>
     <ClInclude Include="DDSLoader.h">
       <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement\TextureLoaders</Filter>
@@ -277,6 +280,18 @@
     </ClInclude>
     <ClInclude Include="Cloth.h">
       <Filter>Файлы заголовков\GraphicsSceneManagement\GraphicsObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="IMeshLoader.h">
+      <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement\MeshProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshProcessor.h">
+      <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement\MeshProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="GeometryProcessor.h">
+      <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement\MeshProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="GeometryStructures.h">
+      <Filter>Файлы заголовков\GraphicsCore\GraphicsResourceManagement\MeshProcessing</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

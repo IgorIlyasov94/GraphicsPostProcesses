@@ -3,14 +3,14 @@
 #include "ResourceManager.h"
 #include "Material.h"
 #include "IRenderable.h"
-#include "OBJLoader.h"
+#include "GeometryStructures.h"
 
 namespace Graphics
 {
 	class Mesh final : public IRenderable
 	{
 	public:
-		Mesh(std::filesystem::path filePath, bool calculateNormals,bool calculateTangents, bool smoothNormals);
+		Mesh(std::filesystem::path filePath, VertexFormat targetVertexFormat, bool smoothNormals, bool enableOptimization);
 		Mesh(VertexFormat _vertexFormat, const void* verticesData, size_t verticesDataSize, const void* indicesData, size_t indicesDataSize);
 		~Mesh();
 

@@ -7,11 +7,28 @@ namespace Graphics
 	template<typename RingBufferType>
 	class RingBufferList
 	{
+	private:
+		using UnderlyingType = std::list<RingBufferType>;
+
 	public:
 		RingBufferList() {};
 		RingBufferList(size_t bufferSize)
 		{
 			buffer.resize(bufferSize);
+		}
+
+		RingBufferList(typename UnderlyingType::iterator vectorBegin, typename UnderlyingType::iterator vectorEnd)
+		{
+			size_t bufferSize = std::distance(vectorBegin, vectorEnd);
+			buffer.resize(bufferSize);
+			std::copy(vectorBegin, vectorEnd, std::back_inserter(buffer));
+		}
+
+		RingBufferList(typename UnderlyingType::const_iterator vectorBegin, typename UnderlyingType::const_iterator vectorEnd)
+		{
+			size_t bufferSize = std::distance(vectorBegin, vectorEnd);
+			buffer.resize(bufferSize);
+			std::copy(vectorBegin, vectorEnd, std::back_inserter(buffer));
 		}
 
 		~RingBufferList() {};
@@ -72,17 +89,34 @@ namespace Graphics
 		}
 
 	private:
-		std::list<RingBufferType> buffer;
+		UnderlyingType buffer;
 	};
 
 	template<typename RingBufferType>
 	class RingBufferVector
 	{
+	private:
+		using UnderlyingType = std::vector<RingBufferType>;
+
 	public:
 		RingBufferVector() {};
 		RingBufferVector(size_t bufferSize)
 		{
 			buffer.resize(bufferSize);
+		}
+
+		RingBufferVector(typename UnderlyingType::iterator vectorBegin, typename UnderlyingType::iterator vectorEnd)
+		{
+			size_t bufferSize = std::distance(vectorBegin, vectorEnd);
+			buffer.resize(bufferSize);
+			std::copy(vectorBegin, vectorEnd, buffer.begin());
+		}
+
+		RingBufferVector(typename UnderlyingType::const_iterator vectorBegin, typename UnderlyingType::const_iterator vectorEnd)
+		{
+			size_t bufferSize = std::distance(vectorBegin, vectorEnd);
+			buffer.resize(bufferSize);
+			std::copy(vectorBegin, vectorEnd, buffer.begin());
 		}
 
 		~RingBufferVector() {};
@@ -130,6 +164,6 @@ namespace Graphics
 		}
 
 	private:
-		std::vector<RingBufferType> buffer;
+		UnderlyingType buffer;
 	};
 }

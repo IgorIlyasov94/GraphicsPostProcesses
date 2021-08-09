@@ -57,7 +57,7 @@ void Graphics::PostProcesses::Initialize(ID3D12Device* device, ID3D12GraphicsCom
 		2, 1, 3
 	};
 
-	screenQuadMesh = std::shared_ptr<Mesh>(new Mesh(VertexFormat::POSITION_TEXCOORD, &vertices, sizeof(vertices), &indices, sizeof(indices)));
+	screenQuadMesh = std::shared_ptr<Mesh>(new Mesh(VertexFormat::POSITION | VertexFormat::TEXCOORD, &vertices, sizeof(vertices), &indices, sizeof(indices)));
 
 	for (uint32_t renderTargetId = 0; renderTargetId < INTERMEDIATE_8B_RENDER_TARGET_COUNT; renderTargetId++)
 	{
@@ -126,7 +126,7 @@ void Graphics::PostProcesses::Compose(ID3D12Device* device, ID3D12GraphicsComman
 	if (isAAEnabled)
 	{
 		antiAliasingMaterial = std::make_shared<Material>();
-		antiAliasingMaterial->SetVertexFormat(VertexFormat::POSITION_TEXCOORD);
+		antiAliasingMaterial->SetVertexFormat(screenQuadMesh->GetVertexFormat());
 		antiAliasingMaterial->AssignRenderTexture(0, srcRenderTarget);
 		antiAliasingMaterial->AssignRenderTexture(1, normalRenderTargetId);
 		antiAliasingMaterial->AssignDepthTexture(2, sceneDepthStencilId);
@@ -153,7 +153,7 @@ void Graphics::PostProcesses::Compose(ID3D12Device* device, ID3D12GraphicsComman
 	{
 		{
 			brightPassMaterial = std::make_shared<Material>();
-			brightPassMaterial->SetVertexFormat(VertexFormat::POSITION_TEXCOORD);
+			brightPassMaterial->SetVertexFormat(screenQuadMesh->GetVertexFormat());
 			brightPassMaterial->AssignRenderTexture(0, srcRenderTarget);
 			brightPassMaterial->SetVertexShader({ screenQuadVS, sizeof(screenQuadVS) });
 			brightPassMaterial->SetPixelShader({ brightPassPS, sizeof(brightPassPS) });
@@ -170,7 +170,7 @@ void Graphics::PostProcesses::Compose(ID3D12Device* device, ID3D12GraphicsComman
 
 		{
 			gaussianBlurXMaterial = std::make_shared<Material>();
-			gaussianBlurXMaterial->SetVertexFormat(VertexFormat::POSITION_TEXCOORD);
+			gaussianBlurXMaterial->SetVertexFormat(screenQuadMesh->GetVertexFormat());
 			gaussianBlurXMaterial->AssignRenderTexture(0, intermediate8bQuartTargetId[0]);
 			gaussianBlurXMaterial->SetVertexShader({ screenQuadVS, sizeof(screenQuadVS) });
 			gaussianBlurXMaterial->SetPixelShader({ gaussianBlurXPS, sizeof(gaussianBlurXPS) });
@@ -185,7 +185,7 @@ void Graphics::PostProcesses::Compose(ID3D12Device* device, ID3D12GraphicsComman
 
 		{
 			gaussianBlurYMaterial = std::make_shared<Material>();
-			gaussianBlurYMaterial->SetVertexFormat(VertexFormat::POSITION_TEXCOORD);
+			gaussianBlurYMaterial->SetVertexFormat(screenQuadMesh->GetVertexFormat());
 			gaussianBlurYMaterial->AssignRenderTexture(0, intermediate8bQuartTargetId[1]);
 			gaussianBlurYMaterial->SetVertexShader({ screenQuadVS, sizeof(screenQuadVS) });
 			gaussianBlurYMaterial->SetPixelShader({ gaussianBlurYPS, sizeof(gaussianBlurYPS) });
@@ -200,7 +200,7 @@ void Graphics::PostProcesses::Compose(ID3D12Device* device, ID3D12GraphicsComman
 
 		{
 			toneMappingMaterial = std::make_shared<Material>();
-			toneMappingMaterial->SetVertexFormat(VertexFormat::POSITION_TEXCOORD);
+			toneMappingMaterial->SetVertexFormat(screenQuadMesh->GetVertexFormat());
 			toneMappingMaterial->AssignRenderTexture(0, srcRenderTarget);
 			toneMappingMaterial->AssignRenderTexture(1, intermediate8bQuartTargetId[0]);
 			toneMappingMaterial->SetVertexShader({ screenQuadVS, sizeof(screenQuadVS) });

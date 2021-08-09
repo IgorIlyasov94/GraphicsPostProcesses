@@ -46,6 +46,15 @@
 #include <set>
 #include <random>
 
+using namespace Microsoft::WRL;
+using namespace DirectX;
+
+using floatN = XMVECTOR;
+using float4 = XMFLOAT4;
+using float3 = XMFLOAT3;
+using float2 = XMFLOAT2;
+using float4x4 = XMMATRIX;
+
 inline void ThrowIfFailed(HRESULT hResult, const char* errorMessage)
 {
     if (FAILED(hResult))

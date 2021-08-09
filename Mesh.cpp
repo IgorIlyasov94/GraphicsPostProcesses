@@ -1,18 +1,45 @@
 #include "Mesh.h"
+#include "GeometryProcessor.h"
+#include "MeshProcessor.h"
+#include "IMeshLoader.h"
+#include "OBJLoader.h"
 
-Graphics::Mesh::Mesh(std::filesystem::path filePath, bool calculateNormals, bool calculateTangents, bool smoothNormals)
+Graphics::Mesh::Mesh(std::filesystem::path filePath, VertexFormat targetVertexFormat, bool smoothNormals, bool enableOptimization)
 	: indicesCount(0), vertexFormat(VertexFormat::UNDEFINED), boundingBox{}, vertexBufferView{}, indexBufferView{}
 {
-	std::vector<uint8_t> verticesData;
-	std::vector<uint8_t> indicesData;
-	
-	Graphics::OBJLoader::Load(filePath, calculateNormals, calculateTangents, smoothNormals, vertexFormat, verticesData, indicesData);
+	std::unique_ptr<IMeshLoader> meshLoader;
 
-	CalculateBoundingBox(verticesData.data(), verticesData.size(), vertexFormat, boundingBox);
-	
-	auto vertexStride = GetVertexStride(vertexFormat);
-	vertexBufferId = resourceManager.CreateVertexBuffer(verticesData.data(), verticesData.size(), vertexStride);
-	indexBufferId = resourceManager.CreateIndexBuffer(indicesData.data(), indicesData.size(), 4);
+	if (filePath.extension() == ".obj" || filePath.extension() == ".OBJ")
+		meshLoader = std::make_unique<Graphics::OBJLoader>();
+	else
+		throw std::exception("Mesh::Mesh: Unsupported file extension");
+
+	SplittedMeshData splittedMeshData;
+	meshLoader->Load(filePath, splittedMeshData);
+
+	MeshProcessor meshProcessor(splittedMeshData);
+
+	if (smoothNormals)
+	{
+		if ((targetVertexFormat & VertexFormat::NORMAL) == VertexFormat::NORMAL && (splittedMeshData.normals.empty() || splittedMeshData.normalFaces.empty()))
+			meshProcessor.CalculateNormals(smoothNormals);
+		else if (!splittedMeshData.normals.empty() && !splittedMeshData.normalFaces.empty())
+			meshProcessor.SmoothNormals();
+	}
+
+	meshProcessor.ConvertPolygons(PolygonFormat::TRIANGLE);
+	meshProcessor.Compose(targetVertexFormat, enableOptimization, vertexFormat);
+
+	boundingBox = meshProcessor.GetBoundingBox();
+
+	std::vector<uint32_t> verticesData;
+	std::vector<uint32_t> indicesData;
+
+	meshProcessor.GetRawComposedData(verticesData, indicesData);
+
+	auto vertexStride = VertexStride(vertexFormat);
+	vertexBufferId = resourceManager.CreateVertexBuffer(verticesData.data(), verticesData.size() * sizeof(uint32_t), vertexStride);
+	indexBufferId = resourceManager.CreateIndexBuffer(indicesData.data(), indicesData.size() * sizeof(uint32_t), 4);
 
 	indicesCount = resourceManager.GetIndexBuffer(indexBufferId).indicesCount;
 
@@ -25,7 +52,7 @@ Graphics::Mesh::Mesh(VertexFormat _vertexFormat, const void* verticesData, size_
 {
 	CalculateBoundingBox(verticesData, verticesDataSize, vertexFormat, boundingBox);
 
-	auto vertexStride = GetVertexStride(vertexFormat);
+	auto vertexStride = VertexStride(vertexFormat);
 	vertexBufferId = resourceManager.CreateVertexBuffer(verticesData, verticesDataSize, vertexStride);
 	indexBufferId = resourceManager.CreateIndexBuffer(indicesData, indicesDataSize, 4);
 
@@ -87,7 +114,7 @@ void Graphics::Mesh::Draw(ID3D12GraphicsCommandList* commandList, const Material
 
 void Graphics::Mesh::CalculateBoundingBox(const void* verticesData, size_t verticesDataSize, VertexFormat _vertexFormat, BoundingBox& result)
 {
-	auto vertexStride = GetVertexStride(_vertexFormat);
+	auto vertexStride = VertexStride(_vertexFormat);
 
 	result = { *reinterpret_cast<const float3*>(verticesData), *reinterpret_cast<const float3*>(verticesData) };
 

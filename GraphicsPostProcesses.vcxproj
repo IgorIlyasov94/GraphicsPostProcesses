@@ -155,8 +155,10 @@
     <ClCompile Include="Cloth.cpp" />
     <ClCompile Include="ComputeObject.cpp" />
     <ClCompile Include="Font.cpp" />
+    <ClCompile Include="GeometryProcessor.cpp" />
     <ClCompile Include="GraphicsSettings.cpp" />
     <ClCompile Include="LightingSystem.cpp" />
+    <ClCompile Include="MeshProcessor.cpp" />
     <ClCompile Include="Octree.cpp" />
     <ClCompile Include="BufferAllocationPage.cpp" />
     <ClCompile Include="CommonHandler.cpp" />
@@ -173,7 +175,6 @@
     <ClCompile Include="PointLight.cpp" />
     <ClCompile Include="PostProcesses.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
-    <ClCompile Include="RingBuffer.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="SceneManager.cpp" />
     <ClCompile Include="SpriteUI.cpp" />
@@ -190,9 +191,13 @@
     <ClInclude Include="Cloth.h" />
     <ClInclude Include="ComputeObject.h" />
     <ClInclude Include="Font.h" />
+    <ClInclude Include="GeometryProcessor.h" />
+    <ClInclude Include="GeometryStructures.h" />
     <ClInclude Include="GraphicsSettings.h" />
+    <ClInclude Include="IMeshLoader.h" />
     <ClInclude Include="IRenderable.h" />
     <ClInclude Include="LightingSystem.h" />
+    <ClInclude Include="MeshProcessor.h" />
     <ClInclude Include="Octree.h" />
     <ClInclude Include="BufferAllocationPage.h" />
     <ClInclude Include="CommonHandler.h" />

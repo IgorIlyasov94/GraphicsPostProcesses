@@ -1,4 +1,5 @@
 #include "SpriteUI.h"
+#include "GeometryProcessor.h"
 
 Graphics::SpriteUI::SpriteUI(int32_t relativePositionX, int32_t relativePositionY, float2 scale, float4 color, TextureId spriteMainTextureId,
 	bool preciseSpriteMesh, float2 spriteOrigin, UIHorizontalAlign horizontalAlign, UIVerticalAlign verticalAlign)
@@ -80,7 +81,7 @@ bool Graphics::SpriteUI::PointInsideMesh(float2 point) const
 		point2.x = point2.x * localConstBuffer.scale.x + localConstBuffer.screenCoordOffset.x;
 		point2.y = point2.y * localConstBuffer.scale.y + localConstBuffer.screenCoordOffset.y;
 
-		if (CheckPointInTriangle(point0, point1, point2, { point.x, point.y, 0.0f }))
+		if (GeometryProcessor::CheckPointInTriangle(point0, point1, point2, { point.x, point.y, 0.0f }))
 			return true;
 	}
 
@@ -118,11 +119,17 @@ void Graphics::SpriteUI::GenerateMeshFromTexture(TextureId textureId, size_t gri
 	
 	FindSpriteSilhouetteVertices(textureInfo.width, textureInfo.height, textureData, resultVertices);
 
-	resultIndices.clear();
-	resultIndices.resize(resultVertices.size());
-	std::iota(resultIndices.begin(), resultIndices.end(), 0);
+	std::vector<size_t> tempIndices(resultVertices.size());
+	std::iota(tempIndices.begin(), tempIndices.end(), 0);
+	std::vector<size_t> relativeIndices;
 
-	TriangulateFace(VertexFormat::POSITION, resultVertices, resultIndices);
+	GeometryProcessor::ConvertPolygon(PolygonFormat::TRIANGLE, resultVertices, tempIndices.begin(), tempIndices.end(), relativeIndices);
+
+	resultIndices.clear();
+	resultIndices.reserve(resultVertices.size());
+
+	for (auto& relativeIndex : relativeIndices)
+		resultIndices.push_back(static_cast<uint32_t>(relativeIndex));
 
 	resultVertexBufferId = resourceManager.CreateVertexBuffer(resultVertices.data(), resultVertices.size() * sizeof(float3), sizeof(float3));
 	resultIndexBufferId = resourceManager.CreateIndexBuffer(resultIndices.data(), resultIndices.size() * sizeof(uint32_t), sizeof(uint32_t));
