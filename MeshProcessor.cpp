@@ -136,10 +136,9 @@ void Graphics::MeshProcessor::CalculateTangents()
 void Graphics::MeshProcessor::SmoothNormals()
 {
 	std::vector<float3> newNormals;
-	newNormals.reserve(meshData.normals.size());
+	newNormals.reserve(meshData.positions.size());
 
-	std::vector<size_t> newNormalFaces;
-	newNormalFaces.reserve(meshData.normalFaces.size());
+	std::vector<size_t> newNormalFaces(meshData.normalFaces.size(), 0);
 
 	std::set<size_t> processedVertexId;
 
@@ -150,16 +149,13 @@ void Graphics::MeshProcessor::SmoothNormals()
 
 		processedVertexId.insert(vertexId);
 
-		floatN normalSum{};
-		size_t normalCount{};
+		floatN normalSum = XMLoadFloat3(&meshData.normals[meshData.normalFaces[vertexId]]);
+		size_t normalCount = 1;
 
 		auto& currentPosition = meshData.positions[meshData.positionFaces[vertexId]];
 
-		for (size_t vertexTraversalId = 1; vertexTraversalId < meshData.normalFaces.size(); vertexTraversalId++)
+		for (size_t vertexTraversalId = vertexId + 1; vertexTraversalId < meshData.normalFaces.size(); vertexTraversalId++)
 		{
-			if (vertexTraversalId == vertexId)
-				continue;
-
 			if (processedVertexId.find(vertexTraversalId) != processedVertexId.end())
 				continue;
 
@@ -170,7 +166,7 @@ void Graphics::MeshProcessor::SmoothNormals()
 				normalSum += XMLoadFloat3(&meshData.normals[meshData.normalFaces[vertexTraversalId]]);
 				normalCount++;
 
-				newNormalFaces.push_back(newNormals.size());
+				newNormalFaces[vertexTraversalId] = newNormals.size();
 
 				processedVertexId.insert(vertexTraversalId);
 			}
@@ -179,7 +175,7 @@ void Graphics::MeshProcessor::SmoothNormals()
 		float3 newNormal{};
 		XMStoreFloat3(&newNormal, normalSum / static_cast<float>(normalCount));
 
-		newNormalFaces.push_back(newNormals.size());
+		newNormalFaces[vertexId] = newNormals.size();
 		newNormals.push_back(newNormal);
 	}
 
