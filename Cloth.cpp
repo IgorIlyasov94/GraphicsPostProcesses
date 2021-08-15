@@ -41,6 +41,8 @@ Graphics::Cloth::Cloth(ID3D12Device* device, ID3D12GraphicsCommandList* commandL
 	std::vector<std::shared_ptr<Vertex>> primaryComposedVertices;
 	std::vector<uint32_t> composedIndices;
 	meshProcessor.GetComposedData(primaryComposedVertices, composedIndices);
+	size_t verticesCount = primaryComposedVertices.size();
+	indicesCount = composedIndices.size();
 
 	vertexBufferId = ComposeVertexBuffer(primaryComposedVertices, bindingBoxes);
 	indexBufferId = resourceManager.CreateIndexBuffer(composedIndices.data(), composedIndices.size() * sizeof(uint32_t), sizeof(uint32_t));
@@ -55,7 +57,7 @@ Graphics::Cloth::Cloth(ID3D12Device* device, ID3D12GraphicsCommandList* commandL
 
 	localConstBufferId = resourceManager.CreateConstantBuffer(&localConstBuffer, sizeof(localConstBuffer));
 
-	SetupComputeObjects(device, globalConstBufferId, localConstBufferId, vertexBufferId, primaryComposedVertices.size(), jointsCount);
+	SetupComputeObjects(device, globalConstBufferId, localConstBufferId, vertexBufferId, verticesCount, jointsCount);
 }
 
 Graphics::Cloth::~Cloth()
@@ -77,11 +79,11 @@ void Graphics::Cloth::Update(ID3D12GraphicsCommandList* commandList) const
 {
 	resourceManager.SetResourceBarrier(commandList, vertexBufferId, D3D12_RESOURCE_BARRIER_FLAG_NONE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
-	clothApplyForcesCO->Present(commandList);
-	clothApplyConstraintsCO->Present(commandList);
+	//clothApplyForcesCO->Present(commandList);
+	//clothApplyConstraintsCO->Present(commandList);
 	//clothApplyExternalConstraintsCO->Present(commandList); waiting for physics
 	//clothApplySelfCollisionCO->Present(commandList); waiting for someday
-	clothRecalculateTangentsCO->Present(commandList);
+	//clothRecalculateTangentsCO->Present(commandList);
 
 	resourceManager.SetResourceBarrier(commandList, vertexBufferId, D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 }
@@ -114,6 +116,7 @@ Graphics::RWBufferId Graphics::Cloth::ComposeVertexBuffer(const std::vector<std:
 		float3 binormal;
 		float2 texCoord;
 		uint32_t isFree;
+		float2 padding;
 	};
 
 	std::vector<ClothVertex> vertices;
