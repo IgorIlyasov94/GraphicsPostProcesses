@@ -1040,6 +1040,9 @@ void Graphics::ResourceManager::CopyRawDataToSubresource(const TextureInfo& srcT
 void Graphics::ResourceManager::SetResourceBarrier(ID3D12GraphicsCommandList* commandList, ID3D12Resource* const resource, D3D12_RESOURCE_BARRIER_FLAGS resourceBarrierFlags,
 	D3D12_RESOURCE_STATES resourceBarrierStateBefore, D3D12_RESOURCE_STATES resourceBarrierStateAfter)
 {
+	if (resourceBarrierStateBefore == resourceBarrierStateAfter)
+		return;
+
 	D3D12_RESOURCE_BARRIER resourceBarrier{};
 	resourceBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 	resourceBarrier.Flags = resourceBarrierFlags;

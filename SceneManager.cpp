@@ -8,6 +8,8 @@
 #include "Resources/Shaders/UISpriteStandardPS.hlsl.h"
 #include "Resources/Shaders/UITextStandardVS.hlsl.h"
 #include "Resources/Shaders/UITextStandardPS.hlsl.h"
+#include "Resources/Shaders/ClothStandardVS.hlsl.h"
+#include "Resources/Shaders/ClothStandardPS.hlsl.h"
 
 Graphics::SceneManager& Graphics::SceneManager::GetInstance()
 {
@@ -78,7 +80,6 @@ void Graphics::SceneManager::InitializeTestScene(ID3D12Device* device, ID3D12Gra
 	
 	goldenFrameMaterial->AssignBuffer(0, currentScene->GetLightingSystem()->GetLightBufferId());
 	goldenFrameMaterial->AssignTexture(1, currentScene->GetLightingSystem()->GetLightClusterId());
-	
 	goldenFrameMaterial->Compose(device);
 
 	goldenFrame = std::make_shared<GraphicObject>();
@@ -121,8 +122,37 @@ void Graphics::SceneManager::InitializeTestScene(ID3D12Device* device, ID3D12Gra
 	testEffect->AssignRenderableEntity(testEffectParticleSystem.get());
 	testEffect->AssignMaterial(testEffectMaterial.get());
 
-	//auto testClothMesh = std::shared_ptr<Mesh>(new Mesh("Resources\\Meshes\\Cube.obj", true, false, false));
-	//testClothCloth = std::shared_ptr<Cloth>(new Cloth(commandList, testClothMesh.get()));
+	std::vector<BoundingBox> bindingBoxes;
+	testClothCloth = std::shared_ptr<Cloth>(new Cloth(device, commandList, "Resources\\Meshes\\TestCloth.obj", bindingBoxes, globalConstBufferId, 1.0f, 0.5f, 0.999f));
+
+	testClothMaterial = std::shared_ptr<Material>(new Material());
+	testClothMaterial->SetPrimitiveTopologyType(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
+	testClothMaterial->SetVertexShader({ clothStandardVS, sizeof(clothStandardVS) });
+	testClothMaterial->SetPixelShader({ clothStandardPS, sizeof(clothStandardPS) });
+	testClothMaterial->SetBlendMode(true, D3D12_BLEND_SRC_ALPHA, D3D12_BLEND_ONE);
+	testClothMaterial->SetDepthTest(true);
+	testClothMaterial->SetDepthStencilFormat(32);
+	testClothMaterial->AssignConstantBuffer(0, immutableGlobalConstBufferId);
+	testClothMaterial->AssignConstantBuffer(1, globalConstBufferId);
+
+	clothConstBuffer.world = XMMatrixIdentity();
+	clothConstBuffer.wvp = camera->GetViewProjection();
+
+	clothConstBufferId = resourceManager.CreateConstantBuffer(&clothConstBuffer, sizeof(clothConstBuffer));
+
+
+	testClothMaterial->AssignBuffer(0, currentScene->GetLightingSystem()->GetLightBufferId());
+	testClothMaterial->AssignTexture(1, currentScene->GetLightingSystem()->GetLightClusterId());
+	testClothMaterial->AssignBuffer(2, testClothCloth->GetVertexBuffer());
+	testClothMaterial->AssignConstantBuffer(2, clothConstBufferId);
+	testClothMaterial->SetRenderTargetFormat(0, DXGI_FORMAT_R16G16B16A16_FLOAT);
+	testClothMaterial->SetRenderTargetFormat(1, DXGI_FORMAT_R8G8B8A8_SNORM);
+	testClothMaterial->Compose(device);
+
+	testCloth = std::shared_ptr<GraphicObject>(new GraphicObject());
+	testCloth->SetRenderingLayer(RenderingLayer::RENDERING_LAYER_OPAQUE);
+	testCloth->AssignRenderableEntity(testClothCloth.get());
+	testCloth->AssignMaterial(testClothMaterial.get());
 
 	auto testSpriteTextureId = resourceManager.CreateTexture("Resources\\Textures\\TestSprite.dds");
 
@@ -176,8 +206,8 @@ void Graphics::SceneManager::InitializeTestScene(ID3D12Device* device, ID3D12Gra
 
 	currentScene->SetMainCamera(camera.get());
 	currentScene->EmplaceGraphicObject(goldenFrame.get(), false);
-	//currentScene->EmplaceGraphicObject(cubeSecond.get(), false);
 	currentScene->EmplaceGraphicObject(testEffect.get(), false);
+	currentScene->EmplaceGraphicObject(testCloth.get(), false);
 }
 
 void Graphics::SceneManager::ExecuteScripts(ID3D12GraphicsCommandList* commandList, size_t mouseX, size_t mouseY)
@@ -215,16 +245,16 @@ void Graphics::SceneManager::DrawCurrentScene(ID3D12GraphicsCommandList* command
 	goldenFrameConstBuffer.world = XMMatrixAffineTransformation(XMLoadFloat3(&scale), XMLoadFloat3(&rotationOrigin), rotation, XMLoadFloat3(&translation));
 	goldenFrameConstBuffer.wvp = XMMatrixMultiply(goldenFrameConstBuffer.world, camera->GetViewProjection());// XMMatrixMultiply(goldenFrameConstBuffer.world, camera->GetViewProjection());
 	
-	/*float3 translation2 = float3(0.0f, 0.0f, 30.0f);
+	float3 translation2 = float3(0.0f, 5.0f, 0.0f);
 	float3 rotationOrigin2 = float3(0.0f, 0.0f, 0.0f);
 	floatN rotation2 = XMQuaternionRotationRollPitchYaw(0.0f, 0.0f, 0.0f);
-	float3 scale2 = float3(20.0f, 20.0f, 20.0f);
+	float3 scale2 = float3(1.0f, 1.0f, 1.0f);
 
-	cubeSecondConstBuffer.world = XMMatrixAffineTransformation(XMLoadFloat3(&scale2), XMLoadFloat3(&rotationOrigin2), rotation2, XMLoadFloat3(&translation2));
-	cubeSecondConstBuffer.wvp = XMMatrixMultiply(cubeSecondConstBuffer.world, camera->GetViewProjection());*/
+	clothConstBuffer.world = XMMatrixAffineTransformation(XMLoadFloat3(&scale2), XMLoadFloat3(&rotationOrigin2), rotation2, XMLoadFloat3(&translation2));
+	clothConstBuffer.wvp = XMMatrixMultiply(clothConstBuffer.world, camera->GetViewProjection());
 	
 	goldenFrameMaterial->UpdateConstantBuffer(goldenFrameConstBufferId, &goldenFrameConstBuffer, sizeof(goldenFrameConstBuffer));
-	//cubeSecondMaterial->UpdateConstantBuffer(cubeSecondConstBufferId, &cubeSecondConstBuffer, sizeof(cubeSecondConstBuffer));
+	testClothMaterial->UpdateConstantBuffer(clothConstBufferId, &clothConstBuffer, sizeof(clothConstBuffer));
 
 	currentScene->Draw(commandList);
 }

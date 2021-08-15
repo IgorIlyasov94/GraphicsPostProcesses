@@ -15,8 +15,9 @@ cbuffer LocalConstBuffer : register(b1)
 	float damping;
 	float3 gravity;
 	float mass;
+	float stiffness;
 	float previousElapsedTime;
-	float3 padding;
+	float2 padding;
 };
 
 struct Vertex
@@ -28,6 +29,7 @@ struct Vertex
 	float3 binormal;
 	float2 texCoord;
 	uint isFree;
+	float2 padding;
 };
 
 RWStructuredBuffer<Vertex> vertexBuffer : register(u0);

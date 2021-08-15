@@ -1,3 +1,5 @@
+static const uint JOINTS_PER_VERTEX_MAX_COUNT = 8;
+
 struct Vertex
 {
 	float3 position;
@@ -7,18 +9,17 @@ struct Vertex
 	float3 binormal;
 	float2 texCoord;
 	uint isFree;
+	float2 padding;
 };
 
-struct JointInfo
+struct AdjacentVertexIndices
 {
-	uint adjacentPointsNumber;
-	uint adjacentPointIndexOffset;
-	float restLength;
-	float stiffness;
+	uint vertexIndex[JOINTS_PER_VERTEX_MAX_COUNT];
+	uint jointsCount;
+	float3 padding;
 };
 
-StructuredBuffer<JointInfo> jointInfoBuffer : register(t0);
-Buffer<uint> jointBuffer : register(t1);
+StructuredBuffer<AdjacentVertexIndices> adjacentVertexIndicesBuffer : register(t0);
 RWStructuredBuffer<Vertex> vertexBuffer : register(u0);
 
 float3 CalculateNormal(float3 tangentVector0, float3 tangentVector1)
@@ -59,20 +60,16 @@ float3 CalculateBinormal(float3 normal, float3 tangent)
 [numthreads(1, 1, 1)]
 void main(uint3 groupId : SV_GroupId)
 {
-	uint vertexId0 = groupId.x;
-	Vertex vertex0 = vertexBuffer[vertexId0];
-	
-	JointInfo jointInfo = jointInfoBuffer[groupId.x];
-    uint vertexId1 = jointBuffer[jointInfo.adjacentPointIndexOffset];
-	Vertex vertex1 = vertexBuffer[vertexId1];
+	AdjacentVertexIndices adjacentVertexIndices = adjacentVertexIndicesBuffer[groupId.x];
+	Vertex vertex0 = vertexBuffer[groupId.x];
+	Vertex vertex1 = vertexBuffer[adjacentVertexIndices.vertexIndex[0]];
 	
 	float3 normal = 0.0f.xxx;
 	float3 previousRawTangent = vertex1.position - vertex0.position;
 	
-	for (uint adjacentPointIndex = 1; adjacentPointIndex < jointInfo.adjacentPointsNumber; adjacentPointIndex++)
+	for (uint adjacentVertexIndexId = 1; adjacentVertexIndexId < adjacentVertexIndices.jointsCount; adjacentVertexIndexId++)
 	{
-		uint vertexIdN = jointBuffer[adjacentPointIndex + jointInfo.adjacentPointIndexOffset];
-		Vertex vertexN = vertexBuffer[vertexIdN];
+		Vertex vertexN = vertexBuffer[adjacentVertexIndices.vertexIndex[adjacentVertexIndexId]];
 		
 		float3 rawTangent = vertexN.position - vertex0.position;
 		
@@ -81,9 +78,9 @@ void main(uint3 groupId : SV_GroupId)
 		previousRawTangent = rawTangent;
 	}
 	
-	vertex0.normal = normal / (float)(jointInfo.adjacentPointsNumber - 1);
+	vertex0.normal = normal / (float)(adjacentVertexIndices.jointsCount - 1);
 	vertex0.tangent = CalculateTangent(vertex0.normal);
 	vertex0.binormal = CalculateBinormal(vertex0.normal, vertex0.tangent);
 	
-	vertexBuffer[vertexId0] = vertex0;
+	vertexBuffer[groupId.x] = vertex0;
 }

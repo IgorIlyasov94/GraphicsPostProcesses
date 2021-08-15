@@ -75,4 +75,8 @@ ECHO ON
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
 %dxcCmd% /Zi /E"main" /Vn"onlyVertexIdOutputVS" /Tvs_6_0 /Fh"OnlyVertexIdOutputVS.hlsl.h" /nologo OnlyVertexIdOutputVS.hlsl
 @IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
+%dxcCmd% /Zi /E"main" /Vn"clothStandardVS" /Tvs_6_0 /Fh"ClothStandardVS.hlsl.h" /nologo ClothStandardVS.hlsl
+@IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
+%dxcCmd% /Zi /E"main" /Vn"clothStandardPS" /Tps_6_0 /Fh"ClothStandardPS.hlsl.h" /nologo ClothStandardPS.hlsl
+@IF %ERRORLEVEL% NEQ 0 (EXIT /b %ERRORLEVEL%)
 ECHO Done.

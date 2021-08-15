@@ -95,6 +95,7 @@ namespace Graphics
 
 	void SetupHeapProperties(D3D12_HEAP_PROPERTIES& heapProperties, D3D12_HEAP_TYPE heapType) noexcept;
 
+	bool CheckPointInBox(const float3& point, const BoundingBox& box);
 	bool CheckBoxInBox(const BoundingBox& sourceBox, const BoundingBox& destinationBox) noexcept;
 	bool CheckBoxInBox(const float3& sourceBoxSize, const float3& destinationBoxSize) noexcept;
 	BoundingBox ExpandBoundingBox(const BoundingBox& targetBox, const BoundingBox& appendableBox) noexcept;

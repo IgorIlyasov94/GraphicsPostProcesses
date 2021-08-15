@@ -7,6 +7,7 @@ struct Vertex
 	float3 binormal;
 	float2 texCoord;
 	uint isFree;
+	float2 padding;
 };
 
 RWStructuredBuffer<Vertex> vertexBuffer : register(u0);

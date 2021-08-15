@@ -260,6 +260,19 @@ void Graphics::SetupHeapProperties(D3D12_HEAP_PROPERTIES& heapProperties, D3D12_
 	heapProperties.Type = heapType;
 }
 
+bool Graphics::CheckPointInBox(const float3& point, const BoundingBox& box)
+{
+	if (point.x <= box.maxCornerPoint.x &&
+		point.x >= box.minCornerPoint.x &&
+		point.y <= box.maxCornerPoint.y &&
+		point.y >= box.minCornerPoint.y &&
+		point.z <= box.maxCornerPoint.z &&
+		point.z >= box.minCornerPoint.z)
+		return true;
+
+	return false;
+}
+
 bool Graphics::CheckBoxInBox(const BoundingBox& sourceBox, const BoundingBox& destinationBox) noexcept
 {
 	if (sourceBox.maxCornerPoint.x <= destinationBox.maxCornerPoint.x &&

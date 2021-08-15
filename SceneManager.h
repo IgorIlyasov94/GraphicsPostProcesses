@@ -51,6 +51,7 @@ namespace Graphics
 		std::shared_ptr<Font> testUIFont;
 
 		ConstantBufferId goldenFrameConstBufferId;
+		ConstantBufferId clothConstBufferId;
 
 		ConstantBufferId immutableGlobalConstBufferId;
 		ConstantBufferId globalConstBufferId;
@@ -84,6 +85,7 @@ namespace Graphics
 		};
 
 		mutable StandardMeshConstBuffer goldenFrameConstBuffer;
+		mutable StandardMeshConstBuffer clothConstBuffer;
 
 		ImmutableGlobalConstBuffer immutableGlobalConstBuffer;
 		mutable GlobalConstBuffer globalConstBuffer;
