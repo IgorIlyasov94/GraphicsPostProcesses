@@ -221,6 +221,8 @@ void Graphics::MeshProcessor::Compose(VertexFormat targetVertexFormat, bool enab
 {
 	composedMeshVertices.clear();
 	composedMeshIndices.clear();
+	composedMeshVertices.reserve(meshData.positionFaces.size());
+	composedMeshIndices.reserve(meshData.positionFaces.size());
 
 	resultVertexFormat = GetResultVertexFormat(targetVertexFormat);
 
@@ -259,6 +261,9 @@ void Graphics::MeshProcessor::Compose(VertexFormat targetVertexFormat, bool enab
 		else
 			composedMeshIndices.push_back(static_cast<uint32_t>(newIndex));
 	}
+
+	composedMeshVertices.shrink_to_fit();
+	composedMeshIndices.shrink_to_fit();
 }
 
 Graphics::VertexFormat Graphics::MeshProcessor::GetResultVertexFormat(VertexFormat targetVertexFormat)

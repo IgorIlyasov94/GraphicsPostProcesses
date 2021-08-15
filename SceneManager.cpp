@@ -56,7 +56,8 @@ void Graphics::SceneManager::InitializeTestScene(ID3D12Device* device, ID3D12Gra
 	
 	currentScene->GetLightingSystem()->ComposeLightBuffer(device, commandList, immutableGlobalConstBufferId, globalConstBufferId);
 	
-	goldenFrameMesh = std::shared_ptr<Mesh>(new Mesh("Resources\\Meshes\\GoldenFrame.obj", VertexFormat::POSITION | VertexFormat::NORMAL | VertexFormat::TEXCOORD, false, true));
+	goldenFrameMesh = std::shared_ptr<Mesh>(new Mesh("Resources\\Meshes\\Cube.obj", PolygonFormat::TRIANGLE,
+		VertexFormat::POSITION | VertexFormat::NORMAL | VertexFormat::TEXCOORD, true, true, true));
 	goldenFrameMaterial = std::make_shared<Material>();
 
 	goldenFrameMaterial->SetVertexFormat(goldenFrameMesh->GetVertexFormat());

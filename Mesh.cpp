@@ -4,8 +4,8 @@
 #include "IMeshLoader.h"
 #include "OBJLoader.h"
 
-Graphics::Mesh::Mesh(std::filesystem::path filePath, VertexFormat targetVertexFormat, bool smoothNormals, bool enableOptimization)
-	: indicesCount(0), vertexFormat(VertexFormat::UNDEFINED), boundingBox{}, vertexBufferView{}, indexBufferView{}
+Graphics::Mesh::Mesh(std::filesystem::path filePath, PolygonFormat targetPolygonFormat, VertexFormat targetVertexFormat, bool recalculateNormals, bool smoothNormals, bool enableOptimization)
+	: indicesCount{}, primitiveTopology{}, polygonFormat(targetPolygonFormat), vertexFormat(VertexFormat::UNDEFINED), boundingBox{}, vertexBufferView{}, indexBufferView{}
 {
 	std::unique_ptr<IMeshLoader> meshLoader;
 
@@ -19,15 +19,15 @@ Graphics::Mesh::Mesh(std::filesystem::path filePath, VertexFormat targetVertexFo
 
 	MeshProcessor meshProcessor(splittedMeshData);
 
-	if (smoothNormals)
+	if (smoothNormals || recalculateNormals)
 	{
-		if ((targetVertexFormat & VertexFormat::NORMAL) == VertexFormat::NORMAL && (splittedMeshData.normals.empty() || splittedMeshData.normalFaces.empty()))
+		if ((targetVertexFormat & VertexFormat::NORMAL) == VertexFormat::NORMAL && (splittedMeshData.normals.empty() || splittedMeshData.normalFaces.empty()) || recalculateNormals)
 			meshProcessor.CalculateNormals(smoothNormals);
 		else if (!splittedMeshData.normals.empty() && !splittedMeshData.normalFaces.empty())
 			meshProcessor.SmoothNormals();
 	}
 
-	meshProcessor.ConvertPolygons(PolygonFormat::TRIANGLE);
+	meshProcessor.ConvertPolygons(targetPolygonFormat);
 	meshProcessor.Compose(targetVertexFormat, enableOptimization, vertexFormat);
 
 	boundingBox = meshProcessor.GetBoundingBox();
@@ -45,10 +45,17 @@ Graphics::Mesh::Mesh(std::filesystem::path filePath, VertexFormat targetVertexFo
 
 	vertexBufferView = resourceManager.GetVertexBufferView(vertexBufferId);
 	indexBufferView = resourceManager.GetIndexBufferView(indexBufferId);
+
+	if (polygonFormat == PolygonFormat::N_GON)
+		primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+	else if (polygonFormat == PolygonFormat::TRIANGLE)
+		primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	else if(polygonFormat == PolygonFormat::QUAD)
+		primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
 }
 
-Graphics::Mesh::Mesh(VertexFormat _vertexFormat, const void* verticesData, size_t verticesDataSize, const void* indicesData, size_t indicesDataSize)
-	: indicesCount(0), vertexFormat(_vertexFormat), boundingBox{}, vertexBufferView{}, indexBufferView{}
+Graphics::Mesh::Mesh(PolygonFormat targetPolygonFormat, VertexFormat targetVertexFormat, const void* verticesData, size_t verticesDataSize, const void* indicesData, size_t indicesDataSize)
+	: indicesCount(0), primitiveTopology{}, polygonFormat(targetPolygonFormat), vertexFormat(targetVertexFormat), boundingBox{}, vertexBufferView{}, indexBufferView{}
 {
 	CalculateBoundingBox(verticesData, verticesDataSize, vertexFormat, boundingBox);
 
@@ -60,6 +67,13 @@ Graphics::Mesh::Mesh(VertexFormat _vertexFormat, const void* verticesData, size_
 
 	vertexBufferView = resourceManager.GetVertexBufferView(vertexBufferId);
 	indexBufferView = resourceManager.GetIndexBufferView(indexBufferId);
+
+	if (polygonFormat == PolygonFormat::N_GON)
+		primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+	else if (polygonFormat == PolygonFormat::TRIANGLE)
+		primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	else if (polygonFormat == PolygonFormat::QUAD)
+		primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
 }
 
 Graphics::Mesh::~Mesh()
@@ -77,6 +91,11 @@ Graphics::VertexFormat Graphics::Mesh::GetVertexFormat() const noexcept
 	return vertexFormat;
 }
 
+Graphics::PolygonFormat Graphics::Mesh::GetPolygonFormat() const noexcept
+{
+	return polygonFormat;
+}
+
 Graphics::VertexBufferId Graphics::Mesh::GetVertexBufferId() const noexcept
 {
 	return vertexBufferId;
@@ -92,6 +111,37 @@ const Graphics::BoundingBox& Graphics::Mesh::GetBoundingBox() const noexcept
 	return boundingBox;
 }
 
+void Graphics::Mesh::SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY targetPrimitiveTopology, D3D_PRIMITIVE_TOPOLOGY& resultPrimitiveTopology)
+{
+	if (polygonFormat == PolygonFormat::N_GON)
+	{
+		if (targetPrimitiveTopology > 32 && targetPrimitiveTopology < 65)
+			primitiveTopology = targetPrimitiveTopology;
+		else
+			primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+	}
+	else if (polygonFormat == PolygonFormat::TRIANGLE)
+	{
+		if (targetPrimitiveTopology > 32 && targetPrimitiveTopology < 65)
+			primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST;
+		else if (targetPrimitiveTopology == D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST)
+			primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		else
+			primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+	}
+	else if (polygonFormat == PolygonFormat::QUAD)
+	{
+		if (targetPrimitiveTopology > 32 && targetPrimitiveTopology < 65)
+			primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST;
+		else if (targetPrimitiveTopology == D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP)
+			primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
+		else
+			primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+	}
+
+	resultPrimitiveTopology = primitiveTopology;
+}
+
 void Graphics::Mesh::Update(ID3D12GraphicsCommandList* commandList) const
 {
 
@@ -102,7 +152,7 @@ void Graphics::Mesh::Draw(ID3D12GraphicsCommandList* commandList, const Material
 	if (material != nullptr)
 		if (material->IsComposed())
 		{
-			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			commandList->IASetPrimitiveTopology(primitiveTopology);
 			commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
 			commandList->IASetIndexBuffer(&indexBufferView);
 

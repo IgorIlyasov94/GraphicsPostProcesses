@@ -57,7 +57,7 @@ void Graphics::PostProcesses::Initialize(ID3D12Device* device, ID3D12GraphicsCom
 		2, 1, 3
 	};
 
-	screenQuadMesh = std::shared_ptr<Mesh>(new Mesh(VertexFormat::POSITION | VertexFormat::TEXCOORD, &vertices, sizeof(vertices), &indices, sizeof(indices)));
+	screenQuadMesh = std::shared_ptr<Mesh>(new Mesh(PolygonFormat::TRIANGLE, VertexFormat::POSITION | VertexFormat::TEXCOORD, &vertices, sizeof(vertices), &indices, sizeof(indices)));
 
 	for (uint32_t renderTargetId = 0; renderTargetId < INTERMEDIATE_8B_RENDER_TARGET_COUNT; renderTargetId++)
 	{
