@@ -5,8 +5,7 @@ cbuffer LocalConstBuffer : register(b0)
 	float3 gravity;
 	float mass;
 	float stiffness;
-	float previousElapsedTime;
-	float2 padding;
+	float3 padding;
 };
 
 struct Vertex

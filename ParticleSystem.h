@@ -36,7 +36,7 @@ namespace Graphics
 		void SetColor(float4 colorStart, float4 colorEnd, ParticleAnimationType colorAlterationType, TextureId _colorGradientId);
 		void SetFrames(uint32_t atlasRowNumber, uint32_t atlasColumnNumber, uint32_t frameRowId, uint32_t frameColumnId, uint32_t animationFramesCount);
 
-		void Compose(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, ConstantBufferId globalConstBufferId);
+		void Compose(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, ConstantBufferId immutableGlobalConstBufferId, ConstantBufferId globalConstBufferId);
 
 		RWBufferId GetParticleBufferId() const;
 		ConstantBufferId GetParticleSystemConstBufferId() const;

@@ -63,15 +63,18 @@ void main(uint3 groupId : SV_GroupId)
 	AdjacentVertexIndices adjacentVertexIndices = adjacentVertexIndicesBuffer[groupId.x];
 	Vertex vertex0 = vertexBuffer[groupId.x];
 	Vertex vertex1 = vertexBuffer[adjacentVertexIndices.vertexIndex[0]];
-	
-	float3 normal = 0.0f.xxx;
+	Vertex vertexN = vertexBuffer[adjacentVertexIndices.vertexIndex[1]];
+		
+	float3 rawTangent = vertexN.position - vertex0.position;
 	float3 previousRawTangent = vertex1.position - vertex0.position;
 	
-	for (uint adjacentVertexIndexId = 1; adjacentVertexIndexId < adjacentVertexIndices.jointsCount; adjacentVertexIndexId++)
+	float3 normal = CalculateNormal(previousRawTangent, rawTangent);
+	
+	for (uint adjacentVertexIndexId = 2; adjacentVertexIndexId < adjacentVertexIndices.jointsCount; adjacentVertexIndexId++)
 	{
-		Vertex vertexN = vertexBuffer[adjacentVertexIndices.vertexIndex[adjacentVertexIndexId]];
+		vertexN = vertexBuffer[adjacentVertexIndices.vertexIndex[adjacentVertexIndexId]];
 		
-		float3 rawTangent = vertexN.position - vertex0.position;
+		rawTangent = vertexN.position - vertex0.position;
 		
 		normal += CalculateNormal(previousRawTangent, rawTangent);
 		

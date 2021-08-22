@@ -1,22 +1,4 @@
-cbuffer ImmutableGlobalConstBuffer : register(b0)
-{
-	float4x4 projection;
-	float4x4 invProjection;
-	float zNear;
-	float zFar;
-	float2 zLinearizeCoeff;
-};
-
-cbuffer GlobalConstBuffer : register(b1)
-{
-	float4x4 view;
-	float4x4 invView;
-	float4x4 viewProjection;
-	float4x4 invViewProjection;
-	float3 cameraPosition;
-	float elapsedTime;
-	float4 randomValues;
-};
+#include "GlobalConstants.hlsli"
 
 cbuffer LocalConstBuffer : register(b2)
 {
@@ -42,6 +24,7 @@ struct Input
 	float2 texCoord : TEXCOORD0;
 	float4 clipCoord : TEXCOORD1;
 	float4 worldCoord : TEXCOORD2;
+	float free : TEXCOORD3;
 };
 
 struct Output
@@ -122,7 +105,7 @@ Output main(Input input)
 		diffuse += CalculateLighting(pointLightBuffer[lightAddress], input.worldCoord.xyz, input.normal);
 	}
 	
-	output.color = float4(diffuse, 1.0f);
+	output.color = float4(input.normal, 1.0f);
 	
 	output.normal = float4(input.normal, 1.0f);
 	

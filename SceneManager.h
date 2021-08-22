@@ -73,9 +73,11 @@ namespace Graphics
 			float4x4 invView;
 			float4x4 viewProjection;
 			float4x4 invViewProjection;
+			float4 randomValues;
 			float3 cameraPosition;
 			float elapsedTime;
-			float4 randomValues;
+			float previousElapsedTime;
+			float3 padding;
 		};
 
 		struct StandardMeshConstBuffer

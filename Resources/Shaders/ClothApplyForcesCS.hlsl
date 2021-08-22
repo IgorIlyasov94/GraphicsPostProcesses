@@ -1,23 +1,13 @@
-cbuffer GlobalConstBuffer : register(b0)
-{
-	float4x4 view;
-	float4x4 invView;
-	float4x4 viewProjection;
-	float4x4 invViewProjection;
-	float3 cameraPosition;
-	float elapsedTime;
-	float4 randomValues;
-};
+#include "GlobalConstants.hlsli"
 
-cbuffer LocalConstBuffer : register(b1)
+cbuffer LocalConstBuffer : register(b2)
 {
 	float3 windStrength;
 	float damping;
 	float3 gravity;
 	float mass;
 	float stiffness;
-	float previousElapsedTime;
-	float2 padding;
+	float3 padding0;
 };
 
 struct Vertex

@@ -1,13 +1,4 @@
-cbuffer GlobalConstBuffer : register(b0)
-{
-	float4x4 view;
-	float4x4 invView;
-	float4x4 viewProjection;
-	float4x4 invViewProjection;
-	float3 cameraPosition;
-	float elapsedTime;
-	float4 randomValues;
-};
+#include "GlobalConstants.hlsli"
 
 struct Particle
 {

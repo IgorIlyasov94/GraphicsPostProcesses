@@ -10,7 +10,7 @@
 #include "Resources/Shaders/ClothRecalculateTangentsCS.hlsl.h"
 
 Graphics::Cloth::Cloth(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, std::filesystem::path meshFilePath, const std::vector<BoundingBox>& bindingBoxes,
-	ConstantBufferId globalConstBufferId, float mass, float stiffness, float damping)
+	ConstantBufferId immutableGlobalConstBufferId, ConstantBufferId globalConstBufferId, float mass, float stiffness, float damping)
 	: boundingBox{}, localConstBuffer{}
 {
 	std::unique_ptr<IMeshLoader> meshLoader;
@@ -42,7 +42,7 @@ Graphics::Cloth::Cloth(ID3D12Device* device, ID3D12GraphicsCommandList* commandL
 	std::vector<uint32_t> composedIndices;
 	meshProcessor.GetComposedData(primaryComposedVertices, composedIndices);
 	size_t verticesCount = primaryComposedVertices.size();
-	indicesCount = composedIndices.size();
+	indicesCount = static_cast<uint32_t>(composedIndices.size());
 
 	vertexBufferId = ComposeVertexBuffer(primaryComposedVertices, bindingBoxes);
 	indexBufferId = resourceManager.CreateIndexBuffer(composedIndices.data(), composedIndices.size() * sizeof(uint32_t), sizeof(uint32_t));
@@ -51,13 +51,14 @@ Graphics::Cloth::Cloth(ID3D12Device* device, ID3D12GraphicsCommandList* commandL
 	size_t jointsCount = ComposeJointBuffers(primaryComposedVertices, composedIndices, adjacentVertexIndicesBufferId, jointInfoBufferId);
 
 	localConstBuffer.damping = damping;
+	localConstBuffer.windStrength = float3(9.0f, 0.0f, 9.0f);
 	localConstBuffer.gravity = float3(0.0f, -9.780318f, 0.0f);
 	localConstBuffer.mass = mass;
 	localConstBuffer.stiffness = stiffness;
 
 	localConstBufferId = resourceManager.CreateConstantBuffer(&localConstBuffer, sizeof(localConstBuffer));
 
-	SetupComputeObjects(device, globalConstBufferId, localConstBufferId, vertexBufferId, verticesCount, jointsCount);
+	SetupComputeObjects(device, immutableGlobalConstBufferId, globalConstBufferId, localConstBufferId, vertexBufferId, verticesCount, jointsCount);
 }
 
 Graphics::Cloth::~Cloth()
@@ -83,7 +84,7 @@ void Graphics::Cloth::Update(ID3D12GraphicsCommandList* commandList) const
 	//clothApplyConstraintsCO->Present(commandList);
 	//clothApplyExternalConstraintsCO->Present(commandList); waiting for physics
 	//clothApplySelfCollisionCO->Present(commandList); waiting for someday
-	//clothRecalculateTangentsCO->Present(commandList);
+	clothRecalculateTangentsCO->Present(commandList);
 
 	resourceManager.SetResourceBarrier(commandList, vertexBufferId, D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 }
@@ -96,7 +97,7 @@ void Graphics::Cloth::Draw(ID3D12GraphicsCommandList* commandList, const Materia
 	if (material != nullptr)
 		if (material->IsComposed())
 		{
-			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			commandList->IASetIndexBuffer(&indexBufferView);
 
 			material->Present(commandList);
@@ -156,7 +157,7 @@ size_t Graphics::Cloth::ComposeJointBuffers(const std::vector<std::shared_ptr<Ve
 		jointInfoBufferData.size(), DXGI_FORMAT_UNKNOWN);
 
 	std::vector<AdjacentVertexIndices> adjacentVertexIndicesBufferData;
-	ComposeAdjacentVertexIndicesBufferData(jointInfoBufferData, indices.size(), adjacentVertexIndicesBufferData);
+	ComposeAdjacentVertexIndicesBufferData(jointInfoBufferData, primaryComposedVertices.size(), adjacentVertexIndicesBufferData);
 	_adjacentVertexIndicesBufferId = resourceManager.CreateBuffer(adjacentVertexIndicesBufferData.data(), adjacentVertexIndicesBufferData.size() * sizeof(AdjacentVertexIndices),
 		sizeof(AdjacentVertexIndices), adjacentVertexIndicesBufferData.size(), DXGI_FORMAT_UNKNOWN);
 
@@ -167,9 +168,9 @@ void Graphics::Cloth::ComposeJointInfoBufferData(const std::vector<std::shared_p
 	std::vector<JointInfo>& jointInfoBuffer)
 {
 	jointInfoBuffer.clear();
-	jointInfoBuffer.reserve(primaryComposedVertices.size() * 6 / 4);
+	jointInfoBuffer.reserve(indices.size());
 
-	for (size_t currentIndexId = 0; currentIndexId < indices.size(); currentIndexId += 4)
+	for (size_t currentIndexId = 0; currentIndexId < indices.size(); currentIndexId += 6)
 	{
 		auto composeJointInfo = [&currentIndexId, &primaryComposedVertices, &indices](const size_t& vertexIndexId0, const size_t& vertexIndexId1)
 		{
@@ -181,9 +182,6 @@ void Graphics::Cloth::ComposeJointInfoBufferData(const std::vector<std::shared_p
 
 			return jointInfo;
 		};
-
-		jointInfoBuffer.push_back(composeJointInfo(0, 3));
-		jointInfoBuffer.push_back(composeJointInfo(1, 2));
 
 		auto compareJoints = [](const JointInfo& jointInfo0)
 		{
@@ -197,11 +195,7 @@ void Graphics::Cloth::ComposeJointInfoBufferData(const std::vector<std::shared_p
 		JointInfo currentJointInfo = composeJointInfo(0, 1);
 		if (std::find_if(jointInfoBuffer.begin(), jointInfoBuffer.end(), compareJoints(currentJointInfo)) == jointInfoBuffer.end())
 			jointInfoBuffer.push_back(currentJointInfo);
-
-		currentJointInfo = composeJointInfo(0, 2);
-		if (std::find_if(jointInfoBuffer.begin(), jointInfoBuffer.end(), compareJoints(currentJointInfo)) == jointInfoBuffer.end())
-			jointInfoBuffer.push_back(currentJointInfo);
-
+		
 		currentJointInfo = composeJointInfo(1, 2);
 		if (std::find_if(jointInfoBuffer.begin(), jointInfoBuffer.end(), compareJoints(currentJointInfo)) == jointInfoBuffer.end())
 			jointInfoBuffer.push_back(currentJointInfo);
@@ -209,16 +203,26 @@ void Graphics::Cloth::ComposeJointInfoBufferData(const std::vector<std::shared_p
 		currentJointInfo = composeJointInfo(2, 3);
 		if (std::find_if(jointInfoBuffer.begin(), jointInfoBuffer.end(), compareJoints(currentJointInfo)) == jointInfoBuffer.end())
 			jointInfoBuffer.push_back(currentJointInfo);
-	}
 
-	jointInfoBuffer.shrink_to_fit();
+		currentJointInfo = composeJointInfo(3, 0);
+		if (std::find_if(jointInfoBuffer.begin(), jointInfoBuffer.end(), compareJoints(currentJointInfo)) == jointInfoBuffer.end())
+			jointInfoBuffer.push_back(currentJointInfo);
+
+		currentJointInfo = composeJointInfo(0, 2);
+		if (std::find_if(jointInfoBuffer.begin(), jointInfoBuffer.end(), compareJoints(currentJointInfo)) == jointInfoBuffer.end())
+			jointInfoBuffer.push_back(currentJointInfo);
+
+		currentJointInfo = composeJointInfo(1, 3);
+		if (std::find_if(jointInfoBuffer.begin(), jointInfoBuffer.end(), compareJoints(currentJointInfo)) == jointInfoBuffer.end())
+			jointInfoBuffer.push_back(currentJointInfo);
+	}
 }
 
 void Graphics::Cloth::ComposeAdjacentVertexIndicesBufferData(const std::vector<JointInfo>& jointInfoBuffer, size_t verticesCount,
 	std::vector<AdjacentVertexIndices>& adjacentVertexIndicesBuffer)
 {
 	adjacentVertexIndicesBuffer.clear();
-	adjacentVertexIndicesBuffer.reserve(verticesCount * 8);
+	adjacentVertexIndicesBuffer.reserve(verticesCount);
 
 	for (uint32_t vertexIndex = 0; vertexIndex < verticesCount; vertexIndex++)
 	{
@@ -241,13 +245,14 @@ void Graphics::Cloth::ComposeAdjacentVertexIndicesBufferData(const std::vector<J
 	adjacentVertexIndicesBuffer.shrink_to_fit();
 }
 
-void Graphics::Cloth::SetupComputeObjects(ID3D12Device* device, ConstantBufferId globalConstBufferId, ConstantBufferId localConstBufferId,
-	RWBufferId _vertexBufferId, size_t verticesCount, size_t jointsCount)
+void Graphics::Cloth::SetupComputeObjects(ID3D12Device* device, ConstantBufferId immutableGlobalConstBufferId, ConstantBufferId globalConstBufferId,
+	ConstantBufferId localConstBufferId, RWBufferId _vertexBufferId, size_t verticesCount, size_t jointsCount)
 {
 	clothApplyForcesCO = std::unique_ptr<ComputeObject>(new ComputeObject());
 	clothApplyForcesCO->AssignShader({ clothApplyForcesCS, sizeof(clothApplyForcesCS) });
-	clothApplyForcesCO->AssignConstantBuffer(0, globalConstBufferId);
-	clothApplyForcesCO->AssignConstantBuffer(1, localConstBufferId);
+	clothApplyForcesCO->AssignConstantBuffer(0, immutableGlobalConstBufferId);
+	clothApplyForcesCO->AssignConstantBuffer(1, globalConstBufferId);
+	clothApplyForcesCO->AssignConstantBuffer(2, localConstBufferId);
 	clothApplyForcesCO->AssignRWBuffer(0, _vertexBufferId);
 	clothApplyForcesCO->SetThreadGroupCount(verticesCount, 1, 1);
 	clothApplyForcesCO->Compose(device);

@@ -143,6 +143,12 @@ void Graphics::GeometryProcessor::ConvertPolygon(PolygonFormat targetPolygonForm
 
 	if (targetPolygonFormat == PolygonFormat::N_GON || verticesCount == targetVerticesPerFace)
 	{
+		if (verticesCount == 4)
+		{
+			freeVertexIndexIds.PushBack(0);
+			freeVertexIndexIds.PushBack(2);
+		}
+
 		newFacesRelativeIndices = freeVertexIndexIds.GetNative();
 
 		return;
@@ -161,11 +167,9 @@ void Graphics::GeometryProcessor::ConvertPolygon(PolygonFormat targetPolygonForm
 		int64_t freeVertexPreviousIndex;
 		int64_t freeVertexCurrentIndex;
 		int64_t freeVertexNextIndex;
-		int64_t freeVertexNextNextIndex = 0;
 		int64_t freeVertexPreviousIndexId;
 		int64_t freeVertexCurrentIndexId;
 		int64_t freeVertexNextIndexId;
-		int64_t freeVertexNextNextIndexId = 0;
 
 		if (static_cast<int64_t>(vertexIndexShift + vertexIndexShiftThreshould) < static_cast<int64_t>(freeVertexIndices.Size()))
 		{
@@ -175,79 +179,36 @@ void Graphics::GeometryProcessor::ConvertPolygon(PolygonFormat targetPolygonForm
 			freeVertexPreviousIndexId = freeVertexIndexIds[vertexIndexShift];
 			freeVertexCurrentIndexId = freeVertexIndexIds[vertexIndexShift + 1];
 			freeVertexNextIndexId = freeVertexIndexIds[vertexIndexShift + 2];
-
-			if (targetVerticesPerFace == 4)
-			{
-				freeVertexNextNextIndex = freeVertexIndices[vertexIndexShift + 3];
-				freeVertexNextNextIndexId = freeVertexIndexIds[vertexIndexShift + 3];
-			}
 		}
 		else
 		{
 			freeVertexPreviousIndex = freeVertexIndices[0];
+			freeVertexCurrentIndex = freeVertexIndices[2];
+			freeVertexNextIndex = freeVertexIndices[1];
 			freeVertexPreviousIndexId = freeVertexIndexIds[0];
-
-			if (targetVerticesPerFace == 3)
-			{
-				freeVertexCurrentIndex = freeVertexIndices[2];
-				freeVertexNextIndex = freeVertexIndices[1];
-				freeVertexCurrentIndexId = freeVertexIndexIds[2];
-				freeVertexNextIndexId = freeVertexIndexIds[1];
-			}
-			else
-			{
-				freeVertexCurrentIndex = freeVertexIndices[3];
-				freeVertexNextIndex = freeVertexIndices[2];
-				freeVertexNextNextIndex = freeVertexIndices[1];
-				freeVertexCurrentIndexId = freeVertexIndexIds[3];
-				freeVertexNextIndexId = freeVertexIndexIds[2];
-				freeVertexNextNextIndexId = freeVertexIndexIds[1];
-			}
+			freeVertexCurrentIndexId = freeVertexIndexIds[2];
+			freeVertexNextIndexId = freeVertexIndexIds[1];
 		}
 
 		const float3& positionPrevious = positions[freeVertexPreviousIndex];
 		const float3& positionCurrent = positions[freeVertexCurrentIndex];
 		const float3& positionNext = positions[freeVertexNextIndex];
-		const float3& positionNextNext = positions[freeVertexNextNextIndex];
 
 		bool triangleIsIncorrect = !(GeometryProcessor::CalculateTriangleArea(positionPrevious, positionCurrent, positionNext) > 0.0f);
 
-		if (!triangleIsIncorrect && targetVerticesPerFace == 4)
-			triangleIsIncorrect = triangleIsIncorrect || !(GeometryProcessor::CalculateTriangleArea(positionPrevious, positionNext, positionNextNext) > 0.0f);
-
 		if (!triangleIsIncorrect)
-		{
 			for (auto& vertexId : freeVertexIndices.GetNative())
 				if (vertexId != freeVertexPreviousIndex && vertexId != freeVertexCurrentIndex && vertexId != freeVertexNextIndex)
-				{
 					if (GeometryProcessor::CheckPointInTriangle(positionPrevious, positionCurrent, positionNext, positions[vertexId]))
 					{
 						triangleIsIncorrect = true;
 
 						break;
 					}
-					else
-					{
-						if (targetVerticesPerFace == 4)
-							if (GeometryProcessor::CheckPointInTriangle(positionPrevious, positionNext, positionNextNext, positions[vertexId]))
-							{
-								triangleIsIncorrect = true;
-
-								break;
-							}
-					}
-				}
-		}
 
 		if (!triangleIsIncorrect)
-		{
 			if (!GeometryProcessor::CheckTriangleInPolygon(positionPrevious, positionCurrent, positionNext, faceNormal))
 				triangleIsIncorrect = true;
-			else
-				if (targetVerticesPerFace == 4)
-					if (!GeometryProcessor::CheckTriangleInPolygon(positionPrevious, positionNext, positionNextNext, faceNormal))
-						triangleIsIncorrect = true;
-		}
 
 		if (triangleIsIncorrect)
 			vertexIndexShift = (static_cast<int64_t>(vertexIndexShift + vertexIndexShiftThreshould) >= static_cast<int64_t>(freeVertexIndices.Size())) ? 0 : ++vertexIndexShift;
@@ -256,9 +217,6 @@ void Graphics::GeometryProcessor::ConvertPolygon(PolygonFormat targetPolygonForm
 			newFacesRelativeIndices.push_back(freeVertexPreviousIndexId);
 			newFacesRelativeIndices.push_back(freeVertexCurrentIndexId);
 			newFacesRelativeIndices.push_back(freeVertexNextIndexId);
-
-			if (targetVerticesPerFace == 4)
-				newFacesRelativeIndices.push_back(freeVertexNextNextIndexId);
 
 			int64_t vertexIndexForRemove = (static_cast<int64_t>(vertexIndexShift + vertexIndexShiftThreshould) < static_cast<int64_t>(freeVertexIndices.Size())) ? vertexIndexShift + 1 : 1;
 

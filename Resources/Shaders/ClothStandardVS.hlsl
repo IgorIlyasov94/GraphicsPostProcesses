@@ -1,22 +1,4 @@
-cbuffer ImmutableGlobalConstBuffer : register(b0)
-{
-	float4x4 projection;
-	float4x4 invProjection;
-	float zNear;
-	float zFar;
-	float2 zLinearizeCoeff;
-};
-
-cbuffer GlobalConstBuffer : register(b1)
-{
-	float4x4 view;
-	float4x4 invView;
-	float4x4 viewProjection;
-	float4x4 invViewProjection;
-	float3 cameraPosition;
-	float elapsedTime;
-	float4 randomValues;
-};
+#include "GlobalConstants.hlsli"
 
 cbuffer LocalConstBuffer : register(b2)
 {
@@ -50,6 +32,7 @@ struct Output
 	float2 texCoord : TEXCOORD0;
 	float4 clipCoord : TEXCOORD1;
 	float4 worldCoord : TEXCOORD2;
+	float free : TEXCOORD3;
 };
 
 Output main(Input input)
@@ -61,6 +44,7 @@ Output main(Input input)
 	output.texCoord = vertexBuffer[input.vertexId].texCoord;
 	output.clipCoord = output.position;
 	output.worldCoord = mul(world, float4(vertexBuffer[input.vertexId].position, 1.0f));
+	output.free = (float) vertexBuffer[input.vertexId].isFree;
 	
 	return output;
 }

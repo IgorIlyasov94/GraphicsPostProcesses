@@ -98,7 +98,8 @@ void Graphics::ParticleSystem::SetFrames(uint32_t atlasRowNumber, uint32_t atlas
 	particleSystemData.framesCount = animationFramesCount;
 }
 
-void Graphics::ParticleSystem::Compose(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, ConstantBufferId globalConstBufferId)
+void Graphics::ParticleSystem::Compose(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, ConstantBufferId immutableGlobalConstBufferId,
+	ConstantBufferId globalConstBufferId)
 {
 	particleSystemConstBufferId = resourceManager.CreateConstantBuffer(&particleSystemData, sizeof(particleSystemData));
 
@@ -128,8 +129,9 @@ void Graphics::ParticleSystem::Compose(ID3D12Device* device, ID3D12GraphicsComma
 
 	updateParticleSystemCO = std::shared_ptr<ComputeObject>(new ComputeObject());
 	updateParticleSystemCO->AssignShader({ updateParticleSystemCS, sizeof(updateParticleSystemCS) });
-	updateParticleSystemCO->AssignConstantBuffer(0, globalConstBufferId);
-	updateParticleSystemCO->AssignConstantBuffer(1, particleSystemConstBufferId);
+	updateParticleSystemCO->AssignConstantBuffer(0, immutableGlobalConstBufferId);
+	updateParticleSystemCO->AssignConstantBuffer(1, globalConstBufferId);
+	updateParticleSystemCO->AssignConstantBuffer(2, particleSystemConstBufferId);
 	updateParticleSystemCO->AssignTexture(0, sizeGradientId);
 	updateParticleSystemCO->AssignTexture(1, velocityGradientId);
 	updateParticleSystemCO->AssignTexture(2, colorGradientId);
@@ -142,7 +144,8 @@ void Graphics::ParticleSystem::Compose(ID3D12Device* device, ID3D12GraphicsComma
 	
 	sortParticleSystemCO = std::shared_ptr<ComputeObject>(new ComputeObject());
 	sortParticleSystemCO->AssignShader({ sortParticleSystemCS, sizeof(sortParticleSystemCS) });
-	sortParticleSystemCO->AssignConstantBuffer(0, globalConstBufferId);
+	sortParticleSystemCO->AssignConstantBuffer(0, immutableGlobalConstBufferId);
+	sortParticleSystemCO->AssignConstantBuffer(1, globalConstBufferId);
 	sortParticleSystemCO->AssignBuffer(0, particleBufferId);
 	sortParticleSystemCO->AssignRWBuffer(0, indexBufferId);
 	sortParticleSystemCO->SetThreadGroupCount(particleSystemData.particleMaxCount, 1, 1);

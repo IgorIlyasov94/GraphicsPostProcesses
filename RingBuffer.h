@@ -33,22 +33,22 @@ namespace Graphics
 
 		~RingBufferList() {};
 
-		void PushFront(const RingBufferList& newElement)
+		void PushFront(const RingBufferType& newElement)
 		{
 			buffer.push_front(newElement);
 		}
 
-		void PushFront(RingBufferList&& newElement)
+		void PushFront(RingBufferType&& newElement)
 		{
 			buffer.push_front(std::forward<RingBufferType>(newElement));
 		}
 
-		void PushBack(const RingBufferList& newElement)
+		void PushBack(const RingBufferType& newElement)
 		{
 			buffer.push_back(newElement);
 		}
 
-		void PushBack(RingBufferList&& newElement)
+		void PushBack(RingBufferType&& newElement)
 		{
 			buffer.push_back(std::forward<RingBufferType>(newElement));
 		}
@@ -121,12 +121,12 @@ namespace Graphics
 
 		~RingBufferVector() {};
 
-		void PushBack(const RingBufferVector& newElement)
+		void PushBack(const RingBufferType& newElement)
 		{
 			buffer.push_back(newElement);
 		}
 
-		void PushBack(RingBufferVector&& newElement)
+		void PushBack(RingBufferType&& newElement)
 		{
 			buffer.push_back(std::forward<RingBufferType>(newElement));
 		}

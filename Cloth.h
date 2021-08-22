@@ -12,7 +12,7 @@ namespace Graphics
 	{
 	public:
 		Cloth(ID3D12Device* device, ID3D12GraphicsCommandList* commandList, std::filesystem::path meshFilePath, const std::vector<BoundingBox>& bindingBoxes,
-			ConstantBufferId globalConstBufferId, float mass, float stiffness, float damping);
+			ConstantBufferId immutableGlobalConstBufferId, ConstantBufferId globalConstBufferId, float mass, float stiffness, float damping);
 		~Cloth();
 
 		const BoundingBox& GetBoundingBox() const noexcept override;
@@ -50,7 +50,8 @@ namespace Graphics
 		void ComposeAdjacentVertexIndicesBufferData(const std::vector<JointInfo>& jointInfoBuffer, size_t verticesCount,
 			std::vector<AdjacentVertexIndices>& adjacentVertexIndicesBuffer);
 
-		void SetupComputeObjects(ID3D12Device* device, ConstantBufferId globalConstBufferId, ConstantBufferId localConstBufferId, RWBufferId _vertexBufferId,
+		void SetupComputeObjects(ID3D12Device* device, ConstantBufferId immutableGlobalConstBufferId, ConstantBufferId globalConstBufferId,
+			ConstantBufferId localConstBufferId, RWBufferId _vertexBufferId,
 			size_t verticesCount, size_t jointsCount);
 
 		RWBufferId vertexBufferId;
@@ -76,8 +77,7 @@ namespace Graphics
 			float3 gravity;
 			float mass;
 			float stiffness;
-			float previousElapsedTime;
-			float2 padding;
+			float3 padding;
 		};
 
 		BoundingBox boundingBox;
