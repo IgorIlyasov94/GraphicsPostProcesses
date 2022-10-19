@@ -6,8 +6,6 @@
 /Debug
 /.vs/GraphicsPostProcesses/v16
 /x64/Debug
-/Resources/Textures
-/Resources/Meshes
 /Resources/Shaders/AddPointLightToBufferCS.hlsl.h
 /Resources/Shaders/SetPointLightCS.hlsl.h
 /Resources/Shaders/DistributePointLightCS.hlsl.h
