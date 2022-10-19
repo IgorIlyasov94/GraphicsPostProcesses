@@ -36,3 +36,4 @@
 /Resources/Shaders/ClothRecalculateTangentsCS.hlsl.h
 /Resources/Shaders/ClothStandardVS.hlsl.h
 /Resources/Shaders/ClothStandardPS.hlsl.h
+/.vs

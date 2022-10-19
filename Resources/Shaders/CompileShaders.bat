@@ -6,15 +6,15 @@ IF %ERRORLEVEL%==0 (
 	GOTO COMPILE_SHADER
 )
 
-:: Search dxc.exe on 15063 SDK installtion path.
-dir "%PROGRAMFILES(x86)%\Windows Kits\10\bin\10.0.17763.0\x86\dxc.exe" >nul 2>nul
+:: Search dxc.exe on 19041 SDK installation path.
+dir "%PROGRAMFILES(x86)%\Windows Kits\10\bin\10.0.19041.0\x86\dxc.exe" >nul 2>nul
 IF %ERRORLEVEL%==0 (
-	SET dxcCmd="%PROGRAMFILES(x86)%\Windows Kits\10\bin\10.0.17763.0\x86\dxc.exe"
+	SET dxcCmd="%PROGRAMFILES(x86)%\Windows Kits\10\bin\10.0.19041.0\x86\dxc.exe"
 	GOTO COMPILE_SHADER
 )
 
 :DXC_NOT_FOUND
-ECHO Error: dxc.exe does not exist somewhere on PATH or on %PROGRAMFILES(x86)%\Windows Kits\10\bin\10.0.17763.0\x86\
+ECHO Error: dxc.exe does not exist somewhere on PATH or on %PROGRAMFILES(x86)%\Windows Kits\10\bin\10.0.19041.0\x86\
 EXIT /b 1
 
 :COMPILE_SHADER
